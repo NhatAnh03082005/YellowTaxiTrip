@@ -1,0 +1,9 @@
+2026-10-30 18:41:37,527 INFO DQ complete yellow_tripdata_2009-01.parquet rows=14092413
+2026-10-30 18:42:46,902 INFO DQ complete yellow_tripdata_2010-01.parquet rows=14863778
+2026-10-30 18:44:12,665 INFO DQ complete yellow_tripdata_2009-01.parquet rows=14092413
+2026-10-30 18:44:41,427 INFO DQ complete yellow_tripdata_2010-01.parquet rows=14863778
+2026-10-30 18:45:26,180 INFO DQ complete yellow_tripdata_2015-01.parquet rows=12741035
+2026-10-30 18:45:54,025 INFO DQ complete yellow_tripdata_2019-01.parquet rows=7696617
+2026-10-30 18:45:59,516 INFO DQ complete yellow_tripdata_2024-04.parquet rows=3514289
+2026-10-30 18:46:04,540 INFO DQ complete yellow_tripdata_2025-01.parquet rows=3475226
+2026-10-30 18:46:09,719 INFO DQ complete yellow_tripdata_2026-01.parquet rows=3724889

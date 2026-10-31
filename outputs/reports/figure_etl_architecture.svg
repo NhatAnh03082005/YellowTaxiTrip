@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="360" viewBox="0 0 1800 360">
+  <style>
+    .box { stroke:#5b8db8; stroke-width:2.5; }
+    .main { font-family:'Times New Roman',serif; font-size:30px; font-weight:700; fill:#17324d; text-anchor:middle; }
+    .sub { font-family:'Times New Roman',serif; font-size:21px; fill:#315b7d; text-anchor:middle; }
+  </style>
+  <rect width="1800" height="360" fill="#ffffff"/>
+
+  <rect class="box" x="30" y="90" width="210" height="180" rx="20" fill="#d9eaf7"/>
+  <text class="main" x="135" y="155">
+    <tspan x="135">Official</tspan><tspan x="135" dy="40">Source</tspan>
+  </text>
+  <text class="sub" x="135" y="238">TLC / NYC Open Data</text>
+
+  <line x1="260" y1="180" x2="287" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="287,162 317,180 287,198" fill="#315b7d"/>
+
+  <rect class="box" x="330" y="90" width="210" height="180" rx="20" fill="#d9eaf7"/>
+  <text class="main" x="435" y="155">
+    <tspan x="435">Raw</tspan><tspan x="435" dy="40">Immutable</tspan>
+  </text>
+  <text class="sub" x="435" y="238">Bản gốc bất biến</text>
+
+  <line x1="560" y1="180" x2="587" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="587,162 617,180 587,198" fill="#315b7d"/>
+
+  <rect class="box" x="630" y="90" width="210" height="180" rx="20" fill="#d9eaf7"/>
+  <text class="main" x="735" y="155">
+    <tspan x="735">Versioned</tspan><tspan x="735" dy="40">Staging</tspan>
+  </text>
+  <text class="sub" x="735" y="238">Canonical schema</text>
+
+  <line x1="860" y1="180" x2="887" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="887,162 917,180 887,198" fill="#315b7d"/>
+
+  <rect class="box" x="930" y="90" width="210" height="180" rx="20" fill="#d9eaf7"/>
+  <text class="main" x="1035" y="155">
+    <tspan x="1035">DQ /</tspan><tspan x="1035" dy="40">Quarantine</tspan>
+  </text>
+  <text class="sub" x="1035" y="238">Kiểm soát chất lượng</text>
+
+  <line x1="1160" y1="180" x2="1187" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="1187,162 1217,180 1187,198" fill="#315b7d"/>
+
+  <rect class="box" x="1230" y="90" width="210" height="180" rx="20" fill="#c9e2f3"/>
+  <text class="main" x="1335" y="155">
+    <tspan x="1335">DDS Star</tspan><tspan x="1335" dy="40">Schema</tspan>
+  </text>
+  <text class="sub" x="1335" y="238">Fact &amp; Dimensions</text>
+
+  <line x1="1460" y1="180" x2="1487" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="1487,162 1517,180 1487,198" fill="#315b7d"/>
+
+  <rect class="box" x="1530" y="90" width="210" height="180" rx="20" fill="#b9d7ee"/>
+  <text class="main" x="1635" y="176">
+    <tspan x="1635">Power BI</tspan>
+  </text>
+  <text class="sub" x="1635" y="224">Dashboard &amp; Analysis</text>
+</svg>

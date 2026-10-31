@@ -1,0 +1,15 @@
+2026-10-30 18:37:07,389 INFO Downloaded 469759995 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2009-01.parquet
+2026-10-30 18:37:17,288 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2009-01.parquet
+2026-10-30 18:37:53,458 INFO Downloaded 515402953 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2010-01.parquet
+2026-10-30 18:37:53,459 INFO Downloaded 515402953 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2010-01.parquet
+2026-10-30 18:38:06,464 INFO Downloaded 175325767 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2015-01.parquet
+2026-10-30 18:38:10,322 INFO Downloaded 110439634 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2019-01.parquet
+2026-10-30 18:38:12,837 INFO Downloaded 59133625 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2024-04.parquet
+2026-10-30 18:38:15,964 INFO Downloaded 59158238 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2025-01.parquet
+2026-10-30 18:38:17,561 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2009-01.parquet
+2026-10-30 18:38:17,987 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2010-01.parquet
+2026-10-30 18:38:18,451 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2015-01.parquet
+2026-10-30 18:38:18,612 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2019-01.parquet
+2026-10-30 18:38:18,712 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2024-04.parquet
+2026-10-30 18:38:18,768 INFO Reuse D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2025-01.parquet
+2026-10-30 18:38:23,619 INFO Downloaded 64165080 bytes to D:\BI\DATH\nyc_taxi_survey\data\raw\yellow_tripdata_2026-01.parquet

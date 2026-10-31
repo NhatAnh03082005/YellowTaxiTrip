@@ -1,0 +1,18 @@
+﻿source,metric_type,column,row_count,column_count,dtype,null_count,null_rate,distinct_count,min,max,is_unique,value,count
+taxi+_zone_lookup.csv,column,LocationID,265,4,int64,0,0.0,265,1,265,True,,
+taxi+_zone_lookup.csv,column,Borough,265,4,str,1,0.0037735849056603774,7,,,False,,
+taxi+_zone_lookup.csv,column,Zone,265,4,str,1,0.0037735849056603774,261,,,False,,
+taxi+_zone_lookup.csv,column,service_zone,265,4,str,2,0.007547169811320755,4,,,False,,
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Queens,69.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Manhattan,69.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Brooklyn,61.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Bronx,43.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Staten Island,20.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,EWR,1.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,Unknown,1.0
+taxi+_zone_lookup.csv,borough_distribution,Borough,265,4,,,,,,,,<NULL>,1.0
+taxi+_zone_lookup.csv,service_zone_distribution,service_zone,265,4,,,,,,,,Boro Zone,205.0
+taxi+_zone_lookup.csv,service_zone_distribution,service_zone,265,4,,,,,,,,Yellow Zone,55.0
+taxi+_zone_lookup.csv,service_zone_distribution,service_zone,265,4,,,,,,,,Airports,2.0
+taxi+_zone_lookup.csv,service_zone_distribution,service_zone,265,4,,,,,,,,<NULL>,2.0
+taxi+_zone_lookup.csv,service_zone_distribution,service_zone,265,4,,,,,,,,EWR,1.0

@@ -1,0 +1,116 @@
+KHOA CÔNG NGHỆ THÔNG TIN 
+TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN 
+227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM 
+Điện thoại: (08) 38.354.266 – Fax: (08) 38.350.096 
+   
+ 
+4.0 
+CSC12107 – HTTT PV TRÍ TUỆ KINH DOANH 
+ĐỒ ÁN THỰC HÀNH 
+ 
+1. Thông tin chung 
+Mã số bài tập: 2026_DATH 
+Thời lượng dự kiến: 8 tuần 
+Deadline nộp bài: 12/2026 
+Hình thức: Bài tập nhóm 
+Hình thức nộp bài: Nộp qua Moodle môn học 
+GV phụ trách: Nguyễn Ngọc Minh Châu, Tiết Gia Hồng 
+Thông tin liên lạc với GV: nnmchau@fit.hcmus.edu.vn , 
+tghong@fit.hcmus.edu.vn  
+2. Chuẩn đầu ra cần đạt 
+Bài tập này nhằm mục tiêu đạt được các chuẩn đầu ra sau: 
+ G3.2: Giải thích vai trò và đặc trưng của kho dữ liệu, ý nghĩa của các bảng chiều và dữ 
+kiện, các thuộc tính, phân cấp chiều trong lược đồ đa chiều 
+ G3.3: Thiết kế lược đồ đa chiều (sao, bông tuyết) dựa vào dữ liệu hệ thống tác vụ và 
+yêu cầu phân tích từ tình huống cho trước 
+ G4.2 Phân biệt được các ứng dụng khai phá dữ liệu vào kinh doanh thông minh. 
+Giải thích đặc trưng và mục đích của khai phá dữ liệu, tầm quan trọng và một số kỹ 
+thuật phổ biến 
+ G5.1 Triển khai quy trình ETL để rút trích dữ liệu từ nhiều nguồn, biến đổi, làm sạch 
+dữ liệu, nạp dữ liệu vào KDL. 
+ G5.2 Xây dựng KDL đa chiều và giải thích được lựa chọn phép toán OLAP phù hợp đối 
+với 1 số yêu cầu phân tích. 
+ G5.3 Sử dụng một số công cụ biểu diễn dữ liệu (powerBI, excel…) để biểu diễn kết 
+quả phân tích, khai thác được (report, dashboard…) 
+ 
+3. Mô tả đồ án 
+Bộ dữ liệu của đồ án mô tả tập dữ liệu về lộ trình Yellow Taxi ở New York City (NYC) từ năm 2009 
+đến 2026: 
+ Tập dữ liệu: 
+ Yellow Taxi Trip  
+ Danh mục Taxi Zones (CSV) 
+ Ranh giới Taxi Zones (Shapefile ZIP) 
+ Yêu cầu phân tích  
+ Khảo sát dữ liệu: (5%) 
+KHOA CÔNG NGHỆ THÔNG TIN 
+TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN 
+227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM 
+Điện thoại: (08) 38.354.266 – Fax: (08) 38.350.096 
+   
+ 
+4.0 
+1. Khảo sát và mô tả các nguồn dữ liệu 
+2. Phân tích các di thường dữ liệu thô 
+ Yêu cầu cơ bản: (80%) 
+1. Thống kê số lượng chuyến taxi và số lượng hành khách theo ngày ➔ tháng ➔ năm. 
+2. Phân tích doanh thu của mỗi quận/khu vực (Manhattan, Brooklyn, Queens, Bronx, 
+Staten Island ) theo từng nhà cung cấp (CMT, VTS) tại một thời điểm cụ thể (ngày, 
+giờ, tháng, năm) 
+3. Thống kê số lượng chuyến đi thanh toán theo từng hình thức (Cash, Credit card, 
+Dispute, No Charge …) ở từng quận/khu vực theo từng tháng trong năm. 
+4. Thống kê số lượng chuyển đón xe và trả khách theo từng thời điểm (khung giờ trong 
+ngày/ ngày trong tuần/ tháng trong năm) 
+5. Thống kê số lượng chuyến đi theo nhóm số lượng khách đi (đi 1 mình, nhóm 2-4 
+người, nhóm từ 5 người trở lên) theo từng loại biểu phí và  cư ly di chuyển. 
+6. Lập dashboard phân tích tình hình hoạt động vận tải taxi của từng quận/khu vực: 
+7. Top n tuyến lộ trình phổ biến nhất 
+8. Tổng doanh thu 
+ Yêu cầu phân tích mở rộng: (15%) 
+1. So sánh tỷ lệ tiền boa trung bình và vận tốc di chuyển trung bình của từng loại biểu 
+phí chuyến đi.  
+2. Doanh thu tháng 5 tăng/giảm so với tháng 6? Vì sao? Giải thích nguyên nhân 
+3. Doanh thu tăng nhưng số chuyến gần như không đổi. Yếu tố nào làm doanh 
+thu/chuyến tăng? 
+4. So sánh doanh thu và số lượng chuyến đi cùng kỳ (tháng hiện tại & tháng trước/ năm 
+hiện tại & năm trước). 
+5. Lập dashboard phân tích tình hình hoạt động vận tải taxi của từng quận/khu vực: 
+a. Hiển thị lượng chuyển đón/trả khách theo từng khu vực trên bản đồ không gian. 
+b. Lập bảng hiển thị doanh thu theo từng quận qua các tháng trong năm, vẽ đồ thị phân 
+tích xu hướng theo các khung giờ trong ngày. 
+ Yêu cầu thiết kế 
+ Thiết kế lược đồ đa chiều DDS 
+ Thiết kế kiến trúc 3 tầng kho dữ liệu: Source > Staging > DDS 
+ Thiết kế bộ kiểm thử 
+ Thiết kế luồng cho phép tự động hóa ETL 
+ Thiết kế giao diện dashboard 
+ Yêu cầu cài đặt  
+ Cài đặt Metadata 
+ Thực hiện nạp dữ liệu vào kho: Staging, Fact/Dims 
+ Kiểm  thử 
+ 
+4. Các yêu cầu & quy định chi tiết cho bài nộp 
+ Có thể sử dụng word, excel, draw.io… để vẽ các lược đồ trên 
+ Bài làm ghi rõ mã nhóm, mssv, họ tên vào đầu bài làm, phân công và đánh giá mỗi thành 
+viên và toàn nhóm. 
+ Đặt tên: MaNhom_MSSV1_MSSV2_MSSV3_ MSSV4_ MSSV5 
+ 
+5. Cách đánh giá  
+STT Nội dung Điểm 
+KHOA CÔNG NGHỆ THÔNG TIN 
+TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN 
+227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM 
+Điện thoại: (08) 38.354.266 – Fax: (08) 38.350.096 
+   
+ 
+4.0 
+1 Khảo sát và phân tích dữ 
+liệu 
+5% 
+2 Phân tích yêu cầu & thiết 
+kế DDS 
+15% 
+3 Cài đặt ETL nạp dữ liệu 30% 
+4 Report/OLAP/Dashboard 35% 
+5 Yêu cầu nâng cao 15% 
+ Tổng 100% 
+ 

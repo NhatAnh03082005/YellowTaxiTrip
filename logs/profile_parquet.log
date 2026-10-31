@@ -1,0 +1,7 @@
+2026-10-30 18:38:53,384 INFO Profiled yellow_tripdata_2009-01.parquet rows=14092413 cols=18
+2026-10-30 18:38:53,387 INFO Profiled yellow_tripdata_2010-01.parquet rows=14863778 cols=18
+2026-10-30 18:38:53,389 INFO Profiled yellow_tripdata_2015-01.parquet rows=12741035 cols=19
+2026-10-30 18:38:53,391 INFO Profiled yellow_tripdata_2019-01.parquet rows=7696617 cols=19
+2026-10-30 18:38:53,392 INFO Profiled yellow_tripdata_2024-04.parquet rows=3514289 cols=19
+2026-10-30 18:38:53,394 INFO Profiled yellow_tripdata_2025-01.parquet rows=3475226 cols=20
+2026-10-30 18:38:53,395 INFO Profiled yellow_tripdata_2026-01.parquet rows=3724889 cols=20

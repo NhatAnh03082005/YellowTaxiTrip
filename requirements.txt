@@ -1,0 +1,12 @@
+pandas>=3.0
+numpy>=2.0
+pyarrow>=20
+duckdb>=1.4
+geopandas>=1.0
+shapely>=2.0
+pyogrio>=0.10
+requests>=2.32
+beautifulsoup4>=4.13
+lxml>=5.0
+pypdf>=5.0
+tabulate>=0.9
