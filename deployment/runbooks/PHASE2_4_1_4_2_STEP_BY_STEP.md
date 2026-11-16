@@ -636,7 +636,7 @@ Không lưu password hoặc toàn bộ `.env` trong evidence.
 - [x] Restart và `docker compose down/up` không mất dữ liệu.
 - [x] Clean start từ volume rỗng tạo lại được toàn bộ infrastructure.
 - [x] Có hướng dẫn up/down/log/reset với cảnh báo rõ cho reset volume.
-- [ ] Cả hai thành viên kết nối được cùng PostgreSQL.
+- [x] Cả hai thành viên kết nối được cùng PostgreSQL.
 
 ---
 

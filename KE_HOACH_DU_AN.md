@@ -109,7 +109,7 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
 
-**Trạng thái:** Hạ tầng kỹ thuật **ĐÃ NGHIỆM THU** ngày 2026-11-16; còn chờ dbt Owner xác nhận kết nối độc lập từ máy/nhánh của họ.
+**Trạng thái:** **HOÀN THÀNH** ngày 2026-11-16. Project Lead/Mage và dbt Owner đều đã xác nhận kết nối PostgreSQL thành công.
 
 - [x] Tạo `docker-compose.yml`.
 - [x] Tạo Mage service.
@@ -131,10 +131,12 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 ### Hoàn thành khi
 
 - [x] Mage kết nối qua `postgres:5432`; kết nối kiểu dbt/host qua `localhost:5433` đã được kiểm tra.
-- [ ] dbt Owner xác nhận kết nối độc lập với PostgreSQL sau khi pull cấu hình mới.
+- [x] dbt Owner xác nhận kết nối độc lập với PostgreSQL sau khi pull cấu hình mới.
 - [x] Restart và `docker compose down/up` không làm mất dữ liệu; chỉ reset có `--volumes` mới xóa database theo chủ đích.
 
 ## 4.3. Control, metadata và watermark
+
+Kế hoạch triển khai chi tiết: `deployment/runbooks/PHASE2_4_3_CONTROL_METADATA_WATERMARK_PLAN.md`.
 
 Bạn chịu trách nhiệm thiết kế và tạo:
 
