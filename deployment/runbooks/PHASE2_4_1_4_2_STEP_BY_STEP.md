@@ -288,7 +288,7 @@ rg -n --hidden --glob '!data/yellow_taxi/**' --glob '!.git/**' '([A-Za-z]:\\|/Us
 
 - [ ] Git root/remote chung đã thống nhất.
 - [ ] `.env.example` không chứa secret; `.env` bị ignore.
-- [ ] Catalog có đúng 24 file và metadata bắt buộc.
+- [x] Catalog có đúng 24 file và metadata bắt buộc.
 - [ ] 24 Parquet đọc được footer và có SHA-256.
 - [ ] CSV và đầy đủ thành phần Shapefile nằm trong `data/reference/`.
 - [ ] Fixture 2024/2025 và invalid fixture chạy độc lập với máy Project Lead.

@@ -94,7 +94,7 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 - [x] Chuyển tài liệu giai đoạn 1 vào đúng `docs/`, `profiling/` và `evidence/`.
 - [x] Tạo `.env.example` và `.gitignore` phù hợp.
 - [x] Không commit password, volume database hoặc Parquet dung lượng lớn; đã kiểm tra staged files trước khi push.
-- [ ] Tạo file catalog cho hai năm ETL.
+- [x] Tạo file catalog cho hai năm ETL: `data/catalog/yellow_taxi_2024_2025.csv`.
 - [ ] Tải/kiểm tra checksum các file được chọn.
 - [ ] Lưu Taxi Zone CSV và Shapefile trong `data/reference/`.
 - [ ] Chuẩn bị sample files nhỏ cho unit/integration test.
