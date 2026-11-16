@@ -22,6 +22,8 @@ data/yellow_taxi/by_year_month/**
 dbt_project/target/
 dbt_project/logs/
 mage_project/.file_versions/
+mage_project/.ssh_tunnel/
+mage_project/.mage_data/
 .pytest_cache/
 **/.pytest_cache/
 .coverage

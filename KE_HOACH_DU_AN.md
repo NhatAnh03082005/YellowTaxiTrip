@@ -109,27 +109,30 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
 
+**Trạng thái:** Hạ tầng kỹ thuật **ĐÃ NGHIỆM THU** ngày 2026-11-16; còn chờ dbt Owner xác nhận kết nối độc lập từ máy/nhánh của họ.
+
 - [x] Tạo `docker-compose.yml`.
 - [x] Tạo Mage service.
 - [x] Tạo PostgreSQL/PostGIS service.
 - [x] Cấu hình port, network và persistent volume.
 - [x] Tạo init scripts.
 - [x] Cấu hình biến môi trường (`.env.example` để chia sẻ, `.env` chỉ lưu local).
-- [ ] Kiểm tra `docker compose up` trên môi trường sạch.
-- [ ] Viết hướng dẫn `up`, `down`, reset volume và xem log.
+- [x] Kiểm tra `docker compose up --build` trên môi trường sạch từ volume rỗng.
+- [x] Viết hướng dẫn `up`, `down`, reset volume và xem log.
 
 ### Database schemas cần tạo
 
-- [ ] `stage`.
-- [ ] `control`.
-- [ ] `dq`.
-- [ ] `dds`.
-- [ ] `olap`.
+- [x] `stage`.
+- [x] `control`.
+- [x] `dq`.
+- [x] `dds`.
+- [x] `olap`.
 
 ### Hoàn thành khi
 
-- Cả bạn và người làm dbt kết nối được cùng PostgreSQL.
-- Restart container không làm mất dữ liệu ngoài ý muốn.
+- [x] Mage kết nối qua `postgres:5432`; kết nối kiểu dbt/host qua `localhost:5433` đã được kiểm tra.
+- [ ] dbt Owner xác nhận kết nối độc lập với PostgreSQL sau khi pull cấu hình mới.
+- [x] Restart và `docker compose down/up` không làm mất dữ liệu; chỉ reset có `--volumes` mới xóa database theo chủ đích.
 
 ## 4.3. Control, metadata và watermark
 
@@ -508,7 +511,7 @@ Bạn phụ trách:
 |---|---|
 | Giai đoạn 1 - Survey và Data Modeling | **HOÀN THÀNH** |
 | Design Freeze vật lý cho ETL | **HOÀN THÀNH** - Project Lead và dbt Owner đã ký duyệt |
-| Docker/PostgreSQL/Control | Chưa thực hiện |
+| Docker/PostgreSQL/Control | Docker/PostgreSQL đã nghiệm thu; Control tables chưa thực hiện |
 | Mage/Staging | Chưa thực hiện |
 | dbt DDS | Chưa thực hiện |
 | Tests/Reconciliation/Automation | Chưa thực hiện |

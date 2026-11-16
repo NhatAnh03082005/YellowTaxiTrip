@@ -102,7 +102,7 @@ POSTGRES_USER=nyc_taxi
 POSTGRES_PASSWORD=replace_with_local_password
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-POSTGRES_HOST_PORT=5432
+POSTGRES_HOST_PORT=5433
 MAGE_PORT=6789
 MAGE_PROJECT_NAME=nyc_taxi_bi
 ```
@@ -511,7 +511,7 @@ docker compose logs --tail 100 mage
 Từ Windows host, dbt dùng:
 
 - host: `localhost`;
-- port: giá trị `POSTGRES_HOST_PORT` (mặc định 5432);
+- port: giá trị `POSTGRES_HOST_PORT` (cấu hình đã kiểm thử dùng 5433);
 - database/user/password: từ `.env` cục bộ.
 
 Từ container trong cùng Compose network, dùng:
@@ -628,14 +628,14 @@ Không lưu password hoặc toàn bộ `.env` trong evidence.
 
 ## B16. Checklist hoàn thành mục 4.2
 
-- [ ] `docker compose config --quiet` thành công.
-- [ ] PostgreSQL/PostGIS healthy.
-- [ ] Có đủ `stage`, `control`, `dq`, `dds`, `olap`.
-- [ ] Mage truy cập PostgreSQL bằng hostname `postgres`.
-- [ ] dbt/host truy cập PostgreSQL bằng `localhost` và host port.
-- [ ] Restart không mất dữ liệu.
-- [ ] Clean start từ volume rỗng tạo lại được toàn bộ infrastructure.
-- [ ] Có hướng dẫn up/down/log/reset với cảnh báo rõ cho reset volume.
+- [x] `docker compose config --quiet` thành công.
+- [x] PostgreSQL/PostGIS healthy.
+- [x] Có đủ `stage`, `control`, `dq`, `dds`, `olap`.
+- [x] Mage truy cập PostgreSQL bằng hostname `postgres`.
+- [x] Kết nối kiểu dbt/host truy cập PostgreSQL bằng `localhost:5433`.
+- [x] Restart và `docker compose down/up` không mất dữ liệu.
+- [x] Clean start từ volume rỗng tạo lại được toàn bộ infrastructure.
+- [x] Có hướng dẫn up/down/log/reset với cảnh báo rõ cho reset volume.
 - [ ] Cả hai thành viên kết nối được cùng PostgreSQL.
 
 ---

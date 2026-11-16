@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.venv
+**/__pycache__
+*.pyc
+data/yellow_taxi
+dbt_project/target
+dbt_project/logs
+evidence
+profiling/outputs

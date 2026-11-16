@@ -26,6 +26,7 @@ services:
       dockerfile: docker/mage/Dockerfile
     command: mage start ${MAGE_PROJECT_NAME}
     environment:
+      USER_CODE_PATH: /home/src/mage_project
       MAGE_PROJECT_NAME: ${MAGE_PROJECT_NAME}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -35,7 +36,7 @@ services:
     ports:
       - "${MAGE_PORT}:6789"
     volumes:
-      - ./mage_project:/home/src/${MAGE_PROJECT_NAME}
+      - ./mage_project:/home/src/mage_project/${MAGE_PROJECT_NAME}
       - ./data:/home/src/data
     depends_on:
       postgres:
