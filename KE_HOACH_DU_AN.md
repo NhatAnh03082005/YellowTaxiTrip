@@ -86,6 +86,13 @@ Mục 3 **ĐÃ HOÀN THÀNH** ngày 2026-11-16. Ba tài liệu Design Freeze, da
 
 ## 4. Công việc của bạn - Project Lead/Integration
 
+### Nguyên tắc làm việc độc lập trước checkpoint 4.6
+
+- Từ mục 4.3 đến hết 4.5, Project Lead là owner duy nhất, tự thiết kế, triển khai, kiểm thử và quyết định chi tiết kỹ thuật cho Control, watermark, Mage, Physical Staging và technical DQ.
+- dbt Owner làm phần 5 trên nhánh/môi trường riêng; không review, không sửa và không phụ thuộc code/runtime của mục 4.3-4.5.
+- Hai bên chỉ dùng Design Freeze và handover contract đã duyệt làm baseline chung; không merge code trung gian.
+- Đến mục 4.6, Project Lead lấy nhánh/code dbt của dbt Owner, thực hiện merge, xử lý conflict, đấu nối với Staging/control metadata và chạy integration tests.
+
 ## 4.1. Quản lý project và dữ liệu
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
@@ -406,10 +413,10 @@ Bạn phụ trách:
 |---|---:|---:|
 | Yêu cầu và Decision Log | Chủ trì | Duyệt |
 | Docker/PostgreSQL | Chính | Kiểm tra kết nối |
-| Control/watermark/audit | Chính | Đọc batch metadata |
+| Control/watermark/audit | Toàn quyền 4.3-4.5 | Không tham gia trước 4.6 |
 | Download/checksum/file manifest | Chính | Không |
 | Mage ingestion | Chính | Không |
-| Physical Staging DDL | Chính | Góp ý contract |
+| Physical Staging DDL | Toàn quyền 4.3-4.5 | Không tham gia trước 4.6 |
 | Canonical SQL transformation | Hỗ trợ contract | Chính |
 | Business DQ | Cung cấp policy | Chính |
 | Dimensions/Fact | Kiểm tra kết quả | Chính |
@@ -422,6 +429,8 @@ Bạn phụ trách:
 ---
 
 ## 7. Hợp đồng bàn giao giữa hai người
+
+Hai danh sách dưới đây là gói bàn giao tại checkpoint 4.6, không phải dependency bắt buộc trong lúc hai bên đang phát triển độc lập ở 4.3-4.5 và phần 5.
 
 ### Bạn bàn giao cho người làm dbt
 
@@ -444,6 +453,8 @@ Bạn phụ trách:
 
 ### Integration checkpoint
 
+Trước checkpoint này, hai nhánh phát triển độc lập và không merge code. Tại 4.6, Project Lead chủ trì lấy code dbt, merge và tích hợp.
+
 - [ ] Cả hai chạy cùng một batch ID.
 - [ ] Mage load stage thành công.
 - [ ] dbt build thành công.
@@ -465,8 +476,9 @@ Bạn phụ trách:
 
 ### Bước 3 - Song song
 
-- Bạn: Mage ingestion và Staging.
-- Bạn dbt: khởi tạo project, sources và staging models trên sample contract.
+- Bạn: tự triển khai độc lập 4.3-4.5 gồm Control, Mage ingestion, Physical Staging và technical DQ.
+- Bạn dbt: tự triển khai độc lập phần 5 trên nhánh/môi trường riêng theo Design Freeze, handover contract và fixtures.
+- Không merge hoặc phụ thuộc runtime của nhau trong bước này; chỉ hội tụ tại 4.6.
 
 ### Bước 4 - Bạn dbt
 

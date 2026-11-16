@@ -2,11 +2,13 @@
 
 **Owner:** Project Lead/Integration
 
-**Reviewer:** dbt Owner
+**Reviewer:** Project Lead tự kiểm thử và đối chiếu evidence; không cần dbt Owner review trước 4.6
 
 **Trạng thái:** READY TO IMPLEMENT
 
 **Điều kiện đầu vào:** Task A hoàn thành; Docker/PostgreSQL/PostGIS/Mage hoàn thành; cả hai thành viên kết nối PostgreSQL thành công.
+
+**Quyền quyết định:** Project Lead toàn quyền quyết định và triển khai mục 4.3-4.5. dbt Owner làm độc lập trên nhánh/môi trường riêng; chỉ merge và tích hợp tại 4.6.
 
 ## 1. Mục tiêu
 
@@ -346,22 +348,24 @@ any failure
 
 Mage truyền `batch_id` xuống mọi block bằng runtime context; không block nào tự tạo batch mới.
 
-## 8. Contract cho dbt Owner
+## 8. Ranh giới chuẩn bị cho tích hợp 4.6
 
-dbt chỉ cần đọc:
+Trong 4.3-4.5, dbt Owner không đọc/ghi control tables và không cần chờ runtime của Project Lead. Các interface dưới đây được Project Lead chuẩn bị để sử dụng khi merge tại 4.6.
+
+Sau khi merge tại 4.6, dbt chỉ cần đọc:
 
 - `batch_id` hiện tại từ Mage variables;
 - `control.etl_batch.lset/cet` nếu cần audit;
 - lineage columns trong Staging.
 
-dbt không được:
+Sau khi merge, dbt không được:
 
 - update watermark;
 - tự mark batch `SUCCESS`;
 - sửa file status;
 - tạo batch ID khác cho cùng master run.
 
-dbt trả cho Mage:
+Tại checkpoint 4.6, code dbt cần cung cấp cho Mage:
 
 - command/selector;
 - exit code;
@@ -376,7 +380,7 @@ dbt trả cho Mage:
 - review tên cột/type/nullable/default;
 - review status transitions;
 - review initial LSET cho backfill và incremental;
-- dbt Owner xác nhận contract đọc batch metadata.
+- Project Lead tự đối chiếu với Design Freeze và handover contract đã duyệt.
 
 ### 4.3.2 — Tạo tables và constraints
 
@@ -428,7 +432,7 @@ dbt trả cho Mage:
 - lưu SQL output/test results;
 - chụp query batch/file/log/watermark;
 - cập nhật `KE_HOACH_DU_AN.md` chỉ sau khi tests đạt;
-- push branch và yêu cầu dbt Owner review contract.
+- push nhánh/commit của Project Lead; không merge code dbt ở bước này.
 
 ## 10. Test matrix bắt buộc
 
@@ -458,7 +462,7 @@ dbt trả cho Mage:
 - [ ] Concurrent batch cùng source bị chặn.
 - [ ] DDL chạy lại an toàn trên database đã có metadata.
 - [ ] Mage block skeleton nhận và truyền cùng `batch_id`.
-- [ ] dbt Owner review contract metadata.
+- [ ] Project Lead tự review data dictionary, state transitions và evidence theo Design Freeze.
 - [ ] Positive/negative test evidence được lưu và push.
 
 Chỉ chuyển sang triển khai ingestion 4.4 sau khi các điều kiện trên đạt.
