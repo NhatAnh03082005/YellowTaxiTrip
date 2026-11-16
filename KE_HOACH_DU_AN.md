@@ -96,8 +96,8 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 - [x] Không commit password, volume database hoặc Parquet dung lượng lớn; đã kiểm tra staged files trước khi push.
 - [x] Tạo file catalog cho hai năm ETL: `data/catalog/yellow_taxi_2024_2025.csv`.
 - [x] Tải và kiểm tra SHA-256, Parquet footer, schema của đủ 24 file Yellow Taxi 2024-2025.
-- [ ] Lưu Taxi Zone CSV và Shapefile trong `data/reference/`.
-- [ ] Chuẩn bị sample files nhỏ cho unit/integration test.
+- [x] Lưu Taxi Zone CSV và Shapefile trong `data/reference/`; xác nhận 265 lookup IDs và 263 geometries.
+- [x] Chuẩn bị sample files nhỏ cho unit/integration test tại `tests/fixtures/`.
 
 ### Hoàn thành khi
 

@@ -1,0 +1,55 @@
+{
+  "generation_contract_date": "2026-11-16",
+  "generator": "profiling/scripts/build_test_fixtures.py",
+  "selection_policy": "Seeded random sample across every Parquet row group plus required real edge cases",
+  "valid_fixtures": [
+    {
+      "fixture": "tests/fixtures/valid/yellow_tripdata_2024-05_sample.parquet",
+      "source_month": "2024-05",
+      "source_file": "yellow_tripdata_2024-05.parquet",
+      "source_sha256": "1974230be2b5a3ea92e47b5eb77f32dbf1de896d81ad8df4ab6faba52749ad23",
+      "selection_seed": 20463521,
+      "random_rows": 5000,
+      "total_fixture_rows": 5000,
+      "coverage": {
+        "passenger_null": 851,
+        "passenger_zero_or_gt6": 50,
+        "zone_264_or_265": 58,
+        "non_positive_total": 64,
+        "non_positive_distance": 53,
+        "business_unknown_or_flex_code": 904
+      },
+      "fixture_sha256": "afd5855157248588a56e17b088129d2049a08ab0025cd1d0dc85e86c802eb5c5"
+    },
+    {
+      "fixture": "tests/fixtures/valid/yellow_tripdata_2025-05_sample.parquet",
+      "source_month": "2025-05",
+      "source_file": "yellow_tripdata_2025-05.parquet",
+      "source_sha256": "7ef46bcd0fceee7f8c0bb38a532be05bceefabb512d4bb0b32a7727dd862b15c",
+      "selection_seed": 20463621,
+      "random_rows": 5000,
+      "total_fixture_rows": 5000,
+      "coverage": {
+        "passenger_null": 1759,
+        "passenger_zero_or_gt6": 25,
+        "zone_264_or_265": 33,
+        "non_positive_total": 169,
+        "non_positive_distance": 197,
+        "business_unknown_or_flex_code": 1807,
+        "positive_cbd_fee": 3502
+      },
+      "fixture_sha256": "da4ab2fb62ea5de7718d37ad5e47fd72ee1065859e7679ce29657c9b9ec57369"
+    }
+  ],
+  "invalid_business_fixture": {
+    "fixture": "tests/fixtures/invalid/business_rule_cases.parquet",
+    "rows": 9,
+    "fixture_sha256": "18d56f3d67963bb0bccca0ee8307797079a3610aefb6f392932f8d78f3692217",
+    "expected_results": "tests/expected_results/business_rule_cases_expected.csv"
+  },
+  "invalid_technical_fixture": {
+    "fixture": "tests/fixtures/invalid/technical_cast_errors.csv",
+    "rows": 5,
+    "fixture_sha256": "ed5dba25911563c75e61e8ed7107badc49e6db6837eeb3f774ae81cc7a381036"
+  }
+}
