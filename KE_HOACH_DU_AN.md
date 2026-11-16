@@ -90,10 +90,10 @@ Mục 3 **ĐÃ HOÀN THÀNH** ngày 2026-11-16. Ba tài liệu Design Freeze, da
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
 
-- [ ] Duy trì cấu trúc repository duy nhất.
-- [ ] Chuyển tài liệu giai đoạn 1 vào đúng `docs/`, `profiling/` và `evidence/`.
-- [ ] Tạo `.env.example` và `.gitignore` phù hợp.
-- [ ] Không commit password, volume database hoặc Parquet dung lượng lớn.
+- [x] Duy trì cấu trúc repository duy nhất; local `main` theo dõi `origin/main` tại GitHub.
+- [x] Chuyển tài liệu giai đoạn 1 vào đúng `docs/`, `profiling/` và `evidence/`.
+- [x] Tạo `.env.example` và `.gitignore` phù hợp.
+- [x] Không commit password, volume database hoặc Parquet dung lượng lớn; đã kiểm tra staged files trước khi push.
 - [ ] Tạo file catalog cho hai năm ETL.
 - [ ] Tải/kiểm tra checksum các file được chọn.
 - [ ] Lưu Taxi Zone CSV và Shapefile trong `data/reference/`.
