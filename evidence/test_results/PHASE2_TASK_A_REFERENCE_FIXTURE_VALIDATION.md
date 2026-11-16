@@ -32,3 +32,14 @@ Kết quả `python tests/validate_fixtures.py`: `Fixture validation passed`.
 - Không tìm thấy đường dẫn `D:\...`, `C:\Users\...`, `/Users/...` hoặc `/home/...` trong executable source/config.
 - Không phát hiện GitHub token, AWS access key, private key hoặc PostgreSQL URL chứa password.
 - 24 Parquet nguồn lớn vẫn bị `.gitignore` loại khỏi Git.
+
+## Fresh-clone acceptance
+
+Repository được clone mới từ GitHub vào thư mục tạm, không có 24 Parquet nguồn lớn. Lần kiểm tra đầu phát hiện Git trên Windows đổi line ending của CSV và làm lệch fixture SHA-256. Project đã bổ sung `.gitattributes` để cố định LF cho text fixtures và đánh dấu Parquet/Shapefile là binary.
+
+Kết quả fresh clone sau sửa:
+
+- `python tests/validate_fixtures.py` → `Fixture validation passed`;
+- số Parquet nguồn lớn trong clone: `0`;
+- fixture manifest và toàn bộ fixture cần thiết: có đầy đủ;
+- working tree của clone: sạch.

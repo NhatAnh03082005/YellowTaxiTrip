@@ -90,6 +90,8 @@ Mục 3 **ĐÃ HOÀN THÀNH** ngày 2026-11-16. Ba tài liệu Design Freeze, da
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
 
+**Trạng thái:** **HOÀN THÀNH** ngày 2026-11-16. Đã nghiệm thu portability bằng fresh clone từ GitHub; fixture validator chạy thành công mà không cần 24 Parquet nguồn lớn.
+
 - [x] Duy trì cấu trúc repository duy nhất; local `main` theo dõi `origin/main` tại GitHub.
 - [x] Chuyển tài liệu giai đoạn 1 vào đúng `docs/`, `profiling/` và `evidence/`.
 - [x] Tạo `.env.example` và `.gitignore` phù hợp.
@@ -101,7 +103,7 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 ### Hoàn thành khi
 
-- Thành viên dbt nhận được file/sample/schema mà không phụ thuộc đường dẫn máy của bạn.
+- [x] Thành viên dbt nhận được file/sample/schema mà không phụ thuộc đường dẫn máy của Project Lead.
 
 ## 4.2. Docker và PostgreSQL/PostGIS
 

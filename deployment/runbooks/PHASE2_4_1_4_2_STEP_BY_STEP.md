@@ -286,14 +286,14 @@ rg -n --hidden --glob '!data/yellow_taxi/**' --glob '!.git/**' '([A-Za-z]:\\|/Us
 
 ## A12. Checklist hoàn thành mục 4.1
 
-- [ ] Git root/remote chung đã thống nhất.
-- [ ] `.env.example` không chứa secret; `.env` bị ignore.
+- [x] Git root/remote chung đã thống nhất.
+- [x] `.env.example` không chứa secret; `.env` bị ignore.
 - [x] Catalog có đúng 24 file và metadata bắt buộc.
 - [x] 24 Parquet đọc được footer và có SHA-256.
-- [ ] CSV và đầy đủ thành phần Shapefile nằm trong `data/reference/`.
-- [ ] Fixture 2024/2025 và invalid fixture chạy độc lập với máy Project Lead.
-- [ ] Không có password hoặc đường dẫn máy cá nhân trong source thực thi.
-- [ ] Thành viên dbt nhận được sample, schema và contract chỉ qua repository chung.
+- [x] CSV và đầy đủ thành phần Shapefile nằm trong `data/reference/`.
+- [x] Fixture 2024/2025 và invalid fixture chạy độc lập với máy Project Lead.
+- [x] Không có password hoặc đường dẫn máy cá nhân trong source thực thi.
+- [x] Fresh clone từ repository chung nhận đủ sample/schema/contract và chạy `tests/validate_fixtures.py` thành công.
 
 ---
 
