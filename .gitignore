@@ -1,0 +1,45 @@
+# Local environments and caches
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+profiles.yml
+**/profiles.yml
+mage_project/io_config.yaml
+mage_project/metadata.db
+
+# Large/re-downloadable trip files
+data/yellow_taxi/by_year_month/**
+*.tmp
+
+# Generated tool artifacts
+dbt_project/target/
+dbt_project/logs/
+mage_project/.file_versions/
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+
+# Local database and container state (use Docker named volumes)
+postgres_data/
+docker/postgres/data/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local BI caches
+*.pbitmp
+*.tmp.pbix
+
+# Keep directory placeholders if added later
+!.gitkeep

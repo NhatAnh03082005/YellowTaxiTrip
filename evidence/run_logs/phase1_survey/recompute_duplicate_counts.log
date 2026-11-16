@@ -1,0 +1,7 @@
+2026-10-30 18:51:33,695 INFO yellow_tripdata_2009-01.parquet full=31 composite=33
+2026-10-30 18:51:53,374 INFO yellow_tripdata_2010-01.parquet full=16 composite=16
+2026-10-30 18:52:02,540 INFO yellow_tripdata_2015-01.parquet full=229 composite=229
+2026-10-30 18:52:07,213 INFO yellow_tripdata_2019-01.parquet full=0 composite=0
+2026-10-30 18:52:08,101 INFO yellow_tripdata_2024-04.parquet full=0 composite=0
+2026-10-30 18:52:08,951 INFO yellow_tripdata_2025-01.parquet full=0 composite=0
+2026-10-30 18:52:09,940 INFO yellow_tripdata_2026-01.parquet full=0 composite=0

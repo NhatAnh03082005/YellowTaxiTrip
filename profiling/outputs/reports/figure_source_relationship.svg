@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#27496d" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#315b7d"/>
+    </marker>
+    <style>
+      .box { fill:#d9eaf7; stroke:#5b8db8; stroke-width:2.5; }
+      .title { font-family:'Times New Roman',serif; font-size:32px; font-weight:700; fill:#17324d; text-anchor:middle; }
+      .subtitle { font-family:'Times New Roman',serif; font-size:24px; fill:#315b7d; text-anchor:middle; }
+      .arrow { stroke:#315b7d; stroke-width:5; fill:none; marker-end:url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="360" fill="#ffffff"/>
+
+  <rect class="box" x="70" y="90" width="300" height="180" rx="20" fill="#d9eaf7" stroke="#5b8db8" stroke-width="2.5"/>
+  <text class="title" x="220" y="158">
+    <tspan x="220">Yellow Taxi</tspan>
+    <tspan x="220" dy="43">Trip Records</tspan>
+  </text>
+  <text class="subtitle" x="220" y="235">Parquet</text>
+
+  <line x1="400" y1="180" x2="462" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="462,162 492,180 462,198" fill="#315b7d"/>
+
+  <rect class="box" x="520" y="90" width="300" height="180" rx="20" fill="#d9eaf7" stroke="#5b8db8" stroke-width="2.5"/>
+  <text class="title" x="670" y="157">
+    <tspan x="670">LocationID</tspan>
+    <tspan x="670" dy="43">/ Spatial Join</tspan>
+  </text>
+  <text class="subtitle" x="670" y="235">Chuẩn hóa vị trí</text>
+
+  <line x1="850" y1="180" x2="912" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="912,162 942,180 912,198" fill="#315b7d"/>
+
+  <rect class="box" x="970" y="90" width="260" height="180" rx="20" fill="#d9eaf7" stroke="#5b8db8" stroke-width="2.5"/>
+  <text class="title" x="1100" y="158">
+    <tspan x="1100">Taxi Zone</tspan>
+    <tspan x="1100" dy="43">CSV</tspan>
+  </text>
+  <text class="subtitle" x="1100" y="235">Thuộc tính vùng</text>
+
+  <line x1="1260" y1="180" x2="1322" y2="180" stroke="#315b7d" stroke-width="5"/>
+  <polygon points="1322,162 1352,180 1322,198" fill="#315b7d"/>
+
+  <rect class="box" x="1380" y="90" width="170" height="180" rx="20" fill="#d9eaf7" stroke="#5b8db8" stroke-width="2.5"/>
+  <text class="title" x="1465" y="157">
+    <tspan x="1465">Shapefile</tspan>
+    <tspan x="1465" dy="43">Polygon</tspan>
+  </text>
+  <text class="subtitle" x="1465" y="235">Geometry</text>
+</svg>

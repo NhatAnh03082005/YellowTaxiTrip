@@ -1,0 +1,21 @@
+﻿metric,value,detail,count
+component,taxi_zones.cpg,.cpg,5
+component,taxi_zones.dbf,.dbf,59927
+component,taxi_zones.prj,.prj,565
+component,taxi_zones.shp,.shp,1586264
+component,taxi_zones.shx,.shx,2204
+required_components_present,True,"Required: .shp,.shx,.dbf",
+feature_count,263,,
+geometry_types,MultiPolygon|Polygon,,
+crs,EPSG:2263,,
+crs_units,US survey foot|US survey foot,,
+bounding_box,"913175.109008804,120121.88125434518,1067382.508405164,272844.2940054685","minx,miny,maxx,maxy",
+attribute_columns,OBJECTID|Shape_Leng|Shape_Area|zone|LocationID|borough|geometry,,
+LocationID_dtype,int32,,
+LocationID_unique,True,,
+geometry_null,0,,
+geometry_empty,0,,
+geometry_invalid,0,includes self-intersection or other OGC invalidity,
+geometry_duplicate,0,exact WKB duplicates,
+LocationID_duplicate,0,,
+needs_EPSG4326_for_web,True,reproject derivative only; preserve source,
