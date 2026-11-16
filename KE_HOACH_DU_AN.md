@@ -109,12 +109,12 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md`.
 
-- [ ] Tạo `docker-compose.yml`.
-- [ ] Tạo Mage service.
-- [ ] Tạo PostgreSQL/PostGIS service.
-- [ ] Cấu hình port, network và persistent volume.
-- [ ] Tạo init scripts.
-- [ ] Cấu hình biến môi trường.
+- [x] Tạo `docker-compose.yml`.
+- [x] Tạo Mage service.
+- [x] Tạo PostgreSQL/PostGIS service.
+- [x] Cấu hình port, network và persistent volume.
+- [x] Tạo init scripts.
+- [x] Cấu hình biến môi trường (`.env.example` để chia sẻ, `.env` chỉ lưu local).
 - [ ] Kiểm tra `docker compose up` trên môi trường sạch.
 - [ ] Viết hướng dẫn `up`, `down`, reset volume và xem log.
 

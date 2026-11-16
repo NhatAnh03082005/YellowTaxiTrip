@@ -1,0 +1,9 @@
+pyarrow>=20
+pandas>=2.2
+requests>=2.32
+psycopg2-binary>=2.9
+SQLAlchemy>=2.0
+GeoAlchemy2>=0.17
+geopandas>=1.0
+pyogrio>=0.10
+shapely>=2.0
