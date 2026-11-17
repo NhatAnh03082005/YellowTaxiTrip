@@ -1,0 +1,63 @@
+version: 2
+
+seeds:
+  - name: vendor_codes
+    description: Approved SCD Type 1 vendor code mapping. Null and unmapped values use dimension key 0 later.
+    columns:
+      - name: vendor_id
+        data_tests: [not_null, unique]
+      - name: vendor_key
+        data_tests: [not_null, unique]
+      - name: vendor_name
+        data_tests: [not_null]
+  - name: payment_type_codes
+    description: Approved SCD Type 1 payment mapping. Code 0 is Flex Fare, 5 is business Unknown, and 6 means voided trip.
+    columns:
+      - name: payment_type_id
+        data_tests: [not_null, unique]
+      - name: payment_type_key
+        data_tests: [not_null, unique]
+      - name: payment_type_name
+        data_tests: [not_null]
+  - name: rate_codes
+    description: Approved SCD Type 1 rate mapping. Code 99 is a business member.
+    columns:
+      - name: rate_code_id
+        data_tests: [not_null, unique]
+      - name: rate_code_key
+        data_tests: [not_null, unique]
+      - name: rate_code_name
+        data_tests: [not_null]
+  - name: zone_key_map
+    description: Fixed positive surrogate keys for the 265 approved Taxi Zone LocationIDs. Key 0 and -1 are reserved for dimensions.
+    columns:
+      - name: location_id
+        data_tests: [not_null, unique]
+      - name: zone_key
+        data_tests: [not_null, unique]
+  - name: dq_rule_policy
+    description: Approved, editable severity and disposition for each business rule. Predicate thresholds are dbt vars.
+    columns:
+      - name: rule_id
+        data_tests: [not_null, unique]
+      - name: severity
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['INFO', 'WARNING', 'HIGH']
+      - name: disposition_action
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['INFO', 'WARNING', 'BUSINESS_QUARANTINE', 'DUPLICATE']
+      - name: severity_rank
+        data_tests: [not_null]
+  - name: business_fixture_expectations
+    description: Expected target rule for each row of the approved nine-row business fixture.
+    columns:
+      - name: fixture_row_number
+        data_tests: [not_null, unique]
+      - name: case_id
+        data_tests: [not_null, unique]
+      - name: expected_rule_id
+        data_tests: [not_null]

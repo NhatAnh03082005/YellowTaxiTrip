@@ -1,0 +1,86 @@
+version: 2
+
+sources:
+  - name: stage
+    description: Physical staging tables loaded by Mage. dbt reads these tables and does not own their DDL.
+    schema: stage
+    tables:
+      - name: yellow_taxi_raw
+        description: Original source values and lineage retained for exact fingerprinting.
+        columns:
+          - name: source_record_key
+            description: SHA-256 of lowercase source file checksum, a colon, and source row number.
+            data_tests: [not_null, unique]
+      - name: yellow_taxi_canonical
+        description: Technically validated source columns and lineage; business rules are applied downstream by dbt.
+        columns:
+          - name: stage_row_id
+            data_tests: [not_null, unique]
+          - name: source_record_key
+            data_tests: [not_null, unique]
+          - name: source_file_sha256
+            data_tests: [not_null]
+          - name: source_row_number
+            data_tests: [not_null]
+          - name: source_file
+            data_tests: [not_null]
+          - name: source_year_month
+            data_tests: [not_null]
+          - name: schema_fingerprint
+            data_tests: [not_null]
+          - name: schema_version
+            data_tests: [not_null]
+          - name: batch_id
+            data_tests:
+              - not_null
+              - relationships:
+                  to: source('control', 'etl_batch')
+                  field: batch_id
+          - name: cast_error_flags
+            data_tests: [not_null]
+          - name: cbd_congestion_fee
+            description: Structurally absent in 2024 and present in the 2025 source schema.
+      - name: taxi_zone_raw
+        description: Taxi Zone lookup CSV loaded by Mage; LocationID 264 and 265 are valid business members. Physical column names are pending the Mage DDL.
+      - name: taxi_zone_geometry
+        description: PostGIS polygons loaded from the Taxi Zone Shapefile. Zones 264 and 265 need no polygon. Physical column names are pending the Mage DDL.
+
+  - name: control
+    description: Batch and source file metadata owned by Mage.
+    schema: control
+    tables:
+      - name: etl_batch
+        description: Batch status and extraction window; dbt receives its batch_id from the orchestrator.
+        columns:
+          - name: batch_id
+            data_tests: [not_null, unique]
+      - name: etl_file
+        description: Source file checksum, schema version, period and validation metadata.
+      - name: etl_watermark
+        description: Last successful extraction end time; Mage commits it after dbt tests and reconciliation.
+      - name: etl_log
+        description: Orchestration and processing log owned by Mage.
+
+  - name: mage_dq
+    description: Temporary configurable interface for Mage-owned technical row rejects, pending its physical DDL.
+    schema: "{{ var('technical_quarantine_schema') }}"
+    tables:
+      - name: technical_quarantine
+        identifier: "{{ var('technical_quarantine_table') }}"
+        description: One row per technical reject, with original file identity and raw total amount text.
+        columns:
+          - name: source_record_key
+            data_tests: [not_null, unique]
+          - name: source_file_sha256
+            data_tests: [not_null]
+          - name: source_file
+            data_tests: [not_null]
+          - name: total_amount_raw
+            description: Original source total as text; invalid casts remain present for row-count reconciliation.
+
+  - name: fact_lifecycle
+    description: Append-only Fact transition history owned by the archive-mode materialization.
+    schema: "{{ var('fact_lifecycle_history_schema') }}"
+    tables:
+      - name: history
+        identifier: "{{ var('fact_lifecycle_history_table') }}"

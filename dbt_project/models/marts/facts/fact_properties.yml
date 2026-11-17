@@ -1,0 +1,85 @@
+version: 2
+
+models:
+  - name: fact_taxi_trip
+    description: Trusted accepted/warning source records, one row per source_record_key, with PostgreSQL identity trip_key.
+    columns:
+      - name: trip_key
+        data_tests: [not_null, unique]
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: raw_exact_fingerprint
+        data_tests: [not_null]
+      - name: candidate_trip_fingerprint
+        data_tests: [not_null]
+      - name: pickup_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: dropoff_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: pickup_time_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_time')
+              field: time_key
+      - name: dropoff_time_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_time')
+              field: time_key
+      - name: pickup_zone_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_zone')
+              field: zone_key
+      - name: dropoff_zone_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_zone')
+              field: zone_key
+      - name: vendor_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_vendor')
+              field: vendor_key
+      - name: payment_type_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_payment_type')
+              field: payment_type_key
+      - name: rate_code_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_rate_code')
+              field: rate_code_key
+      - name: trip_count
+        data_tests: [not_null]
+      - name: is_revenue_kpi_eligible
+        data_tests: [not_null]
+      - name: is_tip_kpi_eligible
+        data_tests: [not_null]
+      - name: is_speed_kpi_eligible
+        data_tests: [not_null]
+      - name: is_duration_kpi_eligible
+        data_tests: [not_null]
+      - name: is_passenger_kpi_eligible
+        data_tests: [not_null]
+      - name: primary_disposition
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ACCEPTED', 'WARNING']

@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: One physical calendar dimension for both pickup and dropoff roles; keys use YYYYMMDD.
+    columns:
+      - name: date_key
+        data_tests: [not_null, unique]
+      - name: full_date
+        description: Null only for technical key 0 and -1.
+  - name: dim_time
+    description: One physical minute-grain time dimension for both pickup and dropoff roles.
+    columns:
+      - name: time_key
+        data_tests: [not_null, unique]
+      - name: time_of_day
+        description: Null only for technical key 0 and -1.
+  - name: dim_zone
+    description: Type 1 TLC Zone members plus technical keys 0 and -1; 264 and 265 retain positive keys.
+    columns:
+      - name: zone_key
+        data_tests: [not_null, unique]
+      - name: location_id
+        data_tests: [unique]
+  - name: dim_vendor
+    description: Type 1 Vendor mapping plus technical keys 0 and -1.
+    columns:
+      - name: vendor_key
+        data_tests: [not_null, unique]
+      - name: vendor_id
+        data_tests: [unique]
+  - name: dim_payment_type
+    description: Type 1 Payment mapping; natural code 0 and code 5 are positive business members.
+    columns:
+      - name: payment_type_key
+        data_tests: [not_null, unique]
+      - name: payment_type_id
+        data_tests: [unique]
+  - name: dim_rate_code
+    description: Type 1 Rate mapping; natural code 99 is a positive business member.
+    columns:
+      - name: rate_code_key
+        data_tests: [not_null, unique]
+      - name: rate_code_id
+        data_tests: [unique]
