@@ -1,0 +1,67 @@
+blocks:
+- name: get_extraction_window
+  uuid: get_extraction_window
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: [discover_source_files]
+- name: discover_source_files
+  uuid: discover_source_files
+  type: transformer
+  upstream_blocks: [get_extraction_window]
+  downstream_blocks: [verify_checksum]
+- name: verify_checksum
+  uuid: verify_checksum
+  type: transformer
+  upstream_blocks: [discover_source_files]
+  downstream_blocks: [filter_incremental]
+- name: filter_incremental
+  uuid: filter_incremental
+  type: transformer
+  upstream_blocks: [verify_checksum]
+  downstream_blocks: [load_source_files]
+- name: load_source_files
+  uuid: load_source_files
+  type: transformer
+  upstream_blocks: [filter_incremental]
+  downstream_blocks: [canonicalize_schema]
+- name: canonicalize_schema
+  uuid: canonicalize_schema
+  type: transformer
+  upstream_blocks: [load_source_files]
+  downstream_blocks: [standardize_and_validate]
+- name: standardize_and_validate
+  uuid: standardize_and_validate
+  type: transformer
+  upstream_blocks: [canonicalize_schema]
+  downstream_blocks: [write_technical_quarantine]
+- name: write_technical_quarantine
+  uuid: write_technical_quarantine
+  type: data_exporter
+  upstream_blocks: [standardize_and_validate]
+  downstream_blocks: [load_stage]
+- name: load_stage
+  uuid: load_stage
+  type: data_exporter
+  upstream_blocks: [write_technical_quarantine]
+  downstream_blocks: [verify_stage]
+- name: verify_stage
+  uuid: verify_stage
+  type: transformer
+  upstream_blocks: [load_stage]
+  downstream_blocks: []
+cache_block_output_in_memory: false
+callbacks: []
+conditionals: []
+created_at: '2026-11-17 10:00:00+00:00'
+description: Incremental and backfill ingestion for Yellow Taxi 2024-2025.
+executor_count: 1
+executor_type: null
+name: pl_yellow_taxi_ingestion
+notification_config: {}
+settings:
+  triggers: null
+tags: [yellow-taxi, ingestion, phase2-4-4]
+type: python
+uuid: pl_yellow_taxi_ingestion
+variables_dir: /home/src/mage_data/nyc_taxi_bi
+widgets: []

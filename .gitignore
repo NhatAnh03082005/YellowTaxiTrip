@@ -16,6 +16,7 @@ mage_project/metadata.db
 
 # Large/re-downloadable trip files
 data/yellow_taxi/by_year_month/**
+data/work/**
 *.tmp
 
 # Generated tool artifacts

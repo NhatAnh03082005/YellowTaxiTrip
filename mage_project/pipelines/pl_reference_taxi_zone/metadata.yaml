@@ -1,0 +1,42 @@
+blocks:
+- name: load_zone_lookup
+  uuid: load_zone_lookup
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: [validate_zone_lookup]
+- name: validate_zone_lookup
+  uuid: validate_zone_lookup
+  type: transformer
+  upstream_blocks: [load_zone_lookup]
+  downstream_blocks: [validate_zone_geometry]
+- name: load_zone_geometry
+  uuid: load_zone_geometry
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: [validate_zone_geometry]
+- name: validate_zone_geometry
+  uuid: validate_zone_geometry
+  type: transformer
+  upstream_blocks: [validate_zone_lookup, load_zone_geometry]
+  downstream_blocks: [load_reference_stage]
+- name: load_reference_stage
+  uuid: load_reference_stage
+  type: data_exporter
+  upstream_blocks: [validate_zone_lookup, validate_zone_geometry]
+  downstream_blocks: []
+cache_block_output_in_memory: true
+callbacks: []
+conditionals: []
+created_at: '2026-11-17 09:25:21.580947+00:00'
+description: Load and validate Taxi Zone lookup and EPSG:2263 geometry.
+executor_count: 1
+executor_type: null
+name: pl_reference_taxi_zone
+notification_config: {}
+settings:
+  triggers: null
+tags: [reference, postgis, phase2-4-4]
+type: python
+uuid: pl_reference_taxi_zone
+variables_dir: /home/src/mage_data/nyc_taxi_bi
+widgets: []
