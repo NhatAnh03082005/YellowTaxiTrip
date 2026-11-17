@@ -5,6 +5,8 @@
 **Database:** `nyc_taxi` / PostgreSQL 16.9 / PostGIS 3.5  
 **Kết quả chung:** PASS
 
+**Git handoff:** commit `760f388` đã push lên `origin/feature/control-metadata-watermark`.
+
 ## Môi trường
 
 - PostgreSQL container: healthy, host port `5433`, container port `5432`.

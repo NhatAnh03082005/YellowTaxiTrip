@@ -145,7 +145,9 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 Kế hoạch triển khai chi tiết: `deployment/runbooks/PHASE2_4_3_CONTROL_METADATA_WATERMARK_PLAN.md`.
 
-- [x] Hoàn thành code, migration, test và Mage smoke integration bước 1–22 trên nhánh `feature/control-metadata-watermark`.
+**Trạng thái:** **HOÀN THÀNH** ngày 2026-11-17. Evidence: `evidence/test_results/PHASE2_4_3_CONTROL_VALIDATION.md`.
+
+- [x] Hoàn thành đủ 23/23 bước và push nhánh `feature/control-metadata-watermark` lên GitHub.
 
 Bạn chịu trách nhiệm thiết kế và tạo:
 

@@ -4,7 +4,7 @@
 
 **Reviewer trước 4.6:** Project Lead tự kiểm thử và đối chiếu evidence
 
-**Trạng thái:** BƯỚC 1–22 ĐÃ HOÀN THÀNH VÀ KIỂM THỬ; CHỜ COMMIT/PUSH BƯỚC 23
+**Trạng thái:** HOÀN THÀNH 23/23 BƯỚC NGÀY 2026-11-17
 
 Project Lead toàn quyền triển khai 4.3–4.5. dbt Owner làm độc lập; chỉ tích hợp tại checkpoint 4.6.
 
@@ -192,7 +192,7 @@ Mage phải truyền cùng `batch_id` qua toàn pipeline.
 - [x] 20. Test required step gate/reconciliation equations.
 - [x] 21. Tích hợp Mage skeleton.
 - [x] 22. Lưu evidence và cập nhật checklist 4.3.
-- [ ] 23. Commit/push nhánh; chỉ merge dbt tại 4.6.
+- [x] 23. Commit/push nhánh; chỉ merge dbt tại 4.6.
 
 ## 10. Definition of Done 4.3
 
@@ -203,6 +203,6 @@ Mage phải truyền cùng `batch_id` qua toàn pipeline.
 - [x] Positive/negative tests pass và PostgreSQL restart không mất metadata.
 - [x] Mage skeleton nhận/truyền cùng `batch_id`.
 - [x] Evidence và checklist 4.3 hoàn tất.
-- [ ] Nhánh đã commit/push; chưa merge dbt trước 4.6.
+- [x] Nhánh đã commit/push; chưa merge dbt trước 4.6.
 
-Hoàn thành code bước 1–13 chưa đồng nghĩa database đã được migrate; chỉ đánh dấu toàn bộ 4.3 sau bước 14–23.
+Mục 4.3 đã hoàn thành đủ code, migration, tests, Mage smoke integration, evidence và Git handoff. Chưa merge dbt trước checkpoint 4.6.
