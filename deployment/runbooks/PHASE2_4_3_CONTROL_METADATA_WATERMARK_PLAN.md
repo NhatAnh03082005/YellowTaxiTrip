@@ -2,299 +2,132 @@
 
 **Owner:** Project Lead/Integration
 
-**Reviewer:** Project Lead tự kiểm thử và đối chiếu evidence; không cần dbt Owner review trước 4.6
+**Reviewer trước 4.6:** Project Lead tự kiểm thử và đối chiếu evidence
 
-**Trạng thái:** READY TO IMPLEMENT
+**Trạng thái:** BƯỚC 1–22 ĐÃ HOÀN THÀNH VÀ KIỂM THỬ; CHỜ COMMIT/PUSH BƯỚC 23
 
-**Điều kiện đầu vào:** Task A hoàn thành; Docker/PostgreSQL/PostGIS/Mage hoàn thành; cả hai thành viên kết nối PostgreSQL thành công.
+Project Lead toàn quyền triển khai 4.3–4.5. dbt Owner làm độc lập; chỉ tích hợp tại checkpoint 4.6.
 
-**Quyền quyết định:** Project Lead toàn quyền quyết định và triển khai mục 4.3-4.5. dbt Owner làm độc lập trên nhánh/môi trường riêng; chỉ merge và tích hợp tại 4.6.
+## 1. Quyết định đã chốt
 
-## 1. Mục tiêu
+- Giữ Extraction Window `LSET < source_updated_at <= CET` cho INCREMENTAL; CET được capture đúng một lần.
+- BACKFILL duyệt toàn bộ catalog trong scope.
+- INCREMENTAL chọn file nằm trong window, chưa từng SUCCESS hoặc có checksum mới.
+- File lifecycle tách `DISCOVERED -> DOWNLOADING -> VALIDATED`.
+- Retry tạo batch mới có `parent_batch_id` và reprocess idempotently; chưa reuse Staging cũ.
+- Batch mất heartbeat chuyển `STALE`; operator phải resolve trước khi có run mới.
+- Cùng filename nhưng SHA-256 mới phải được duyệt thủ công.
+- Empty batch chỉ SUCCESS khi discovery kiểm đủ catalog.
+- Không cập nhật watermark nếu ingestion, dbt, required step hoặc reconciliation thất bại.
 
-Xây control plane dùng chung cho Mage và dbt để mỗi lần chạy ETL có thể:
+Data dictionary: `docs/etl_design/CONTROL_METADATA_DATA_DICTIONARY.md`.
 
-- xác định chính xác cửa sổ incremental `LSET < source_updated_at <= CET`;
-- ghi nhận batch, file, checksum, schema version, counters và lỗi;
-- retry an toàn mà không nạp trùng;
-- không cập nhật watermark khi ingestion, dbt hoặc reconciliation thất bại;
-- truy vết từ một dòng Staging/Fact về batch và source file;
-- cung cấp evidence vận hành bằng SQL thay vì chỉ dựa vào ảnh chụp thủ công.
+## 2. Phạm vi
 
-## 2. Phạm vi và ranh giới
+### Thuộc 4.3
 
-### Thuộc mục 4.3
+- Năm bảng `control.etl_batch`, `control.etl_watermark`, `control.etl_file`, `control.etl_step_run`, `control.etl_log`.
+- PK, FK, unique/check constraints, comments và indexes.
+- Functions cho batch, file, step, log, discovery, stale recovery, approval và atomic watermark commit.
+- SQL tests cho schema, success/failure, retry, concurrency, lifecycle, empty batch, stale batch, step gate và approval.
+- Contract để Mage dùng cùng `batch_id` trên toàn pipeline.
 
-- `control.etl_watermark`;
-- `control.etl_batch`;
-- `control.etl_file`;
-- `control.etl_log`;
-- indexes, constraints và functions/procedures phục vụ lifecycle batch;
-- test SQL cho watermark, retry, concurrency và failure;
-- contract để Mage ghi và dbt đọc metadata.
+### Chưa thuộc bước 1–13
 
-### Chưa thuộc mục 4.3
+- Chạy DDL trên PostgreSQL: bước 14.
+- Chạy tests và lưu evidence: bước 15–22.
+- Mage skeleton/runtime integration: bước 21.
+- Nạp 24 Parquet vào Physical Staging: 4.4–4.5.
+- Merge code dbt: checkpoint 4.6.
 
-- tải/nạp Parquet thật vào Staging — mục 4.4/4.5;
-- business DQ — dbt;
-- Dimensions/Fact — dbt;
-- reconciliation business amounts — mục 4.6/5.7;
-- lịch schedule production — mục 4.8.
+## 3. Time và identity semantics
 
-## 3. Quy ước đã chốt cho implementation
+- Control timestamp dùng `timestamptz`, lưu UTC.
+- `LSET` là `last_successful_extraction_time` đã commit.
+- `CET` là `clock_timestamp()` được capture một lần trong `control.start_batch`.
+- Business pickup/dropoff time không dùng làm watermark.
+- Watermark grain: `(pipeline_name, source_name)`.
+- Batch identity: `batch_id bigint generated always as identity`.
+- SHA-256 được phép null trước file validation.
+- Record identity ở 4.5: `SHA256(source_file_sha256 || ':' || source_row_number)`.
 
-### 3.1. Time và cửa sổ extraction
+Seed: `pl_taxi_master` / `yellow_taxi_tripdata`, initial LSET `1970-01-01T00:00:00Z`.
 
-- Mọi timestamp control dùng `timestamptz` và lưu UTC.
-- `LSET`: successful extraction time gần nhất đã commit.
-- `CET`: current extraction time, được capture đúng một lần khi tạo batch.
-- Predicate incremental:
+## 4. Data model và lifecycle
 
-```text
-LSET < source_updated_at <= CET
-```
+### `control.etl_batch`
 
-- Không gọi lại `now()` ở từng block để tạo CET mới.
-- Batch đầu tiên dùng `initial_lset` được truyền rõ; không âm thầm dùng thời gian hiện tại.
-- Backfill 2024–2025 dùng cửa sổ được truyền bởi runtime variables, nhưng vẫn ghi LSET/CET trong batch.
-
-### 3.2. Watermark grain
-
-Một watermark cho mỗi cặp:
+Một lần chạy pipeline; lưu run type, retry parent, LSET/CET, heartbeat, discovery completeness, counters và error.
 
 ```text
-(pipeline_name, source_name)
+RUNNING -> STAGED -> DBT_RUNNING -> RECONCILING -> SUCCESS
+active -> FAILED
+active -> STALE -> FAILED/CANCELLED
 ```
 
-Khuyến nghị ban đầu:
+`STALE` vẫn chặn batch mới để tránh hai extraction window chồng nhau.
+
+### `control.etl_watermark`
+
+Một dòng cho mỗi pipeline/source. Chỉ `commit_batch_success` tiến LSET đến CET và tăng version.
+
+### `control.etl_file`
+
+Một file attempt trong batch; lưu source metadata, SHA/schema, lifecycle, counters, error và approval evidence.
 
 ```text
-pipeline_name = pl_taxi_master
-source_name   = yellow_taxi_tripdata
+DISCOVERED -> DOWNLOADING -> VALIDATED -> STAGED
+                                   |-> SKIPPED_ALREADY_PROCESSED
+                                   |-> SOURCE_VERSION_CHANGED -> APPROVED_SOURCE_VERSION
+any processing state -> FAILED
 ```
 
-Reference CSV và Shapefile dùng source/pipeline riêng, không chia sẻ watermark với Yellow Taxi.
+### `control.etl_step_run`
 
-### 3.3. Batch và file identity
+Step status: `PENDING -> RUNNING -> SUCCESS/FAILED/SKIPPED`.
 
-- `batch_id`: identity/bigint do PostgreSQL sinh, không dùng timestamp làm khóa.
-- `source_file_sha256`: identity của đúng nội dung file.
-- `source_record_key = SHA256(source_file_sha256 || ':' || source_row_number)` chống duplicate khi rerun.
-- `etl_file` ghi một file attempt trong một batch; uniqueness tối thiểu là `(batch_id, source_file_sha256)`.
-- Cùng filename nhưng SHA-256 đổi phải dừng ở `SOURCE_VERSION_CHANGED`, không tự ghi đè metadata cũ.
+Required steps: `DISCOVERY`, `FILE_VALIDATION`, `STAGING`, `DBT_BUILD_DDS`, `DBT_TEST`, `RECONCILIATION`, `DBT_BUILD_OLAP`.
 
-### 3.4. Trạng thái
+### `control.etl_log`
 
-Không dùng PostgreSQL ENUM ở phiên bản đầu để migration dễ hơn. Dùng `varchar` với `CHECK`.
+Event log append-only theo application contract. Không ghi secret, password hoặc connection string.
 
-Batch status:
+## 5. Reconciliation và success gates
+
+Counters gồm `rows_raw`, `rows_canonical`, `rows_technical_quarantined`, `rows_business_quarantined`, `rows_duplicate_quarantined`, `rows_fact_loaded`, `rows_amount_reconciliation_eligible`.
 
 ```text
-CREATED
-RUNNING
-STAGED
-DBT_RUNNING
-RECONCILING
-SUCCESS
-FAILED
-CANCELLED
+rows_raw = rows_canonical + rows_technical_quarantined
+
+rows_canonical
+= rows_fact_loaded
+ + rows_business_quarantined
+ + rows_duplicate_quarantined
 ```
 
-File status:
+Success còn yêu cầu discovery SUCCESS, catalog checked bằng expected, không còn file unresolved, mọi required step hợp lệ và batch đang RECONCILING. Empty batch chỉ hợp lệ khi catalog được kiểm đủ và `files_selected = 0`.
 
-```text
-DISCOVERED
-DOWNLOADING
-VALIDATED
-STAGED
-SKIPPED_ALREADY_PROCESSED
-SOURCE_VERSION_CHANGED
-FAILED
-```
+## 6. Functions đã triển khai
 
-Log level:
+| Function | Trách nhiệm |
+|---|---|
+| `log_event` | Ghi audit event |
+| `start_batch` | Lock source, đọc/khởi tạo watermark, capture CET, tạo batch/steps |
+| `touch_batch_heartbeat` | Gia hạn heartbeat |
+| `mark_stale_batches` / `resolve_stale_batch` | Stale detection và operator recovery |
+| `transition_batch` | Chặn state transition sai |
+| `update_discovery_result` | Ghi discovery completeness |
+| `update_batch_counters` | Ghi reconciliation counters |
+| `should_discover_file` | Policy BACKFILL/INCREMENTAL/RETRY/TEST |
+| `discover_file` / `mark_file_downloading` | File discovery/download lifecycle |
+| `validate_file` | Trả PROCESS/SKIP/STOP/REPROCESS |
+| `approve_source_version` | Ghi approval cho SHA mới |
+| `start_step` / `finish_step` | Step evidence và exit code |
+| `update_file_result` | File result/counters |
+| `fail_batch` | Fail batch, giữ nguyên watermark |
+| `commit_batch_success` | Kiểm gates và atomically commit SUCCESS + LSET=CET |
 
-```text
-DEBUG
-INFO
-WARNING
-ERROR
-```
-
-## 4. Thiết kế bốn bảng
-
-## 4.1. `control.etl_watermark`
-
-Grain: một dòng cho mỗi `(pipeline_name, source_name)`.
-
-Các cột dự kiến:
-
-| Cột | Type | Quy tắc |
-|---|---|---|
-| `pipeline_name` | `varchar(100)` | PK phần 1, not null |
-| `source_name` | `varchar(100)` | PK phần 2, not null |
-| `last_successful_extraction_time` | `timestamptz` | LSET đã commit |
-| `last_successful_batch_id` | `bigint` | FK batch thành công gần nhất |
-| `watermark_version` | `bigint` | tăng khi commit để optimistic audit |
-| `created_at` | `timestamptz` | default `clock_timestamp()` |
-| `updated_at` | `timestamptz` | cập nhật khi commit |
-
-Constraints:
-
-- primary key `(pipeline_name, source_name)`;
-- batch được tham chiếu phải tồn tại;
-- watermark chỉ được cập nhật qua success function, Mage không chạy `UPDATE` trực tiếp.
-
-## 4.2. `control.etl_batch`
-
-Grain: một lần thực thi pipeline.
-
-Các nhóm cột:
-
-### Identity và context
-
-- `batch_id bigint generated always as identity primary key`;
-- `pipeline_name varchar(100) not null`;
-- `source_name varchar(100) not null`;
-- `run_type varchar(20)` — `BACKFILL`, `INCREMENTAL`, `RETRY`, `TEST`;
-- `parent_batch_id bigint null` — batch gốc khi retry;
-- `triggered_by varchar(100)` — manual, schedule hoặc user/service.
-
-### Extraction window
-
-- `lset timestamptz not null`;
-- `cet timestamptz not null`;
-- check `lset <= cet`.
-
-### Lifecycle
-
-- `status varchar(24) not null`;
-- `started_at timestamptz not null`;
-- `ended_at timestamptz null`;
-- `error_code varchar(100) null`;
-- `error_message text null`;
-
-### Counters
-
-- `files_discovered`;
-- `files_validated`;
-- `rows_read`;
-- `rows_staged`;
-- `rows_technical_rejected`;
-- `rows_business_rejected`;
-- `rows_loaded`.
-
-Tất cả counters dùng `bigint`, default 0 và check `>= 0`.
-
-## 4.3. `control.etl_file`
-
-Grain: một source file attempt trong một batch.
-
-Các cột dự kiến:
-
-- `etl_file_id bigint generated always as identity primary key`;
-- `batch_id bigint not null` FK `etl_batch`;
-- `source_file varchar(255) not null`;
-- `source_url text`;
-- `source_year_month char(7)` với format `YYYY-MM`;
-- `source_last_modified timestamptz`;
-- `content_length bigint`;
-- `source_file_sha256 char(64) not null`;
-- `schema_fingerprint char(64)`;
-- `schema_version varchar(20)`;
-- `file_status varchar(32) not null`;
-- `rows_read`, `rows_staged`, `rows_rejected` bigint default 0;
-- `discovered_at`, `validated_at`, `staged_at` timestamptz;
-- `error_message text`;
-- unique `(batch_id, source_file_sha256)`.
-
-Indexes cần có:
-
-- `(source_file, source_file_sha256)`;
-- `(file_status, source_year_month)`;
-- `batch_id`;
-- `source_last_modified`.
-
-## 4.4. `control.etl_log`
-
-Grain: một event append-only.
-
-Các cột dự kiến:
-
-- `log_id bigint generated always as identity primary key`;
-- `batch_id bigint null` FK;
-- `etl_file_id bigint null` FK;
-- `pipeline_name varchar(100) not null`;
-- `block_name varchar(150)`;
-- `log_level varchar(10) not null`;
-- `event_code varchar(100)`;
-- `message text not null`;
-- `details jsonb not null default '{}'`;
-- `logged_at timestamptz not null default clock_timestamp()`.
-
-Indexes:
-
-- `(batch_id, logged_at)`;
-- `(log_level, logged_at)`;
-- GIN trên `details` chỉ thêm nếu truy vấn thực tế cần; không thêm sớm.
-
-## 5. Functions/procedures cần triển khai
-
-Tách DDL và lifecycle logic để Mage không tự ghép SQL rời rạc.
-
-## 5.1. `control.start_batch(...)`
-
-Trách nhiệm:
-
-1. lấy advisory lock theo `(pipeline_name, source_name)`;
-2. đọc/khởi tạo watermark;
-3. capture CET một lần;
-4. insert batch `RUNNING`;
-5. trả `batch_id`, `lset`, `cet` cho Mage.
-
-Nếu pipeline cùng source đang RUNNING, function phải fail rõ ràng; không tạo hai batch chồng cửa sổ.
-
-## 5.2. `control.register_file(...)`
-
-- insert file metadata;
-- kiểm tra SHA-256 đã xử lý thành công;
-- phát hiện cùng filename nhưng checksum đổi;
-- trả action: `PROCESS`, `SKIP_ALREADY_PROCESSED` hoặc `STOP_SOURCE_VERSION_CHANGED`.
-
-## 5.3. `control.log_event(...)`
-
-- append log chuẩn hóa;
-- nhận `jsonb details` cho stack trace/counters;
-- tuyệt đối không ghi password hoặc connection string.
-
-## 5.4. `control.update_file_result(...)`
-
-- cập nhật status/timestamps/counters của file;
-- không cho counter âm;
-- chỉ cho phép transition hợp lệ.
-
-## 5.5. `control.fail_batch(...)`
-
-- đổi batch sang `FAILED`;
-- ghi `ended_at`, error code/message;
-- append error log;
-- không cập nhật watermark.
-
-## 5.6. `control.commit_batch_success(...)`
-
-Chạy trong một transaction:
-
-1. lock batch và watermark;
-2. xác nhận batch đang `RECONCILING`;
-3. xác nhận không có file `FAILED`/`SOURCE_VERSION_CHANGED`;
-4. xác nhận dbt và reconciliation đã pass qua flags/log contract;
-5. cập nhật batch `SUCCESS` và `ended_at`;
-6. cập nhật `LSET = batch.CET` và tăng `watermark_version`;
-7. commit cùng lúc.
-
-Bất kỳ bước nào lỗi phải rollback cả batch success lẫn watermark.
-
-## 6. File implementation dự kiến
+## 7. File implementation
 
 ```text
 sql/control/
@@ -303,166 +136,73 @@ sql/control/
 ├── 003_control_functions.sql
 └── 004_control_seed_watermarks.sql
 
+docs/etl_design/
+└── CONTROL_METADATA_DATA_DICTIONARY.md
+
 tests/control/
 ├── test_control_schema.sql
+├── test_backfill_incremental.sql
 ├── test_watermark_success.sql
 ├── test_watermark_failure.sql
 ├── test_retry_idempotency.sql
 ├── test_concurrent_batch.sql
-└── test_file_version_change.sql
-
-evidence/test_results/
-└── PHASE2_4_3_CONTROL_VALIDATION.md
+├── test_file_lifecycle.sql
+├── test_empty_batch.sql
+├── test_stale_batch.sql
+├── test_step_gate.sql
+├── test_file_version_change.sql
+└── test_source_version_approval.sql
 ```
 
-Init Docker chỉ tạo schema/extension. Control DDL chạy bằng migration command riêng để thay đổi SQL không buộc xóa volume.
-
-## 7. Luồng Mage sử dụng control tables
+## 8. Mage contract
 
 ```text
-Mage get_extraction_window
-  -> call control.start_batch
-  -> nhận batch_id, LSET, CET
-
-discover_source_files
-  -> call control.register_file cho từng file
-
-verify/load/stage
-  -> update etl_file counters/status
-  -> append etl_log events
-
-dbt build + tests
-  -> dùng cùng batch_id
-  -> trả exit code/test result
-
-reconciliation
-  -> ghi result/log
-
-all pass
-  -> call control.commit_batch_success
-
-any failure
-  -> call control.fail_batch
-  -> watermark giữ nguyên
+start_batch -> batch_id/LSET/CET
+discovery -> update_discovery_result + discover_file
+download -> mark_file_downloading
+validation -> validate_file
+downstream -> start_step/finish_step + counters
+all gates pass -> commit_batch_success
+any failure -> fail_batch
 ```
 
-Mage truyền `batch_id` xuống mọi block bằng runtime context; không block nào tự tạo batch mới.
+Mage phải truyền cùng `batch_id` qua toàn pipeline.
 
-## 8. Ranh giới chuẩn bị cho tích hợp 4.6
+## 9. Trình tự 23 bước
 
-Trong 4.3-4.5, dbt Owner không đọc/ghi control tables và không cần chờ runtime của Project Lead. Các interface dưới đây được Project Lead chuẩn bị để sử dụng khi merge tại 4.6.
+- [x] 1. Checkout nhánh `feature/control-metadata-watermark`.
+- [x] 2. Tạo cấu trúc SQL, test và data dictionary.
+- [x] 3. Chốt dictionary, nullable/default, lifecycle và ownership.
+- [x] 4. Thiết kế `etl_batch` và heartbeat/STALE.
+- [x] 5. Thiết kế `etl_watermark` và LSET/CET.
+- [x] 6. Thiết kế `etl_file` với lifecycle ba tầng.
+- [x] 7. Thiết kế `etl_step_run` và required steps.
+- [x] 8. Thiết kế `etl_log` và audit contract.
+- [x] 9. Tạo constraints và indexes.
+- [x] 10. Tạo batch/discovery/file lifecycle functions.
+- [x] 11. Tạo retry, heartbeat, stale recovery và approval.
+- [x] 12. Tạo step gate, reconciliation và atomic success commit.
+- [x] 13. Tạo seed watermark idempotent.
+- [x] 14. Chạy DDL/seed trên PostgreSQL và chạy lại kiểm idempotency.
+- [x] 15. Kiểm schema, constraints, comments và indexes.
+- [x] 16. Test BACKFILL/INCREMENTAL/discovery completeness.
+- [x] 17. Test success/failure watermark và empty batch.
+- [x] 18. Test retry, file lifecycle và checksum change.
+- [x] 19. Test concurrency, heartbeat/STALE và recovery.
+- [x] 20. Test required step gate/reconciliation equations.
+- [x] 21. Tích hợp Mage skeleton.
+- [x] 22. Lưu evidence và cập nhật checklist 4.3.
+- [ ] 23. Commit/push nhánh; chỉ merge dbt tại 4.6.
 
-Sau khi merge tại 4.6, dbt chỉ cần đọc:
+## 10. Definition of Done 4.3
 
-- `batch_id` hiện tại từ Mage variables;
-- `control.etl_batch.lset/cet` nếu cần audit;
-- lineage columns trong Staging.
+- [x] Code có đủ năm bảng, comments, dictionary, constraints, indexes và lifecycle functions.
+- [x] LSET/CET dùng `timestamptz`; CET capture một lần.
+- [x] Có contract cho failure, retry, stale, empty batch và source-version approval.
+- [x] DDL/seed chạy idempotent.
+- [x] Positive/negative tests pass và PostgreSQL restart không mất metadata.
+- [x] Mage skeleton nhận/truyền cùng `batch_id`.
+- [x] Evidence và checklist 4.3 hoàn tất.
+- [ ] Nhánh đã commit/push; chưa merge dbt trước 4.6.
 
-Sau khi merge, dbt không được:
-
-- update watermark;
-- tự mark batch `SUCCESS`;
-- sửa file status;
-- tạo batch ID khác cho cùng master run.
-
-Tại checkpoint 4.6, code dbt cần cung cấp cho Mage:
-
-- command/selector;
-- exit code;
-- test result;
-- reconciliation result;
-- error message rút gọn và đường dẫn artifact/log.
-
-## 9. Kế hoạch thực hiện theo thứ tự
-
-### 4.3.1 — Chốt data dictionary
-
-- review tên cột/type/nullable/default;
-- review status transitions;
-- review initial LSET cho backfill và incremental;
-- Project Lead tự đối chiếu với Design Freeze và handover contract đã duyệt.
-
-### 4.3.2 — Tạo tables và constraints
-
-- viết `001_control_tables.sql`;
-- chạy trên database sạch;
-- chạy lại lần hai để chứng minh DDL idempotent;
-- kiểm tra PK/FK/check constraints.
-
-### 4.3.3 — Tạo indexes
-
-- viết `002_control_indexes.sql`;
-- dùng `EXPLAIN` cho lookup watermark, file checksum và batch log;
-- không thêm index không có query use case.
-
-### 4.3.4 — Tạo lifecycle functions
-
-- start batch;
-- register file;
-- log/update result;
-- fail batch;
-- commit success/watermark.
-
-### 4.3.5 — Tích hợp Mage skeleton
-
-- tạo block `get_extraction_window`;
-- tạo helper gọi control functions;
-- truyền batch context xuống downstream;
-- chưa cần load 24 file thật ở bước này.
-
-### 4.3.6 — Positive tests
-
-- first run;
-- successful incremental batch;
-- empty successful batch;
-- restart PostgreSQL rồi đọc lại metadata;
-- cùng input retry không tạo staging duplicate.
-
-### 4.3.7 — Negative tests
-
-- dbt exit code khác 0 → watermark không đổi;
-- reconciliation fail → watermark không đổi;
-- checksum đổi cùng filename → stop/review;
-- hai batch cùng source chạy đồng thời → batch thứ hai bị chặn;
-- invalid status transition → fail;
-- counter âm → constraint fail.
-
-### 4.3.8 — Evidence và bàn giao
-
-- lưu SQL output/test results;
-- chụp query batch/file/log/watermark;
-- cập nhật `KE_HOACH_DU_AN.md` chỉ sau khi tests đạt;
-- push nhánh/commit của Project Lead; không merge code dbt ở bước này.
-
-## 10. Test matrix bắt buộc
-
-| Test | Expected |
-|---|---|
-| Start first batch | Tạo watermark/batch, trả LSET/CET hợp lệ |
-| Successful batch | Batch SUCCESS, LSET mới bằng CET |
-| Failed ingestion | Batch FAILED, LSET không đổi |
-| Failed dbt | Batch FAILED, LSET không đổi |
-| Failed reconciliation | Batch FAILED, LSET không đổi |
-| Empty batch | SUCCESS hợp lệ; watermark tiến nếu discovery hoàn tất |
-| Retry failed batch | parent_batch_id được ghi; không duplicate |
-| Same file/checksum | skip nếu đã SUCCESS |
-| Same filename/new checksum | SOURCE_VERSION_CHANGED và stop |
-| Concurrent start | Chỉ một batch giữ lock |
-| PostgreSQL restart | Metadata còn nguyên |
-| Re-run DDL | Không lỗi, không mất dữ liệu |
-
-## 11. Definition of Done cho mục 4.3
-
-- [ ] Có đủ bốn bảng và comments/data dictionary.
-- [ ] PK, FK, unique, check constraints và indexes đã kiểm tra.
-- [ ] `start_batch`, `register_file`, `fail_batch`, `commit_batch_success` chạy đúng.
-- [ ] LSET/CET dùng `timestamptz` và CET chỉ capture một lần.
-- [ ] Failure ở Mage/dbt/reconciliation không cập nhật watermark.
-- [ ] Retry và cùng input không tạo duplicate.
-- [ ] Concurrent batch cùng source bị chặn.
-- [ ] DDL chạy lại an toàn trên database đã có metadata.
-- [ ] Mage block skeleton nhận và truyền cùng `batch_id`.
-- [ ] Project Lead tự review data dictionary, state transitions và evidence theo Design Freeze.
-- [ ] Positive/negative test evidence được lưu và push.
-
-Chỉ chuyển sang triển khai ingestion 4.4 sau khi các điều kiện trên đạt.
+Hoàn thành code bước 1–13 chưa đồng nghĩa database đã được migrate; chỉ đánh dấu toàn bộ 4.3 sau bước 14–23.

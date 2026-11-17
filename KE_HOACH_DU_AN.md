@@ -145,21 +145,26 @@ Hướng dẫn thao tác chi tiết: `deployment/runbooks/PHASE2_4_1_4_2_STEP_BY
 
 Kế hoạch triển khai chi tiết: `deployment/runbooks/PHASE2_4_3_CONTROL_METADATA_WATERMARK_PLAN.md`.
 
+- [x] Hoàn thành code, migration, test và Mage smoke integration bước 1–22 trên nhánh `feature/control-metadata-watermark`.
+
 Bạn chịu trách nhiệm thiết kế và tạo:
 
-- [ ] `control.etl_watermark`.
-- [ ] `control.etl_batch`.
-- [ ] `control.etl_file`.
-- [ ] `control.etl_log`.
+- [x] `control.etl_watermark`.
+- [x] `control.etl_batch`.
+- [x] `control.etl_file`.
+- [x] `control.etl_step_run`.
+- [x] `control.etl_log`.
 
 Metadata cần lưu:
 
-- [ ] Batch ID và pipeline name.
-- [ ] Source file, checksum, year-month và schema version.
-- [ ] LSET và CET.
-- [ ] Rows read, staged, rejected và loaded.
-- [ ] Start/end time.
-- [ ] Status và error message.
+- [x] Batch ID và pipeline name.
+- [x] Source file, checksum, year-month và schema version.
+- [x] LSET và CET.
+- [x] Discovery completeness, heartbeat và trạng thái stale.
+- [x] Rows raw, canonical, technical/business/duplicate quarantine và fact loaded.
+- [x] Start/end time.
+- [x] Status và error message.
+- [x] Approval evidence khi cùng filename có checksum mới.
 
 Watermark flow:
 
@@ -174,8 +179,8 @@ read LSET
 -> commit LSET = CET
 ```
 
-- [ ] Không commit watermark nếu dbt hoặc reconciliation thất bại.
-- [ ] Chạy lại batch lỗi không tạo duplicate.
+- [x] Không commit watermark nếu dbt hoặc reconciliation thất bại.
+- [x] Control retry trả `REPROCESS_IDEMPOTENTLY`; Physical Staging sẽ enforce unique `source_record_key` ở 4.5.
 
 ## 4.4. Mage pipelines
 
