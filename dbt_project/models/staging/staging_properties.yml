@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_yellow_taxi
+    description: Canonical source columns and lineage, with New York wall-time timestamps unchanged.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: source_row_number
+        data_tests: [not_null]
+      - name: schema_fingerprint
+        data_tests: [not_null]
+      - name: batch_id
+        data_tests: [not_null]
+  - name: stg_taxi_zone
+    description: TLC lookup attributes. Physical source headers may be quoted or normalized to lowercase.
+    columns:
+      - name: location_id
+        data_tests: [not_null, unique]
+  - name: stg_taxi_zone_geometry
+    description: PostGIS geometry preserved from Mage staging; SRID and geometry column checks await its DDL.

@@ -1,6 +1,6 @@
 # dbt handover contract — Yellow Taxi 2024–2025
 
-**Contract status:** `APPROVED` — Project Lead và dbt Owner ký ngày 2026-11-16; đồng bộ với `PHASE2_DESIGN_FREEZE_PROPOSAL.md`.  
+**Contract status:** `APPROVED` — Project Lead và dbt Owner ký ngày 2026-11-16; điều chỉnh điều kiện năm theo yêu cầu người dùng ngày 2026-11-17.
 **Target database:** PostgreSQL/PostGIS.  
 **Trusted Fact grain:** một dòng cho một source trip record accepted/warning, sau khi quarantine raw-exact duplicate lặp lại trong cùng file.
 
@@ -110,8 +110,7 @@ TECHNICAL_REJECT > DUPLICATE > BUSINESS_QUARANTINE > WARNING > ACCEPTED
 | TIME-002 | Dropoff <= pickup | High | Business quarantine |
 | TIME-003 | Duration > 24 giờ | High | Business quarantine |
 | TIME-004 | 3 giờ < duration <= 24 giờ | Warning | Load Fact; exclude duration/speed KPI mặc định |
-| TIME-005 | Pickup month khác file month nhưng vẫn trong 2024–2025 | Warning | Load + flag; month role lấy từ pickup datetime |
-| TIME-006 | Pickup nằm ngoài 2024–2025 | High | Business quarantine; không để rò sang kỳ ngoài scope |
+| TIME-005 | Pickup month khác file month | Warning | Load + flag; month role lấy từ pickup datetime |
 | DIST-001 | Distance < 0 | High | Business quarantine |
 | DIST-002 | Distance null hoặc = 0 | Warning | Load; speed null; exclude distance/speed KPI mặc định |
 | SPEED-001 | 45 < speed <= 80 mph | Warning | Load; exclude speed KPI mặc định |
@@ -134,6 +133,11 @@ TECHNICAL_REJECT > DUPLICATE > BUSINESS_QUARANTINE > WARNING > ACCEPTED
 | FEE-002 | CBD fee >0 trước 2025-01-05 | High | Business quarantine sau khi xác nhận timestamp/file hợp lệ |
 | DUP-001 | `raw_exact_fingerprint` lặp trong cùng `source_file_sha256`, occurrence > 1 theo source row | High | Duplicate quarantine; liên kết source_record_key của winner |
 | DUP-002 | Raw-exact/candidate fingerprint giống nhau giữa các file | Warning | Giữ cả hai; không auto-delete |
+
+Điều chỉnh ngày 2026-11-17: `TIME-006` đã ngừng áp dụng. Hai năm 2024–2025
+là danh sách file team chọn nạp, không phải điều kiện loại chuyến theo
+`pickup_datetime`. `TIME-005` chỉ cảnh báo khi tháng pickup khác tháng ghi trên
+file, kể cả khi pickup nằm ngoài hai năm đã chọn.
 
 Không dùng P99 làm action threshold. P99 chỉ ghi vào monitoring table theo file/tháng.
 

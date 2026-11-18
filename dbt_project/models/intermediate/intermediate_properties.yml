@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: int_taxi_trip_enriched
+    description: Source measures, row diagnostics, component reconciliation, and configurable bands.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+  - name: int_taxi_trip_fingerprinted
+    description: Deterministic raw-exact and business-candidate hashes with separate purposes.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: raw_exact_fingerprint
+        data_tests: [not_null]
+      - name: candidate_trip_fingerprint
+        data_tests: [not_null]
+  - name: int_taxi_trip_classified
+    description: One disposition and independent KPI flags per technically valid canonical row.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: primary_disposition
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['DUPLICATE', 'BUSINESS_QUARANTINE', 'WARNING', 'ACCEPTED']
+      - name: dq_rule_ids
+        data_tests: [not_null]
+      - name: is_revenue_kpi_eligible
+        data_tests: [not_null]
+      - name: is_tip_kpi_eligible
+        data_tests: [not_null]
+      - name: is_speed_kpi_eligible
+        data_tests: [not_null]
+      - name: is_duration_kpi_eligible
+        data_tests: [not_null]
+      - name: is_passenger_kpi_eligible
+        data_tests: [not_null]
+  - name: int_taxi_trip_accepted
+    description: Accepted or warning records only; Phase 3 builds the trusted Fact from this model.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]

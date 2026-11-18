@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: business_quarantine
+    description: Technically valid records failing a high-severity business rule; retains lineage and raw values.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+  - name: duplicate_quarantine
+    description: Later raw-exact occurrences within a file, linked to the smallest source row number.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: duplicate_survivor_source_record_key
+        data_tests: [not_null]
+  - name: file_reconciliation
+    description: File-level row and amount checks across raw, technical reject, canonical, Fact, business and duplicate branches.
+    columns:
+      - name: source_file_sha256
+        data_tests: [not_null]
+      - name: source_file
+        data_tests: [not_null]

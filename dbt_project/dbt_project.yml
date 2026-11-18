@@ -1,0 +1,96 @@
+name: yellow_taxi_bi
+version: '1.0.0'
+config-version: 2
+profile: yellow_taxi_bi
+
+model-paths: ['models']
+seed-paths: ['seeds']
+test-paths: ['tests']
+macro-paths: ['macros']
+
+clean-targets: ['target', 'dbt_packages']
+
+# Approved defaults. Override with --vars only after business approval.
+vars:
+  cbd_schema_start_month: '2025-01'
+  cbd_fee_effective_date: '2025-01-05'
+  duration_warning_minutes: 180
+  duration_quarantine_minutes: 1440
+  speed_warning_mph: 45
+  speed_quarantine_mph: 80
+  passenger_kpi_max: 6
+  passenger_group_single_size: 1
+  passenger_group_middle_max: 4
+  component_match_tolerance: 0.01
+  component_rounding_tolerance: 0.05
+  recorded_card_payment_code: 1
+  flex_fare_payment_code: 0
+  voided_payment_code: 6
+  business_unknown_rate_code: 99
+  business_unknown_payment_code: 5
+  expected_vendor_codes: [1, 2, 6, 7]
+  expected_payment_type_codes: [0, 1, 2, 3, 4, 5, 6]
+  expected_rate_codes: [1, 2, 3, 4, 5, 6, 99]
+  airport_pickup_zone_ids: [132, 138]
+  non_geometric_zone_ids: [264, 265]
+  zone_lookup_expected_count: 265
+  zone_geometry_expected_count: 263
+  distance_band_edges_miles: [1, 5, 10]
+  time_band_start_hours: [5, 12, 17, 21]
+  fixture_mode: false
+  business_fixture_source_file: 'business_rule_cases.parquet'
+  load_batch_id: null
+  technical_quarantine_schema: dq
+  technical_quarantine_table: technical_quarantine
+  amount_reconciliation_tolerance: 0.01
+  fact_lifecycle_mode: guard
+  fact_lifecycle_history_schema: dq
+  fact_lifecycle_history_table: fact_taxi_trip_history
+  fact_lifecycle_fail_after_archive: false
+
+models:
+  yellow_taxi_bi:
+    staging:
+      +schema: dds
+      +materialized: view
+    intermediate:
+      +schema: dds
+      +materialized: view
+    quality:
+      +schema: dq
+      +materialized: table
+    marts:
+      dimensions:
+        +schema: dds
+        +materialized: table
+      facts:
+        +schema: dds
+
+seeds:
+  yellow_taxi_bi:
+    +schema: dds
+    +quote_columns: false
+    vendor_codes:
+      +column_types:
+        vendor_id: smallint
+        vendor_key: integer
+    payment_type_codes:
+      +column_types:
+        payment_type_id: smallint
+        payment_type_key: integer
+    rate_codes:
+      +column_types:
+        rate_code_id: smallint
+        rate_code_key: integer
+    zone_key_map:
+      +column_types:
+        location_id: smallint
+        zone_key: integer
+    dq_rule_policy:
+      +column_types:
+        severity_rank: smallint
+    business_fixture_expectations:
+      +enabled: "{{ var('fixture_mode', false) }}"
+      +schema: dq
+      +column_types:
+        fixture_row_number: integer

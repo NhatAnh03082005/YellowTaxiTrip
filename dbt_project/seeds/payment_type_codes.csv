@@ -1,0 +1,8 @@
+payment_type_id,payment_type_key,payment_type_name
+0,1,Flex Fare trip
+1,2,Credit card
+2,3,Cash
+3,4,No charge
+4,5,Dispute
+5,6,Unknown
+6,7,Voided trip

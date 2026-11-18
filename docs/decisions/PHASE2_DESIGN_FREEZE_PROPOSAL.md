@@ -203,3 +203,12 @@ Project Lead và dbt owner kiểm tra các file sau:
 | dbt Owner | **APPROVED** | 2026-11-16 | Người dùng xác nhận dbt Owner cũng đã ký duyệt trong phiên làm việc |
 
 Design Freeze đã được khóa. Từ thời điểm này, mọi thay đổi contract phải có Decision Log mới và được hai owner duyệt.
+
+## 10. Làm rõ phạm vi năm sau Design Freeze — 2026-11-17
+
+Người dùng xác nhận hai năm 2024–2025 là quyết định chọn **file đầu vào** của
+team, không phải ràng buộc dữ liệu theo `pickup_datetime`. Theo yêu cầu này,
+dbt ngừng áp dụng `TIME-006` và không loại chuyến chỉ vì pickup nằm ngoài hai
+năm trên. `TIME-005` tiếp tục cảnh báo nếu tháng pickup khác tháng ghi trên
+file; các quy tắc về thứ tự/thời lượng chuyến và ngày hiệu lực CBD vẫn áp dụng.
+Đây là thay đổi phạm vi rule được người dùng chỉ đạo sau bản ký duyệt ban đầu.
