@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: trip_fingerprint_history
+    description: Compact binary fingerprint registry retained after transient Staging cleanup.
+    columns:
+      - name: source_record_key
+        data_tests: [not_null, unique]
+      - name: file_version_id
+        data_tests: [not_null]
+      - name: raw_exact_fingerprint
+        data_tests: [not_null]
+      - name: candidate_trip_fingerprint
+        data_tests: [not_null]
+  - name: cross_file_fingerprint_match
+    description: Only fingerprints observed in at least two immutable source file versions.
+    columns:
+      - name: fingerprint_type
+        data_tests: [not_null]
+      - name: fingerprint
+        data_tests: [not_null]
+

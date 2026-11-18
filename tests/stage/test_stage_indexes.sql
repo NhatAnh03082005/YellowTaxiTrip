@@ -7,16 +7,8 @@ BEGIN
     WITH expected(schema_name, index_name) AS (
         VALUES
             ('stage', 'ix_taxi_zone_geometry_gist'),
-            ('stage', 'ix_yellow_taxi_raw_batch'),
             ('stage', 'ix_yellow_taxi_raw_file_sha'),
-            ('stage', 'ix_yellow_taxi_raw_year_month'),
-            ('stage', 'ix_yellow_taxi_raw_file_row'),
-            ('stage', 'ix_yellow_taxi_canonical_batch'),
             ('stage', 'ix_yellow_taxi_canonical_file_sha'),
-            ('stage', 'ix_yellow_taxi_canonical_year_month'),
-            ('stage', 'ix_yellow_taxi_canonical_pickup'),
-            ('stage', 'ix_yellow_taxi_canonical_pu_location'),
-            ('stage', 'ix_yellow_taxi_canonical_do_location'),
             ('dq', 'ix_technical_quarantine_batch'),
             ('dq', 'ix_technical_quarantine_file_sha'),
             ('dq', 'ix_technical_quarantine_year_month'),

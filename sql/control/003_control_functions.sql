@@ -512,6 +512,7 @@ DECLARE
     v_action text;
     v_approved boolean;
     v_failed_staged boolean;
+    v_file_version_id bigint;
 BEGIN
     SELECT *
     INTO v_file
@@ -541,6 +542,25 @@ BEGIN
        OR p_schema_fingerprint !~ '^[0-9a-f]{64}$' THEN
         RAISE EXCEPTION 'SHA-256 and schema fingerprint must be lowercase 64-character hex';
     END IF;
+
+    INSERT INTO control.source_file_version (
+        source_file, source_url, source_year_month, source_file_sha256,
+        schema_fingerprint, schema_version, source_last_modified, content_length
+    )
+    VALUES (
+        v_file.source_file, v_file.source_url, v_file.source_year_month,
+        p_source_file_sha256, p_schema_fingerprint, p_schema_version,
+        v_file.source_last_modified, p_content_length
+    )
+    ON CONFLICT (source_file, source_file_sha256) DO UPDATE
+    SET source_url = EXCLUDED.source_url,
+        source_year_month = EXCLUDED.source_year_month,
+        schema_fingerprint = EXCLUDED.schema_fingerprint,
+        schema_version = EXCLUDED.schema_version,
+        source_last_modified = EXCLUDED.source_last_modified,
+        content_length = EXCLUDED.content_length,
+        verified_at = clock_timestamp()
+    RETURNING file_version_id INTO v_file_version_id;
 
     IF EXISTS (
         SELECT 1
@@ -609,6 +629,7 @@ BEGIN
         source_file_sha256 = p_source_file_sha256,
         schema_fingerprint = p_schema_fingerprint,
         schema_version = p_schema_version,
+        file_version_id = v_file_version_id,
         validated_at = clock_timestamp(),
         previous_sha256 = CASE
             WHEN v_action = 'STOP_SOURCE_VERSION_CHANGED' THEN v_previous_sha256

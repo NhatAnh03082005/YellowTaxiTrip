@@ -1,9 +1,5 @@
 from utils.database import fetch_one
-
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
+from utils.decorators import data_loader, test
 
 
 @data_loader

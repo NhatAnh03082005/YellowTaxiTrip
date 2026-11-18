@@ -60,6 +60,20 @@ sources:
         description: Last successful extraction end time; Mage commits it after dbt tests and reconciliation.
       - name: etl_log
         description: Orchestration and processing log owned by Mage.
+      - name: source_file_version
+        description: Stable identity for immutable file content across retries.
+        columns:
+          - name: file_version_id
+            data_tests: [not_null, unique]
+
+  - name: audit
+    description: Persistent compact audit structures retained after Staging cleanup.
+    schema: audit
+    tables:
+      - name: trip_fingerprint_history
+        description: Binary fingerprint history for cross-file duplicate warnings.
+      - name: cross_file_fingerprint_match
+        description: Fingerprints observed in more than one immutable file version.
 
   - name: mage_dq
     description: Temporary configurable interface for Mage-owned technical row rejects, pending its physical DDL.

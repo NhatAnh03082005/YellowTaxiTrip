@@ -59,12 +59,16 @@ models:
     quality:
       +schema: dq
       +materialized: table
+    audit:
+      +schema: audit
     marts:
       dimensions:
         +schema: dds
         +materialized: table
       facts:
         +schema: dds
+      olap:
+        +schema: olap
 
 seeds:
   yellow_taxi_bi:

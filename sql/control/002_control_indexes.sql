@@ -58,3 +58,15 @@ CREATE INDEX IF NOT EXISTS ix_etl_log_step_time
 
 CREATE INDEX IF NOT EXISTS ix_etl_log_level_time
     ON control.etl_log (log_level, logged_at);
+
+CREATE INDEX IF NOT EXISTS ix_source_file_version_month
+    ON control.source_file_version (source_year_month, file_version_id);
+
+CREATE INDEX IF NOT EXISTS ix_trip_fingerprint_history_raw
+    ON audit.trip_fingerprint_history (raw_exact_fingerprint, file_version_id);
+
+CREATE INDEX IF NOT EXISTS ix_trip_fingerprint_history_candidate
+    ON audit.trip_fingerprint_history (candidate_trip_fingerprint, file_version_id);
+
+CREATE INDEX IF NOT EXISTS ix_trip_fingerprint_history_file
+    ON audit.trip_fingerprint_history (file_version_id, source_row_number);

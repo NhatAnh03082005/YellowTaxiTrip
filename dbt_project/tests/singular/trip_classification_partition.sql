@@ -1,10 +1,14 @@
 -- Every canonical source key must be in exactly one final Phase 2 branch.
-with branch_keys as (
+with current_file_versions as (
+    select distinct file_version_id from {{ ref('stg_yellow_taxi') }}
+), branch_keys as (
     select source_record_key from {{ ref('int_taxi_trip_accepted') }}
     union all
     select source_record_key from {{ ref('business_quarantine') }}
+    where file_version_id in (select file_version_id from current_file_versions)
     union all
     select source_record_key from {{ ref('duplicate_quarantine') }}
+    where file_version_id in (select file_version_id from current_file_versions)
 ), counts as (
     select source_record_key, count(*) as branch_count
     from branch_keys group by source_record_key

@@ -1,4 +1,13 @@
 -- Canonical types and lineage are owned by Mage. Keep local New York wall time.
+with canonical as (
+    select
+        s.*,
+        coalesce(s.file_version_id, v.file_version_id) as effective_file_version_id
+    from {{ source('stage', 'yellow_taxi_canonical') }} s
+    join {{ source('control', 'source_file_version') }} v
+      on v.source_file = s.source_file
+     and v.source_file_sha256 = s.source_file_sha256
+)
 select
     stage_row_id,
     vendor_id,
@@ -26,6 +35,7 @@ select
     cast_error_flags,
     raw_payload,
     batch_id,
+    effective_file_version_id as file_version_id,
     source_file,
     source_year_month,
     source_file_sha256,
@@ -35,4 +45,4 @@ select
     schema_version,
     source_last_modified,
     ingested_at
-from {{ source('stage', 'yellow_taxi_canonical') }}
+from canonical

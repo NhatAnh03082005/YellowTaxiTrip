@@ -91,6 +91,30 @@ CREATE TABLE IF NOT EXISTS control.etl_watermark (
     CONSTRAINT ck_etl_watermark_updated CHECK (updated_at >= created_at)
 );
 
+CREATE TABLE IF NOT EXISTS control.source_file_version (
+    file_version_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    source_file varchar(255) NOT NULL,
+    source_url text NULL,
+    source_year_month char(7) NOT NULL,
+    source_file_sha256 char(64) NOT NULL,
+    schema_fingerprint char(64) NOT NULL,
+    schema_version varchar(20) NOT NULL,
+    source_last_modified timestamptz NULL,
+    content_length bigint NOT NULL,
+    verified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT uq_source_file_version_identity UNIQUE (source_file, source_file_sha256),
+    CONSTRAINT ck_source_file_version_year_month CHECK (
+        source_year_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+    ),
+    CONSTRAINT ck_source_file_version_sha256 CHECK (
+        source_file_sha256 ~ '^[0-9a-f]{64}$'
+    ),
+    CONSTRAINT ck_source_file_version_schema_fingerprint CHECK (
+        schema_fingerprint ~ '^[0-9a-f]{64}$'
+    ),
+    CONSTRAINT ck_source_file_version_content_length CHECK (content_length > 0)
+);
+
 CREATE TABLE IF NOT EXISTS control.etl_file (
     etl_file_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     batch_id bigint NOT NULL REFERENCES control.etl_batch(batch_id),
@@ -103,6 +127,8 @@ CREATE TABLE IF NOT EXISTS control.etl_file (
     source_file_sha256 char(64) NULL,
     schema_fingerprint char(64) NULL,
     schema_version varchar(20) NULL,
+    file_version_id bigint NULL
+        REFERENCES control.source_file_version(file_version_id),
 
     file_status varchar(40) NOT NULL DEFAULT 'DISCOVERED',
     approval_status varchar(16) NOT NULL DEFAULT 'NOT_REQUIRED',
@@ -219,12 +245,147 @@ CREATE TABLE IF NOT EXISTS control.etl_log (
         CHECK (log_level IN ('DEBUG', 'INFO', 'WARNING', 'ERROR'))
 );
 
+CREATE TABLE IF NOT EXISTS control.file_reconciliation_history (
+    file_version_id bigint PRIMARY KEY
+        REFERENCES control.source_file_version(file_version_id),
+    successful_batch_id bigint NOT NULL REFERENCES control.etl_batch(batch_id),
+    source_rows bigint NOT NULL,
+    canonical_rows bigint NOT NULL,
+    technical_rows bigint NOT NULL,
+    fact_rows bigint NOT NULL,
+    business_rows bigint NOT NULL,
+    duplicate_rows bigint NOT NULL,
+    source_amount_eligible_rows bigint NOT NULL,
+    canonical_amount_eligible_rows bigint NOT NULL,
+    technical_amount_eligible_rows bigint NOT NULL,
+    fact_amount_eligible_rows bigint NOT NULL,
+    business_amount_eligible_rows bigint NOT NULL,
+    duplicate_amount_eligible_rows bigint NOT NULL,
+    source_amount numeric NOT NULL,
+    canonical_amount numeric NOT NULL,
+    technical_amount numeric NOT NULL,
+    fact_amount numeric NOT NULL,
+    business_amount numeric NOT NULL,
+    duplicate_amount numeric NOT NULL,
+    source_row_delta bigint NOT NULL,
+    trusted_row_delta bigint NOT NULL,
+    source_amount_delta numeric NOT NULL,
+    trusted_amount_delta numeric NOT NULL,
+    recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT ck_file_reconciliation_nonnegative CHECK (
+        source_rows >= 0 AND canonical_rows >= 0 AND technical_rows >= 0
+        AND fact_rows >= 0 AND business_rows >= 0 AND duplicate_rows >= 0
+    ),
+    CONSTRAINT ck_file_reconciliation_balanced CHECK (
+        source_row_delta = 0 AND trusted_row_delta = 0
+    )
+);
+
+CREATE TABLE IF NOT EXISTS control.etl_backfill_run (
+    backfill_run_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    pipeline_name varchar(100) NOT NULL,
+    source_name varchar(100) NOT NULL,
+    source_month_from char(7) NOT NULL,
+    source_month_to char(7) NOT NULL,
+    expected_file_count integer NOT NULL,
+    completed_file_count integer NOT NULL DEFAULT 0,
+    status varchar(16) NOT NULL DEFAULT 'RUNNING',
+    started_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    ended_at timestamptz NULL,
+    error_message text NULL,
+    CONSTRAINT ck_backfill_run_months CHECK (
+        source_month_from ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+        AND source_month_to ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+        AND source_month_from <= source_month_to
+    ),
+    CONSTRAINT ck_backfill_run_counts CHECK (
+        expected_file_count > 0 AND completed_file_count >= 0
+        AND completed_file_count <= expected_file_count
+    ),
+    CONSTRAINT ck_backfill_run_status CHECK (
+        status IN ('RUNNING', 'SUCCESS', 'FAILED')
+    )
+);
+
+CREATE TABLE IF NOT EXISTS control.etl_backfill_file (
+    backfill_run_id bigint NOT NULL
+        REFERENCES control.etl_backfill_run(backfill_run_id),
+    source_year_month char(7) NOT NULL,
+    file_version_id bigint NULL
+        REFERENCES control.source_file_version(file_version_id),
+    batch_id bigint NULL REFERENCES control.etl_batch(batch_id),
+    status varchar(16) NOT NULL DEFAULT 'PENDING',
+    completed_at timestamptz NULL,
+    error_message text NULL,
+    CONSTRAINT pk_etl_backfill_file PRIMARY KEY (
+        backfill_run_id, source_year_month
+    ),
+    CONSTRAINT ck_etl_backfill_file_month CHECK (
+        source_year_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+    ),
+    CONSTRAINT ck_etl_backfill_file_status CHECK (
+        status IN ('PENDING', 'RUNNING', 'SUCCESS', 'FAILED')
+    )
+);
+
+CREATE SCHEMA IF NOT EXISTS audit;
+
+CREATE TABLE IF NOT EXISTS audit.trip_fingerprint_history (
+    source_record_key bytea PRIMARY KEY,
+    file_version_id bigint NOT NULL
+        REFERENCES control.source_file_version(file_version_id),
+    source_row_number bigint NOT NULL,
+    source_file_sha256 bytea NOT NULL,
+    raw_exact_fingerprint bytea NOT NULL,
+    candidate_trip_fingerprint bytea NOT NULL,
+    primary_disposition varchar(24) NOT NULL,
+    last_batch_id bigint NOT NULL REFERENCES control.etl_batch(batch_id),
+    updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT ck_trip_fingerprint_source_key_bytes
+        CHECK (octet_length(source_record_key) = 32),
+    CONSTRAINT ck_trip_fingerprint_file_sha_bytes
+        CHECK (octet_length(source_file_sha256) = 32),
+    CONSTRAINT ck_trip_fingerprint_raw_bytes
+        CHECK (octet_length(raw_exact_fingerprint) = 32),
+    CONSTRAINT ck_trip_fingerprint_candidate_bytes
+        CHECK (octet_length(candidate_trip_fingerprint) = 32),
+    CONSTRAINT ck_trip_fingerprint_row_number CHECK (source_row_number > 0),
+    CONSTRAINT ck_trip_fingerprint_disposition CHECK (
+        primary_disposition IN ('ACCEPTED', 'WARNING', 'BUSINESS_QUARANTINE', 'DUPLICATE')
+    )
+);
+
+CREATE TABLE IF NOT EXISTS audit.cross_file_fingerprint_match (
+    fingerprint_type varchar(16) NOT NULL,
+    fingerprint bytea NOT NULL,
+    first_file_version_id bigint NOT NULL
+        REFERENCES control.source_file_version(file_version_id),
+    matched_file_version_id bigint NOT NULL
+        REFERENCES control.source_file_version(file_version_id),
+    detected_batch_id bigint NOT NULL REFERENCES control.etl_batch(batch_id),
+    detected_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT pk_cross_file_fingerprint_match PRIMARY KEY (
+        fingerprint_type, fingerprint, first_file_version_id, matched_file_version_id
+    ),
+    CONSTRAINT ck_cross_file_fingerprint_type
+        CHECK (fingerprint_type IN ('RAW_EXACT', 'CANDIDATE')),
+    CONSTRAINT ck_cross_file_fingerprint_bytes CHECK (octet_length(fingerprint) = 32),
+    CONSTRAINT ck_cross_file_distinct_versions
+        CHECK (first_file_version_id <> matched_file_version_id)
+);
+
 COMMENT ON TABLE control.etl_batch IS
     'One row per Mage master-pipeline execution, including extraction window, discovery completeness and reconciliation counters.';
 COMMENT ON TABLE control.etl_watermark IS
     'Last successful extraction time per pipeline/source. Updated only by control.commit_batch_success.';
 COMMENT ON TABLE control.etl_file IS
     'One source-file attempt per batch, from discovery through validation, staging, skip or source-version review.';
+COMMENT ON TABLE control.source_file_version IS
+    'Stable identity for immutable source file content across batch attempts and retries.';
+COMMENT ON TABLE control.file_reconciliation_history IS
+    'Persistent per-file-version reconciliation retained after transient Staging is cleaned.';
+COMMENT ON TABLE audit.trip_fingerprint_history IS
+    'Compact binary fingerprint registry preserving cross-file warnings after Staging cleanup.';
 COMMENT ON TABLE control.etl_step_run IS
     'Machine-readable execution result for each required pipeline step.';
 COMMENT ON TABLE control.etl_log IS

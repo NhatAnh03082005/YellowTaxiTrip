@@ -59,6 +59,7 @@ select
     e.dq_rule_ids,
     e.reversal_or_adjustment_candidate,
     e.batch_id,
+    e.file_version_id,
     e.source_file,
     e.source_year_month,
     e.source_file_sha256,

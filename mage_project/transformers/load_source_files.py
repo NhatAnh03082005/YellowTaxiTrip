@@ -5,11 +5,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from utils.database import execute
+from utils.decorators import transformer
 from utils.parquet_utils import make_source_record_key
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-
 
 @transformer
 def load_source_files(ingestion_context, *args, **kwargs):
@@ -50,6 +47,10 @@ def load_source_files(ingestion_context, *args, **kwargs):
                 ('source_record_key', pa.array(record_keys, type=pa.string())),
                 ('batch_id', pa.array(
                     [int(ingestion_context['batch_id'])] * row_count,
+                    type=pa.int64(),
+                )),
+                ('file_version_id', pa.array(
+                    [int(file_context['file_version_id'])] * row_count,
                     type=pa.int64(),
                 )),
                 ('source_file', pa.array(

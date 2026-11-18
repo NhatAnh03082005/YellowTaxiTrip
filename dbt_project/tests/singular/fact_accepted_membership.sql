@@ -13,7 +13,10 @@ union all
 select f.source_record_key
 from {{ ref('fact_taxi_trip') }} f
 left join {{ ref('int_taxi_trip_accepted') }} a on a.source_record_key = f.source_record_key
-where a.source_record_key is null
+where f.file_version_id in (
+       select distinct file_version_id from {{ ref('int_taxi_trip_classified') }}
+   )
+  and (a.source_record_key is null
    or f.trip_count is distinct from 1::smallint
    or f.raw_exact_fingerprint is distinct from a.raw_exact_fingerprint
    or f.candidate_trip_fingerprint is distinct from a.candidate_trip_fingerprint
@@ -51,4 +54,4 @@ where a.source_record_key is null
           a.source_file_sha256, a.source_row_number, a.schema_fingerprint,
           a.schema_version, a.source_last_modified, a.ingested_at)
    or exists (select 1 from {{ ref('business_quarantine') }} b where b.source_record_key = f.source_record_key)
-   or exists (select 1 from {{ ref('duplicate_quarantine') }} d where d.source_record_key = f.source_record_key)
+   or exists (select 1 from {{ ref('duplicate_quarantine') }} d where d.source_record_key = f.source_record_key))

@@ -12,17 +12,38 @@ with fingerprinted as (
             order by source_row_number
         ) as duplicate_survivor_source_record_key
     from fingerprinted f
-), cross_file_raw as (
+), current_cross_file_raw as (
     select raw_exact_fingerprint
     from fingerprinted
     where raw_exact_fingerprint is not null
     group by raw_exact_fingerprint
     having count(distinct source_file_sha256) > 1
-), cross_file_candidate as (
+), historical_cross_file_raw as (
+    select distinct f.raw_exact_fingerprint
+    from fingerprinted f
+    join {{ source('audit', 'trip_fingerprint_history') }} h
+      on h.raw_exact_fingerprint = decode(trim(f.raw_exact_fingerprint), 'hex')
+     and h.file_version_id <> f.file_version_id
+    where f.raw_exact_fingerprint is not null
+), cross_file_raw as (
+    select raw_exact_fingerprint from current_cross_file_raw
+    union
+    select raw_exact_fingerprint from historical_cross_file_raw
+), current_cross_file_candidate as (
     select candidate_trip_fingerprint
     from fingerprinted
     group by candidate_trip_fingerprint
     having count(distinct source_file_sha256) > 1
+), historical_cross_file_candidate as (
+    select distinct f.candidate_trip_fingerprint
+    from fingerprinted f
+    join {{ source('audit', 'trip_fingerprint_history') }} h
+      on h.candidate_trip_fingerprint = decode(trim(f.candidate_trip_fingerprint), 'hex')
+     and h.file_version_id <> f.file_version_id
+), cross_file_candidate as (
+    select candidate_trip_fingerprint from current_cross_file_candidate
+    union
+    select candidate_trip_fingerprint from historical_cross_file_candidate
 ), lookups as (
     select
         d.*,

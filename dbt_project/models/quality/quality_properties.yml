@@ -16,6 +16,8 @@ models:
   - name: file_reconciliation
     description: File-level row and amount checks across raw, technical reject, canonical, Fact, business and duplicate branches.
     columns:
+      - name: file_version_id
+        data_tests: [not_null, unique]
       - name: source_file_sha256
         data_tests: [not_null]
       - name: source_file

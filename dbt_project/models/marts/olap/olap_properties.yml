@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: olap_monthly_zone_kpi
+    description: Compact monthly Pickup Zone aggregate for revenue, payment, vendor, rate and tip analysis.
+  - name: olap_monthly_route_kpi
+    description: Monthly pickup/dropoff route aggregate for Top N route and map analysis.
+  - name: olap_daily_kpi
+    description: Daily aggregate supporting time-series, MoM and YoY reporting.
+

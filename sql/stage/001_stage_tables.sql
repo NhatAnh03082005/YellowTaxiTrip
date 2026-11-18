@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS stage.taxi_zone_geometry (
         CHECK (ST_IsValid(geometry))
 );
 
-CREATE TABLE IF NOT EXISTS stage.yellow_taxi_raw (
+CREATE UNLOGGED TABLE IF NOT EXISTS stage.yellow_taxi_raw (
     raw_row_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
     "VendorID" bigint NULL,
@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS stage.yellow_taxi_raw (
     cbd_congestion_fee double precision NULL,
 
     batch_id bigint NOT NULL,
+    file_version_id bigint NOT NULL,
     source_file varchar(255) NOT NULL,
     source_year_month char(7) NOT NULL,
     source_file_sha256 char(64) NOT NULL,
@@ -73,6 +74,9 @@ CREATE TABLE IF NOT EXISTS stage.yellow_taxi_raw (
     CONSTRAINT fk_yellow_taxi_raw_batch
         FOREIGN KEY (batch_id)
         REFERENCES control.etl_batch(batch_id),
+    CONSTRAINT fk_yellow_taxi_raw_file_version
+        FOREIGN KEY (file_version_id)
+        REFERENCES control.source_file_version(file_version_id),
     CONSTRAINT ck_yellow_taxi_raw_year_month
         CHECK (source_year_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
     CONSTRAINT ck_yellow_taxi_raw_sha256
@@ -87,7 +91,7 @@ CREATE TABLE IF NOT EXISTS stage.yellow_taxi_raw (
         CHECK (schema_version IN ('yt_schema_v001', 'yt_schema_v002'))
 );
 
-CREATE TABLE IF NOT EXISTS stage.yellow_taxi_canonical (
+CREATE UNLOGGED TABLE IF NOT EXISTS stage.yellow_taxi_canonical (
     stage_row_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
     vendor_id smallint NULL,
@@ -114,6 +118,7 @@ CREATE TABLE IF NOT EXISTS stage.yellow_taxi_canonical (
     cast_error_flags jsonb NOT NULL DEFAULT '{}'::jsonb,
     raw_payload jsonb NULL,
     batch_id bigint NOT NULL,
+    file_version_id bigint NOT NULL,
     source_file varchar(255) NOT NULL,
     source_year_month char(7) NOT NULL,
     source_file_sha256 char(64) NOT NULL,
@@ -129,6 +134,9 @@ CREATE TABLE IF NOT EXISTS stage.yellow_taxi_canonical (
     CONSTRAINT fk_yellow_taxi_canonical_batch
         FOREIGN KEY (batch_id)
         REFERENCES control.etl_batch(batch_id),
+    CONSTRAINT fk_yellow_taxi_canonical_file_version
+        FOREIGN KEY (file_version_id)
+        REFERENCES control.source_file_version(file_version_id),
     CONSTRAINT ck_yellow_taxi_canonical_store_flag
         CHECK (store_and_fwd_flag IS NULL OR store_and_fwd_flag IN ('Y', 'N')),
     CONSTRAINT ck_yellow_taxi_canonical_year_month
@@ -176,6 +184,7 @@ CREATE TABLE IF NOT EXISTS dq.technical_quarantine (
     cast_error_flags jsonb NOT NULL,
     raw_payload jsonb NOT NULL,
     batch_id bigint NOT NULL,
+    file_version_id bigint NOT NULL,
     source_file varchar(255) NOT NULL,
     source_year_month char(7) NOT NULL,
     source_file_sha256 char(64) NOT NULL,
@@ -191,6 +200,9 @@ CREATE TABLE IF NOT EXISTS dq.technical_quarantine (
     CONSTRAINT fk_technical_quarantine_batch
         FOREIGN KEY (batch_id)
         REFERENCES control.etl_batch(batch_id),
+    CONSTRAINT fk_technical_quarantine_file_version
+        FOREIGN KEY (file_version_id)
+        REFERENCES control.source_file_version(file_version_id),
     CONSTRAINT ck_technical_quarantine_has_error
         CHECK (cast_error_flags <> '{}'::jsonb),
     CONSTRAINT ck_technical_quarantine_cast_flags

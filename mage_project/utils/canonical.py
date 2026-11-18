@@ -66,7 +66,7 @@ def canonicalize_dataframe(raw_dataframe):
     source_columns = [
         column for column in raw.columns
         if column not in {
-            'batch_id', 'source_file', 'source_year_month',
+            'batch_id', 'file_version_id', 'source_file', 'source_year_month',
             'source_file_sha256', 'source_row_number', 'source_record_key',
             'schema_fingerprint', 'schema_version', 'source_last_modified',
         }

@@ -37,7 +37,9 @@
         {# Guard mode is the safe default for databases not yet migrated. #}
         {% set stale_fact_probe = run_query(
             'select f.source_record_key from ' ~ target_relation ~ ' f ' ~
-            'where not exists (select 1 from ' ~ ref('int_taxi_trip_accepted') ~
+            'where f.file_version_id in (select distinct file_version_id from ' ~
+            ref('int_taxi_trip_classified') ~ ') and not exists (select 1 from ' ~
+            ref('int_taxi_trip_accepted') ~
             ' a where a.source_record_key = f.source_record_key) limit 1'
         ) %}
         {% if stale_fact_probe.rows | length > 0 %}
@@ -59,7 +61,7 @@
             'raw_exact_fingerprint', 'candidate_trip_fingerprint',
             'pickup_date_key', 'dropoff_date_key', 'pickup_time_key', 'dropoff_time_key',
             'pickup_zone_key', 'dropoff_zone_key', 'vendor_key', 'payment_type_key',
-            'rate_code_key', 'trip_count', 'is_revenue_kpi_eligible',
+            'rate_code_key', 'trip_count', 'file_version_id', 'is_revenue_kpi_eligible',
             'is_tip_kpi_eligible', 'is_speed_kpi_eligible',
             'is_duration_kpi_eligible', 'is_passenger_kpi_eligible'
         ] %}
@@ -151,7 +153,8 @@
             ' t on t.source_record_key = f.source_record_key ' ~
             'left join ' ~ source('stage', 'yellow_taxi_raw') ~
             ' r on r.source_record_key = f.source_record_key ' ~
-            'where a.source_record_key is null'
+            'where f.file_version_id in (select distinct file_version_id from ' ~
+            ref('int_taxi_trip_classified') ~ ') and a.source_record_key is null'
         ) %}
         {% set untraceable = run_query('select source_record_key from ' ~ temp_stale ~
             ' where not has_raw or not has_branch limit 1') %}

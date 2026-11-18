@@ -6,10 +6,7 @@ import pyarrow.parquet as pq
 
 from utils.canonical import canonicalize_dataframe, serialize_json_columns
 from utils.database import execute
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-
+from utils.decorators import transformer
 
 @transformer
 def canonicalize_schema(ingestion_context, *args, **kwargs):

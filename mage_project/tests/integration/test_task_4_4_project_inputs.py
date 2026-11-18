@@ -172,6 +172,7 @@ class ProjectInputIntegrationTests(unittest.TestCase):
                         'last_modified': '2025-01-01T00:00:00+00:00',
                         'parquet_row_count': 5,
                         'etl_file_id': 1,
+                        'file_version_id': 101,
                     }],
                 },
                 work_root=temporary,
@@ -185,6 +186,7 @@ class ProjectInputIntegrationTests(unittest.TestCase):
             self.assertEqual(combined['source_row_number'].tolist(), [1, 2, 3, 4, 5])
             self.assertEqual(combined['source_record_key'].nunique(), 5)
             self.assertTrue((combined['batch_id'] == 1001).all())
+            self.assertTrue((combined['file_version_id'] == 101).all())
 
 
 if __name__ == '__main__':
