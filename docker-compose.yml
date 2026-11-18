@@ -28,6 +28,7 @@ services:
     environment:
       USER_CODE_PATH: /home/src/mage_project
       MAGE_PROJECT_NAME: ${MAGE_PROJECT_NAME}
+      PYTHONPATH: /home/src/mage_project/${MAGE_PROJECT_NAME}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

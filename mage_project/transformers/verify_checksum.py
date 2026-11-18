@@ -10,6 +10,57 @@ if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
 
 
+def _resume_successful_validation(discovery_context):
+    """Rebuild block output when Mage reruns an already-successful step."""
+    validated = []
+    for context in discovery_context['files']:
+        file_row = fetch_one(
+            """
+            SELECT file_status, content_length, source_file_sha256,
+                   schema_fingerprint, schema_version
+            FROM control.etl_file
+            WHERE etl_file_id = %(etl_file_id)s
+              AND batch_id = %(batch_id)s;
+            """,
+            {
+                'etl_file_id': int(context['etl_file_id']),
+                'batch_id': int(discovery_context['batch_id']),
+            },
+        )
+        if not file_row:
+            raise RuntimeError(
+                'Validated control file is missing: {}'.format(
+                    context['etl_file_id']
+                )
+            )
+        action_by_status = {
+            'VALIDATED': 'PROCESS',
+            'APPROVED_SOURCE_VERSION': 'PROCESS',
+            'SKIPPED_ALREADY_PROCESSED': 'SKIP_ALREADY_PROCESSED',
+        }
+        action = action_by_status.get(file_row['file_status'])
+        if action is None:
+            raise RuntimeError(
+                'Cannot resume FILE_VALIDATION from file status {} for {}'.format(
+                    file_row['file_status'], context['file_name']
+                )
+            )
+        path = resolve_data_path(context['local_path'])
+        metadata = inspect_parquet(path)
+        validated.append({
+            **context,
+            'resolved_path': str(path),
+            'source_file_sha256': file_row['source_file_sha256'].strip(),
+            'schema_fingerprint': file_row['schema_fingerprint'].strip(),
+            'schema_version': file_row['schema_version'],
+            'content_length': int(file_row['content_length']),
+            'parquet_row_count': metadata['row_count'],
+            'row_group_count': metadata['row_group_count'],
+            'action': action,
+        })
+    return {**discovery_context, 'files': validated}
+
+
 @transformer
 def verify_checksum(discovery_context, *args, **kwargs):
     batch_id = int(discovery_context['batch_id'])
@@ -18,6 +69,27 @@ def verify_checksum(discovery_context, *args, **kwargs):
         '/home/src/data/catalog/yellow_taxi_schema_registry.csv',
     )), dtype='string')
     versions = dict(zip(registry['schema_fingerprint'], registry['schema_version']))
+
+    step = fetch_one(
+        """
+        SELECT status
+        FROM control.etl_step_run
+        WHERE batch_id = %(batch_id)s
+          AND step_name = 'FILE_VALIDATION';
+        """,
+        {'batch_id': batch_id},
+    )
+    if not step:
+        raise RuntimeError('FILE_VALIDATION step is missing for batch {}'.format(batch_id))
+    if step['status'] == 'SUCCESS':
+        return _resume_successful_validation(discovery_context)
+    if step['status'] != 'PENDING':
+        raise RuntimeError(
+            'FILE_VALIDATION for batch {} is {}; start a new pipeline execution'.format(
+                batch_id, step['status']
+            )
+        )
+
     execute("SELECT control.start_step(%(batch_id)s, 'FILE_VALIDATION');", {'batch_id': batch_id})
     validated = []
     try:

@@ -188,9 +188,9 @@ read LSET
 
 ### Pipeline nguồn tham chiếu
 
-- [ ] Load Taxi Zone Lookup CSV.
-- [ ] Load Shapefile/geometry vào PostGIS.
-- [ ] Kiểm tra LocationID, CRS và geometry.
+- [x] Load Taxi Zone Lookup CSV.
+- [x] Load Shapefile/geometry vào PostGIS.
+- [x] Kiểm tra LocationID, CRS và geometry.
 
 ### Pipeline Yellow Taxi
 
@@ -219,11 +219,11 @@ read LSET
 
 Bạn tạo và quản lý:
 
-- [ ] `stage.yellow_taxi_raw`.
-- [ ] `stage.yellow_taxi_canonical` hoặc staging tables theo version đã chốt.
-- [ ] `stage.taxi_zone_raw`.
-- [ ] `stage.taxi_zone_geometry`.
-- [ ] Technical quarantine table.
+- [x] `stage.yellow_taxi_raw`.
+- [x] `stage.yellow_taxi_canonical` hoặc staging tables theo version đã chốt.
+- [x] `stage.taxi_zone_raw`.
+- [x] `stage.taxi_zone_geometry`.
+- [x] Technical quarantine table.
 
 Bạn xử lý:
 

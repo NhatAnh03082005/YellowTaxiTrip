@@ -1,6 +1,7 @@
 import os
 from urllib.parse import quote_plus
 
+import geopandas as gpd
 from sqlalchemy import create_engine, text
 from geoalchemy2 import Geometry
 
@@ -22,16 +23,26 @@ def _engine():
 @data_exporter
 def load_reference_stage(zone_lookup, zone_geometry, *args, **kwargs):
     require_tables(['stage.taxi_zone_raw', 'stage.taxi_zone_geometry'])
+    geometry_frame = zone_geometry.copy()
+    if 'geometry_wkt' not in geometry_frame.columns:
+        raise ValueError('Validated geometry output must contain geometry_wkt')
+    geometry_frame['geometry'] = gpd.GeoSeries.from_wkt(
+        geometry_frame.pop('geometry_wkt'), crs='EPSG:2263'
+    )
+    geometry_frame = gpd.GeoDataFrame(
+        geometry_frame, geometry='geometry', crs='EPSG:2263'
+    )
     engine = _engine()
     with engine.begin() as connection:
-        connection.execute(text('TRUNCATE TABLE stage.taxi_zone_geometry;'))
-        connection.execute(text('TRUNCATE TABLE stage.taxi_zone_raw;'))
+        connection.execute(text(
+            'TRUNCATE TABLE stage.taxi_zone_geometry, stage.taxi_zone_raw;'
+        ))
         zone_lookup.to_sql(
             'taxi_zone_raw', connection, schema='stage', if_exists='append', index=False,
             method='multi', chunksize=1000,
         )
-        zone_geometry.to_postgis(
+        geometry_frame.to_postgis(
             'taxi_zone_geometry', connection, schema='stage', if_exists='append', index=False,
             dtype={'geometry': Geometry('MULTIPOLYGON', srid=2263)}, chunksize=500,
         )
-    return {'lookup_rows': len(zone_lookup), 'geometry_rows': len(zone_geometry)}
+    return {'lookup_rows': len(zone_lookup), 'geometry_rows': len(geometry_frame)}

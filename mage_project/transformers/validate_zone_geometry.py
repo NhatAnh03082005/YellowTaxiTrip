@@ -19,7 +19,36 @@ def _to_multipolygon(geometry):
 @transformer
 def validate_zone_geometry(zone_lookup, zone_geometry, *args, **kwargs):
     lookup = zone_lookup.copy()
-    geometry = zone_geometry.copy()
+    if isinstance(zone_geometry, gpd.GeoDataFrame):
+        geometry = zone_geometry.copy()
+    else:
+        required_transport_columns = {'geometry_wkt', 'source_crs_epsg'}
+        missing_transport = required_transport_columns - set(zone_geometry.columns)
+        if missing_transport:
+            raise ValueError(
+                'Geometry transport columns missing: {}'.format(
+                    sorted(missing_transport)
+                )
+            )
+        epsg_values = set(
+            pd.to_numeric(zone_geometry['source_crs_epsg'], errors='coerce')
+            .dropna().astype(int)
+        )
+        if epsg_values != {2263}:
+            raise ValueError(
+                'Expected source CRS EPSG:2263, found {}'.format(
+                    sorted(epsg_values)
+                )
+            )
+        attributes = zone_geometry.drop(
+            columns=['geometry_wkt', 'source_crs_epsg']
+        ).copy()
+        attributes['geometry'] = gpd.GeoSeries.from_wkt(
+            zone_geometry['geometry_wkt'], crs='EPSG:2263'
+        )
+        geometry = gpd.GeoDataFrame(
+            attributes, geometry='geometry', crs='EPSG:2263'
+        )
     if geometry.crs is None or geometry.crs.to_epsg() != 2263:
         raise ValueError('Expected source CRS EPSG:2263, found {}'.format(geometry.crs))
     geometry['location_id'] = pd.to_numeric(
@@ -43,14 +72,20 @@ def validate_zone_geometry(zone_lookup, zone_geometry, *args, **kwargs):
     if lookup_ids - geometry_ids != {264, 265}:
         raise ValueError('Expected only LocationID 264 and 265 without geometry')
     geometry['geometry'] = geometry.geometry.map(_to_multipolygon)
-    return gpd.GeoDataFrame(
+    validated = gpd.GeoDataFrame(
         geometry[['location_id', 'OBJECTID', 'Shape_Leng', 'Shape_Area', 'geometry']],
         geometry='geometry', crs='EPSG:2263',
     )
+    # Mage 0.9.76 previews pandas outputs with to_json(orient='split').
+    # GeoDataFrame overrides to_json without that argument, so pass WKT through
+    # the block boundary and rebuild the GeoDataFrame in the exporter.
+    output = pd.DataFrame(validated.drop(columns='geometry'))
+    output['geometry_wkt'] = validated.geometry.to_wkt()
+    return output
 
 
 @test
 def test_output(output, *args):
     assert len(output) == 263
-    assert output.crs.to_epsg() == 2263
-    assert set(output.geometry.geom_type) == {'MultiPolygon'}
+    assert output['geometry_wkt'].notna().all()
+    assert output['geometry_wkt'].str.startswith('MULTIPOLYGON').all()

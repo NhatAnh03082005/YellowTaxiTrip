@@ -52,8 +52,8 @@ def _json_value(value):
 
 
 def canonicalize_dataframe(raw_dataframe):
-    """Canonicalize one bounded row-group DataFrame and split rejects."""
-    raw = raw_dataframe.copy()
+    """Vectorized canonicalization for one bounded batch."""
+    raw = raw_dataframe.reset_index(drop=True).copy()
     rename_mapping = {
         column: COLUMN_MAPPING[column.strip().lower()]
         for column in raw.columns
@@ -71,60 +71,90 @@ def canonicalize_dataframe(raw_dataframe):
             'schema_fingerprint', 'schema_version', 'source_last_modified',
         }
     ]
-    raw_payloads = []
-    error_flags = []
+    row_count = len(canonical)
+    error_flags = [{} for _ in range(row_count)]
 
-    for index in canonical.index:
-        errors = {}
-        payload = {
-            column: _json_value(raw.at[index, column])
-            for column in source_columns
-        }
-        raw_payloads.append(payload)
+    def add_errors(mask, column, error_code, overwrite=False):
+        for position in mask.to_numpy().nonzero()[0]:
+            if overwrite or column not in error_flags[position]:
+                error_flags[position][column] = error_code
 
-        for column in ('pickup_datetime', 'dropoff_datetime'):
-            original = canonical.at[index, column]
-            converted = pd.to_datetime(original, errors='coerce')
-            if pd.notna(original) and pd.isna(converted):
-                errors[column] = 'INVALID_TIMESTAMP'
-            canonical.at[index, column] = converted
+    for column in ('pickup_datetime', 'dropoff_datetime'):
+        if column not in canonical.columns:
+            canonical[column] = pd.NaT
+            continue
+        original = canonical[column]
+        converted = pd.to_datetime(original, errors='coerce')
+        add_errors(
+            original.notna() & converted.isna(),
+            column,
+            'INVALID_TIMESTAMP',
+        )
+        canonical[column] = converted
 
-        for column in INTEGER_COLUMNS:
-            if column not in canonical.columns:
-                canonical[column] = pd.NA
-            original = canonical.at[index, column]
-            converted = pd.to_numeric(original, errors='coerce')
-            if pd.notna(original) and pd.isna(converted):
-                errors[column] = 'INVALID_INTEGER'
-            canonical.at[index, column] = converted
+    for column in INTEGER_COLUMNS:
+        if column not in canonical.columns:
+            canonical[column] = pd.NA
+            continue
+        original = canonical[column]
+        converted = pd.to_numeric(original, errors='coerce')
+        add_errors(
+            original.notna() & converted.isna(),
+            column,
+            'INVALID_INTEGER',
+        )
+        canonical[column] = converted
 
-        for column in NUMERIC_COLUMNS:
-            if column not in canonical.columns:
-                canonical[column] = pd.NA
-            original = canonical.at[index, column]
-            converted = pd.to_numeric(original, errors='coerce')
-            if pd.notna(original) and pd.isna(converted):
-                errors[column] = 'INVALID_NUMERIC'
-            canonical.at[index, column] = converted
+    for column in NUMERIC_COLUMNS:
+        if column not in canonical.columns:
+            canonical[column] = pd.NA
+            continue
+        original = canonical[column]
+        converted = pd.to_numeric(original, errors='coerce')
+        add_errors(
+            original.notna() & converted.isna(),
+            column,
+            'INVALID_NUMERIC',
+        )
+        canonical[column] = converted
 
-        flag = canonical.at[index, 'store_and_fwd_flag'] \
-            if 'store_and_fwd_flag' in canonical.columns else None
-        if pd.notna(flag):
-            flag = str(flag).strip().upper()
-            canonical.at[index, 'store_and_fwd_flag'] = (
-                flag if flag in {'Y', 'N'} else None
-            )
+    if 'store_and_fwd_flag' not in canonical.columns:
+        canonical['store_and_fwd_flag'] = pd.NA
+    else:
+        normalized_flags = (
+            canonical['store_and_fwd_flag']
+            .astype('string')
+            .str.strip()
+            .str.upper()
+        )
+        canonical['store_and_fwd_flag'] = normalized_flags.where(
+            normalized_flags.isin(['Y', 'N']), pd.NA
+        )
 
-        for column in REQUIRED_TECHNICAL_COLUMNS:
-            if column not in canonical.columns or pd.isna(canonical.at[index, column]):
-                errors.setdefault(column, 'REQUIRED_VALUE_NULL_OR_UNCASTABLE')
-        error_flags.append(errors)
+    rejected_mask = pd.Series(False, index=canonical.index)
+    for column in REQUIRED_TECHNICAL_COLUMNS:
+        missing = canonical[column].isna()
+        add_errors(
+            missing,
+            column,
+            'REQUIRED_VALUE_NULL_OR_UNCASTABLE',
+        )
+        rejected_mask |= missing
 
-    canonical['raw_payload'] = raw_payloads
     canonical['cast_error_flags'] = error_flags
-    rejected_mask = canonical['cast_error_flags'].map(bool)
     accepted = canonical.loc[~rejected_mask].copy()
     rejected = canonical.loc[rejected_mask].copy()
+    accepted['raw_payload'] = None
+
+    if rejected.empty:
+        rejected['raw_payload'] = pd.Series(dtype='object')
+    else:
+        payload_frame = raw.loc[rejected_mask, source_columns].copy()
+        payload_frame = payload_frame.astype(object).where(
+            pd.notna(payload_frame), None
+        )
+        rejected['raw_payload'] = payload_frame.to_dict(orient='records')
+
     if len(raw) != len(accepted) + len(rejected):
         raise AssertionError('Technical row reconciliation failed')
     return accepted, rejected
@@ -135,6 +165,8 @@ def serialize_json_columns(dataframe):
     for column in ('raw_payload', 'cast_error_flags'):
         if column in result.columns:
             result[column] = result[column].map(
-                lambda value: json.dumps(value, ensure_ascii=False, default=str)
+                lambda value: None if value is None else json.dumps(
+                    value, ensure_ascii=False, default=str
+                )
             )
     return result

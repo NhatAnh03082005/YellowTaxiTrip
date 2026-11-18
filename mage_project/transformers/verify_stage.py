@@ -5,10 +5,12 @@ if 'transformer' not in globals():
 
 
 @transformer
-def verify_stage(context, *args, **kwargs):
-    batch_id = int(context['batch_id'])
-    hashes = sorted({item['source_file_sha256'] for item in context['files']})
-    metrics = context['metrics']
+def verify_stage(ingestion_context, *args, **kwargs):
+    batch_id = int(ingestion_context['batch_id'])
+    hashes = sorted({
+        item['source_file_sha256'] for item in ingestion_context['files']
+    })
+    metrics = ingestion_context['metrics']
     if not hashes:
         raw_count = canonical_count = rejected_count = 0
     else:

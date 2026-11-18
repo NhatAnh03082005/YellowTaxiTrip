@@ -8,7 +8,9 @@
 
 - Giữ Extraction Window `LSET < source_updated_at <= CET` cho INCREMENTAL.
 - BACKFILL duyệt toàn bộ catalog trong scope, không loại file vì Last-Modified cũ.
-- INCREMENTAL kết hợp Extraction Window với global file history để không bỏ sót file chưa từng SUCCESS hoặc file đổi checksum.
+- INCREMENTAL kết hợp Extraction Window với file history trong cùng grain
+  `(pipeline_name, source_name)` để không bỏ sót file chưa từng SUCCESS hoặc file
+  đổi checksum; lịch sử QA/pipeline khác không được làm nhiễm production.
 - File lifecycle tách `DISCOVERED -> DOWNLOADING -> VALIDATED`.
 - Retry sau downstream failure dùng `REPROCESS_IDEMPOTENTLY`, không tái sử dụng Staging cũ trong phiên bản đầu.
 - Step-level evidence dùng `control.etl_step_run`.

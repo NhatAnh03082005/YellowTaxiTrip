@@ -3,14 +3,16 @@ if 'transformer' not in globals():
 
 
 @transformer
-def standardize_and_validate(context, *args, **kwargs):
-    rows_raw = sum(item['row_count'] for item in context['chunks'])
-    rows_canonical = sum(item['canonical_rows'] for item in context['chunks'])
-    rows_rejected = sum(item['technical_reject_rows'] for item in context['chunks'])
+def standardize_and_validate(ingestion_context, *args, **kwargs):
+    rows_raw = sum(item['row_count'] for item in ingestion_context['chunks'])
+    rows_canonical = sum(item['canonical_rows'] for item in ingestion_context['chunks'])
+    rows_rejected = sum(
+        item['technical_reject_rows'] for item in ingestion_context['chunks']
+    )
     if rows_raw != rows_canonical + rows_rejected:
         raise ValueError('rows_raw != rows_canonical + rows_technical_quarantined')
     return {
-        **context,
+        **ingestion_context,
         'metrics': {
             'rows_raw': rows_raw, 'rows_canonical': rows_canonical,
             'rows_technical_quarantined': rows_rejected,

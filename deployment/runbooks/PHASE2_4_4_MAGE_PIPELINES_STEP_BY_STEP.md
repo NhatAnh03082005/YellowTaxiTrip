@@ -43,13 +43,23 @@ Mage chạy trong Docker nên code không được dùng `D:\BI\DATH` hoặc đ�
 
 Catalog tiếp tục lưu đường dẫn portable dạng `data/yellow_taxi/...`. Hàm `utils.paths.resolve_data_path` bỏ prefix `data/`, nối vào `/home/src/data` và chặn path traversal.
 
-Không cần sửa `docker-compose.yml`; mount hiện tại đã đúng:
+Các data/project mounts trong `docker-compose.yml`:
 
 ```yaml
 volumes:
   - ./mage_project:/home/src/mage_project/${MAGE_PROJECT_NAME}
   - ./data:/home/src/data
 ```
+
+Mage block execution also requires the project directory on Python's import
+path. Compose sets:
+
+```yaml
+PYTHONPATH: /home/src/mage_project/${MAGE_PROJECT_NAME}
+```
+
+This allows blocks to import shared modules with `from utils...` regardless of
+the kernel working directory.
 
 Work files được tạo tại:
 
@@ -276,11 +286,13 @@ Chỉ giữ `PROCESS` và `REPROCESS_IDEMPOTENTLY`. Watermark lọc theo `source
 
 ### 6.5 `load_source_files`
 
-- Đọc từng row group, không concat 24 file vào RAM.
+- Duyệt Parquet theo row group nhưng giới hạn mỗi Arrow batch mặc định ở 100.000 dòng (`source_batch_size`), không đưa nguyên row group hoặc concat 24 file vào RAM.
 - `source_row_number` chạy liên tục từ 1 trong mỗi file.
 - Tạo stable `source_record_key`.
 - Thêm batch/file/schema lineage.
-- Ghi bounded raw work Parquet rồi giải phóng DataFrame trước chunk tiếp theo.
+- Ghi trực tiếp Arrow Table thành bounded raw work Parquet với Snappy; không chuyển cả row group qua pandas trước khi ghi.
+- Khi chạy lại block cho cùng batch, thư mục `raw` của chính batch đó được làm sạch để không trộn file dở từ lần bị ngắt.
+- Cập nhật heartbeat và in tiến độ sau mỗi 10 part.
 
 ### 6.6 `canonicalize_schema`
 
@@ -313,6 +325,14 @@ stage.yellow_taxi_canonical
 ```
 
 Block start step STAGING, upsert từng chunk, rồi gọi `update_file_result(..., 'STAGED', ...)` theo file. Nếu lỗi, block finish STAGING FAILED và gọi `fail_batch`; watermark không đổi.
+
+Khi sửa file block từ host trong lúc Mage Editor đang mở, phải hard-refresh tab
+trước khi chạy. Editor cũ có thể gửi lại nội dung đang cache và ghi đè file trên
+bind mount. Với bản hiện tại, đầu file `load_stage.py` phải có
+`from importlib import reload`, và `stage_loader.py` phải dùng `copy_expert` thay
+vì `frame.to_sql`. Block tự reload utility module, tự resume riêng lỗi
+`STAGING_FAILED`, ghi heartbeat/tiến độ mỗi 10 part và vẫn idempotent theo
+`source_record_key`.
 
 ### 6.10 `verify_stage`
 

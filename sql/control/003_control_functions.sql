@@ -383,13 +383,15 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_run_type varchar(20);
+    v_pipeline_name varchar(100);
+    v_source_name varchar(100);
     v_lset timestamptz;
     v_cet timestamptz;
     v_has_successful_filename boolean;
     v_has_successful_identity boolean;
 BEGIN
-    SELECT b.run_type, b.lset, b.cet
-    INTO v_run_type, v_lset, v_cet
+    SELECT b.run_type, b.pipeline_name, b.source_name, b.lset, b.cet
+    INTO v_run_type, v_pipeline_name, v_source_name, v_lset, v_cet
     FROM control.etl_batch b
     WHERE b.batch_id = p_batch_id;
 
@@ -406,6 +408,8 @@ BEGIN
         FROM control.etl_file f
         JOIN control.etl_batch b ON b.batch_id = f.batch_id
         WHERE f.source_file = p_source_file
+          AND b.pipeline_name = v_pipeline_name
+          AND b.source_name = v_source_name
           AND f.file_status = 'STAGED'
           AND b.status = 'SUCCESS'
     )
@@ -416,6 +420,8 @@ BEGIN
         FROM control.etl_file f
         JOIN control.etl_batch b ON b.batch_id = f.batch_id
         WHERE f.source_file = p_source_file
+          AND b.pipeline_name = v_pipeline_name
+          AND b.source_name = v_source_name
           AND f.source_file_sha256 = p_catalog_sha256
           AND f.file_status = 'STAGED'
           AND b.status = 'SUCCESS'
@@ -500,6 +506,8 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_file control.etl_file%ROWTYPE;
+    v_pipeline_name varchar(100);
+    v_source_name varchar(100);
     v_previous_sha256 char(64);
     v_action text;
     v_approved boolean;
@@ -520,6 +528,11 @@ BEGIN
             p_etl_file_id, v_file.file_status;
     END IF;
 
+    SELECT b.pipeline_name, b.source_name
+    INTO v_pipeline_name, v_source_name
+    FROM control.etl_batch b
+    WHERE b.batch_id = v_file.batch_id;
+
     IF p_content_length <= 0 THEN
         RAISE EXCEPTION 'Content length must be positive';
     END IF;
@@ -534,6 +547,8 @@ BEGIN
         FROM control.etl_file f
         JOIN control.etl_batch b ON b.batch_id = f.batch_id
         WHERE f.source_file = v_file.source_file
+          AND b.pipeline_name = v_pipeline_name
+          AND b.source_name = v_source_name
           AND f.source_file_sha256 = p_source_file_sha256
           AND f.file_status = 'STAGED'
           AND b.status = 'SUCCESS'
@@ -545,6 +560,8 @@ BEGIN
         FROM control.etl_file f
         JOIN control.etl_batch b ON b.batch_id = f.batch_id
         WHERE f.source_file = v_file.source_file
+          AND b.pipeline_name = v_pipeline_name
+          AND b.source_name = v_source_name
           AND f.source_file_sha256 IS NOT NULL
           AND f.source_file_sha256 <> p_source_file_sha256
           AND f.file_status = 'STAGED'
@@ -555,7 +572,10 @@ BEGIN
         SELECT EXISTS (
             SELECT 1
             FROM control.etl_file f
+            JOIN control.etl_batch b ON b.batch_id = f.batch_id
             WHERE f.source_file = v_file.source_file
+              AND b.pipeline_name = v_pipeline_name
+              AND b.source_name = v_source_name
               AND f.source_file_sha256 = p_source_file_sha256
               AND f.approval_status = 'APPROVED'
               AND f.file_status = 'APPROVED_SOURCE_VERSION'
@@ -567,6 +587,8 @@ BEGIN
             FROM control.etl_file f
             JOIN control.etl_batch b ON b.batch_id = f.batch_id
             WHERE f.source_file = v_file.source_file
+              AND b.pipeline_name = v_pipeline_name
+              AND b.source_name = v_source_name
               AND f.source_file_sha256 = p_source_file_sha256
               AND f.file_status = 'STAGED'
               AND b.status = 'FAILED'
@@ -794,6 +816,55 @@ BEGIN
         p_error_message,
         p_batch_id,
         p_event_code => p_error_code
+    );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION control.resume_failed_staging(
+    p_batch_id bigint
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_pipeline_name varchar(100);
+    v_batch_status varchar(24);
+    v_error_code varchar(100);
+    v_step_status varchar(16);
+BEGIN
+    SELECT b.pipeline_name, b.status, b.error_code, s.status
+    INTO v_pipeline_name, v_batch_status, v_error_code, v_step_status
+    FROM control.etl_batch b
+    JOIN control.etl_step_run s
+      ON s.batch_id = b.batch_id AND s.step_name = 'STAGING'
+    WHERE b.batch_id = p_batch_id
+    FOR UPDATE OF b, s;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Batch % or its STAGING step does not exist', p_batch_id;
+    END IF;
+    IF v_batch_status <> 'FAILED'
+       OR v_error_code <> 'STAGING_FAILED'
+       OR v_step_status <> 'FAILED' THEN
+        RAISE EXCEPTION
+            'Batch % is not resumable from failed STAGING (batch=%, code=%, step=%)',
+            p_batch_id, v_batch_status, v_error_code, v_step_status;
+    END IF;
+
+    UPDATE control.etl_batch
+    SET status = 'RUNNING', ended_at = NULL, heartbeat_at = clock_timestamp(),
+        error_code = NULL, error_message = NULL
+    WHERE batch_id = p_batch_id;
+
+    UPDATE control.etl_step_run
+    SET status = 'PENDING', started_at = NULL, ended_at = NULL,
+        exit_code = NULL, details = '{}'::jsonb, error_message = NULL
+    WHERE batch_id = p_batch_id AND step_name = 'STAGING';
+
+    PERFORM control.log_event(
+        v_pipeline_name, 'WARNING',
+        'Resuming idempotent STAGING after a failed load', p_batch_id,
+        p_event_code => 'STAGING_RESUMED'
     );
 END;
 $$;

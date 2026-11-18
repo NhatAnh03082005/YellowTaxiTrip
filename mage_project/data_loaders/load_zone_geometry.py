@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -21,10 +22,18 @@ def load_zone_geometry(*args, **kwargs):
     ]
     if missing:
         raise FileNotFoundError('Missing Shapefile components: {}'.format(missing))
-    return gpd.read_file(shp_path, engine='pyogrio')
+    geometry = gpd.read_file(shp_path, engine='pyogrio')
+    if geometry.crs is None:
+        raise ValueError('Shapefile CRS is missing')
+    output = pd.DataFrame(geometry.drop(columns='geometry'))
+    output['geometry_wkt'] = geometry.geometry.to_wkt()
+    output['source_crs_epsg'] = geometry.crs.to_epsg()
+    return output
 
 
 @test
 def test_output(output, *args):
     assert output is not None
     assert len(output) == 263
+    assert output['geometry_wkt'].notna().all()
+    assert set(output['source_crs_epsg']) == {2263}

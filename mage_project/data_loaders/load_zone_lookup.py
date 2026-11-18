@@ -15,13 +15,21 @@ def load_zone_lookup(*args, **kwargs):
     ))
     if not csv_path.is_file():
         raise FileNotFoundError('Zone lookup not found: {}'.format(csv_path))
-    return pd.read_csv(csv_path, dtype={
-        'LocationID': 'Int64', 'Borough': 'string',
-        'Zone': 'string', 'service_zone': 'string',
-    })
+    return pd.read_csv(
+        csv_path,
+        dtype={
+            'LocationID': 'Int64', 'Borough': 'string',
+            'Zone': 'string', 'service_zone': 'string',
+        },
+        # TLC uses the literal text "N/A" for valid source members 264/265.
+        # pandas would otherwise coerce it to NaN before validation.
+        keep_default_na=False,
+    )
 
 
 @test
 def test_output(output, *args):
     assert output is not None
     assert len(output) == 265
+    assert output.loc[output['LocationID'] == 264, 'Zone'].iloc[0] == 'N/A'
+    assert output.loc[output['LocationID'] == 265, 'Borough'].iloc[0] == 'N/A'

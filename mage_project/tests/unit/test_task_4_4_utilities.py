@@ -14,12 +14,14 @@ try:
         calculate_file_sha256, inspect_parquet, make_source_record_key,
     )
     from mage_project.utils.paths import resolve_data_path
+    from mage_project.utils.stage_loader import normalize_copy_frame, serialize_json_value
 except ModuleNotFoundError:  # Mage container exposes the project as nyc_taxi_bi.
     from nyc_taxi_bi.utils.canonical import canonicalize_dataframe, serialize_json_columns
     from nyc_taxi_bi.utils.parquet_utils import (
         calculate_file_sha256, inspect_parquet, make_source_record_key,
     )
     from nyc_taxi_bi.utils.paths import resolve_data_path
+    from nyc_taxi_bi.utils.stage_loader import normalize_copy_frame, serialize_json_value
 
 
 class PathTests(unittest.TestCase):
@@ -134,6 +136,35 @@ class CanonicalizationTests(unittest.TestCase):
             serialize_json_columns(rejected).to_parquet(rejected_path, index=False)
             self.assertEqual(len(pd.read_parquet(accepted_path)), 1)
             self.assertEqual(len(pd.read_parquet(rejected_path)), 0)
+
+    def test_stage_json_serializer_preserves_sql_null(self):
+        self.assertIsNone(serialize_json_value(None))
+        self.assertIsNone(serialize_json_value(pd.NA))
+        self.assertIsNone(serialize_json_value(float('nan')))
+        self.assertEqual(serialize_json_value({}), '{}')
+        self.assertEqual(serialize_json_value({'column': 'error'}),
+                         '{"column": "error"}')
+
+    def test_copy_normalizes_nullable_float_integer_columns(self):
+        frame = pd.DataFrame({
+            'passenger_count': [1.0, None, 2.0],
+            'trip_distance': [1.25, 2.5, 3.75],
+        })
+        normalized = normalize_copy_frame(
+            frame,
+            {'passenger_count': 'BIGINT', 'trip_distance': 'NUMERIC(10, 3)'},
+        )
+        self.assertEqual(str(normalized['passenger_count'].dtype), 'Int64')
+        self.assertEqual(normalized['passenger_count'].iloc[0], 1)
+        self.assertTrue(pd.isna(normalized['passenger_count'].iloc[1]))
+        self.assertEqual(normalized['trip_distance'].tolist(), [1.25, 2.5, 3.75])
+
+    def test_copy_rejects_fractional_values_for_integer_target(self):
+        with self.assertRaisesRegex(ValueError, 'non-integer values'):
+            normalize_copy_frame(
+                pd.DataFrame({'passenger_count': [1.5]}),
+                {'passenger_count': 'SMALLINT'},
+            )
 
 
 if __name__ == '__main__':
