@@ -1,3 +1,4 @@
+{{ config(materialized='ephemeral' if var('dbt_minimal_mode', false) else 'view') }}
 -- Source field order and logical types come from the approved 2024/2025 survey.
 -- Mage must retain the original typed values or equivalent lossless raw_payload.
 with raw_rows as (
@@ -11,6 +12,9 @@ with raw_rows as (
             else to_jsonb(r)
         end as raw_values
     from {{ source('stage', 'yellow_taxi_raw') }} r
+    {% if var('dbt_minimal_mode', false) %}
+    where r.batch_id={{ minimal_batch_id() }} and r.file_version_id={{ minimal_version_id() }}
+    {% endif %}
 ), joined as (
     select e.*, r.raw_values
     from {{ ref('int_taxi_trip_enriched') }} e
@@ -39,7 +43,7 @@ with raw_rows as (
             {{ fingerprint_field(raw_source_value('raw_values', 'total_amount'), 17, 'double') }} ||
             {{ fingerprint_field(raw_source_value('raw_values', 'congestion_surcharge'), 18, 'double') }} ||
             {{ fingerprint_field("coalesce(raw_values ->> 'Airport_fee', raw_values ->> 'airport_fee')", 19, 'double') }}
-            || case when source_year_month >= '{{ var("cbd_schema_start_month") }}'
+            || case when {% if var('dbt_minimal_mode', false) %}schema_version = 'yt_schema_v002'{% else %}source_year_month >= '{{ var("cbd_schema_start_month") }}'{% endif %}
                 then {{ fingerprint_field(raw_source_value('raw_values', 'cbd_congestion_fee'), 20, 'double') }}
                 else '' end
             , 'sha256'), 'hex') end::char(64) as raw_exact_fingerprint,
@@ -55,4 +59,15 @@ with raw_rows as (
             , 'sha256'), 'hex')::char(64) as candidate_trip_fingerprint
     from joined j
 )
-select * from hashes
+select hashes.*
+{% if var('dbt_minimal_mode', false) %}
+, coalesce(raw_values is not null and raw_values ?& array[
+'VendorID','tpep_pickup_datetime','tpep_dropoff_datetime','passenger_count',
+'trip_distance','RatecodeID','store_and_fwd_flag','PULocationID','DOLocationID',
+'payment_type','fare_amount','extra','mta_tax','tip_amount','tolls_amount',
+'improvement_surcharge','total_amount','congestion_surcharge']
+and (raw_values ? 'Airport_fee' or raw_values ? 'airport_fee')
+and ((schema_version='yt_schema_v001' and not raw_values ? 'cbd_congestion_fee')
+  or (schema_version='yt_schema_v002' and raw_values ? 'cbd_congestion_fee')),false) as raw_contract_valid
+{% endif %}
+from hashes

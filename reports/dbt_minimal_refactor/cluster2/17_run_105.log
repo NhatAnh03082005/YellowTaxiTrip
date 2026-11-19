@@ -1,0 +1,21 @@
+[0m09:48:38  Running with dbt=1.8.7
+[0m09:48:38  Registered adapter: postgres=1.8.2
+[0m09:48:39  Found 21 models, 144 data tests, 5 seeds, 18 sources, 445 macros
+[0m09:48:39  
+[0m09:48:39  Concurrency: 1 threads (target='qa')
+[0m09:48:39  
+[0m09:48:39  1 of 1 START sql minimal_fact model dds.fact_taxi_trip ......................... [RUN]
+[0m09:48:39  1 of 1 ERROR creating sql minimal_fact model dds.fact_taxi_trip ................ [[31mERROR[0m in 0.28s]
+[0m09:48:39  
+[0m09:48:39  Finished running 1 minimal fact model in 0 hours 0 minutes and 0.73 seconds (0.73s).
+[0m09:48:39  
+[0m09:48:39  [31mCompleted with 1 error and 0 warnings:[0m
+[0m09:48:39  
+[0m09:48:39    Compilation Error in model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+  Minimal schema differs for "dbt_minimal_cluster2"."dds"."fact_taxi_trip"; use the reviewed T09 migration on a non-live target first. No automatic column drop/full-refresh.
+  
+  > in macro minimal_require_model_columns (macros\minimal_file_materializations.sql)
+  > called by macro materialization_minimal_fact_postgres (macros\minimal_file_materializations.sql)
+  > called by model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+[0m09:48:39  
+[0m09:48:39  Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1

@@ -1,0 +1,19 @@
+[0m09:47:55  Running with dbt=1.8.7
+[0m09:47:55  Registered adapter: postgres=1.8.2
+[0m09:47:55  Unable to do partial parsing because config vars, config profile, or config target have changed
+[0m09:47:59  Found 21 models, 144 data tests, 5 seeds, 18 sources, 445 macros
+[0m09:47:59  
+[0m09:47:59  Concurrency: 1 threads (target='qa')
+[0m09:47:59  
+[0m09:47:59  1 of 1 START sql minimal_fact model dds.fact_taxi_trip ......................... [RUN]
+[0m09:47:59  1 of 1 ERROR creating sql minimal_fact model dds.fact_taxi_trip ................ [[31mERROR[0m in 0.17s]
+[0m09:47:59  
+[0m09:47:59  Finished running 1 minimal fact model in 0 hours 0 minutes and 0.61 seconds (0.61s).
+[0m09:47:59  
+[0m09:47:59  [31mCompleted with 1 error and 0 warnings:[0m
+[0m09:47:59  
+[0m09:47:59    Database Error in model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+  Classification workspace belongs to another batch/version
+  CONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE
+[0m09:47:59  
+[0m09:47:59  Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1

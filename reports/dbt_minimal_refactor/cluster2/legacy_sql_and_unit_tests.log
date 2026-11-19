@@ -1,0 +1,11 @@
+test_2024_and_2025_hashes_are_stable (test_fingerprint_golden_versions.FingerprintGoldenVersions.test_2024_and_2025_hashes_are_stable) ... ok
+test_lowest_source_row_is_survivor_within_file (test_duplicate_survivor_fixture_sql.DuplicateSurvivorFixtureSQL.test_lowest_source_row_is_survivor_within_file) ... ok
+test_speed_and_tip_rate_follow_contract (test_olap_kpi_fixture_sql.OlapKpiFixtureSQL.test_speed_and_tip_rate_follow_contract) ... ok
+test_guard_archive_and_baseline_are_version_scoped (test_fact_lifecycle_scope.FactLifecycleScope.test_guard_archive_and_baseline_are_version_scoped) ... ok
+test_no_unscoped_fact_delete (test_fact_lifecycle_scope.FactLifecycleScope.test_no_unscoped_fact_delete) ... ok
+test_default_keeps_legacy_registry (test_fingerprint_consumer_switch.FingerprintConsumerSwitch.test_default_keeps_legacy_registry) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.167s
+
+OK

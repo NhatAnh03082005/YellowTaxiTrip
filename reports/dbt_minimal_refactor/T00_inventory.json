@@ -1,0 +1,1821 @@
+{
+  "branch": "feature/control-metadata-watermark",
+  "head": "c679360afb102465e343fd0bfa31f89f501259ad",
+  "comparison_ref": "5fcf66145662fee38e1c4d93f7b3e40720ad2f54",
+  "counts": {
+    "models": 24,
+    "singular_tests": 29,
+    "macro_files": 5,
+    "seed_csv": 6
+  },
+  "cached_manifest": {
+    "generated_at": "2026-11-19T04:03:36.602852Z",
+    "nodes_by_type": {
+      "model": 22,
+      "test": 170,
+      "seed": 5
+    },
+    "sources": 18
+  },
+  "models": [
+    {
+      "path": "dbt_project/models/audit/cross_file_fingerprint_match.sql",
+      "refs": [
+        "int_taxi_trip_fingerprinted"
+      ],
+      "sources": [
+        [
+          "audit",
+          "v_trip_fingerprint_history"
+        ],
+        [
+          "audit",
+          "trip_fingerprint_history"
+        ]
+      ],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key=['fingerprint_type', 'fingerprint',\n                'first_file_version_id', 'matched_file_version_id'],\n    schema='audit',\n    tags=['audit', 'fingerprint']\n) }}"
+    },
+    {
+      "path": "dbt_project/models/audit/trip_fingerprint_history.sql",
+      "refs": [
+        "int_taxi_trip_classified"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key='source_record_key',\n    schema='audit',\n    tags=['audit', 'fingerprint']\n) }}"
+    },
+    {
+      "path": "dbt_project/models/audit/v_trip_cross_file_warning.sql",
+      "refs": [
+        "v_trip_fingerprint_history"
+      ],
+      "sources": [
+        [
+          "audit",
+          "cross_file_fingerprint_match"
+        ]
+      ],
+      "config": "{{ config(materialized='view', schema='audit', enabled=var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}"
+    },
+    {
+      "path": "dbt_project/models/audit/v_trip_fingerprint_history.sql",
+      "refs": [],
+      "sources": [
+        [
+          "fact_lifecycle",
+          "history"
+        ]
+      ],
+      "config": "{{ config(materialized='view', schema='audit', enabled=var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}"
+    },
+    {
+      "path": "dbt_project/models/intermediate/int_taxi_trip_accepted.sql",
+      "refs": [
+        "int_taxi_trip_classified"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+      "refs": [
+        "dq_rule_policy",
+        "int_taxi_trip_fingerprinted",
+        "payment_type_codes",
+        "rate_codes",
+        "stg_taxi_zone",
+        "vendor_codes"
+      ],
+      "sources": [
+        [
+          "audit",
+          "v_trip_fingerprint_history"
+        ],
+        [
+          "audit",
+          "trip_fingerprint_history"
+        ]
+      ],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/intermediate/int_taxi_trip_enriched.sql",
+      "refs": [
+        "stg_yellow_taxi"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql",
+      "refs": [
+        "int_taxi_trip_enriched"
+      ],
+      "sources": [
+        [
+          "stage",
+          "yellow_taxi_raw"
+        ]
+      ],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_date.sql",
+      "refs": [
+        "int_taxi_trip_accepted"
+      ],
+      "sources": [],
+      "config": "{{ config(materialized='incremental', incremental_strategy='delete+insert', unique_key='date_key') }}"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_payment_type.sql",
+      "refs": [
+        "payment_type_codes"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_rate_code.sql",
+      "refs": [
+        "rate_codes"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_time.sql",
+      "refs": [],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_vendor.sql",
+      "refs": [
+        "vendor_codes"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/dimensions/dim_zone.sql",
+      "refs": [
+        "stg_taxi_zone",
+        "zone_key_map"
+      ],
+      "sources": [],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+      "refs": [
+        "dim_date",
+        "dim_payment_type",
+        "dim_rate_code",
+        "dim_time",
+        "dim_vendor",
+        "dim_zone",
+        "int_taxi_trip_accepted",
+        "int_taxi_trip_classified",
+        "int_taxi_trip_fingerprinted"
+      ],
+      "sources": [
+        [
+          "mage_dq",
+          "technical_quarantine"
+        ],
+        [
+          "stage",
+          "yellow_taxi_raw"
+        ]
+      ],
+      "config": "{{ config(materialized='fact_identity', tags=['dds', 'fact']) }}"
+    },
+    {
+      "path": "dbt_project/models/marts/olap/olap_daily_kpi.sql",
+      "refs": [
+        "fact_taxi_trip",
+        "stg_yellow_taxi"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key='pickup_date_key',\n    schema='olap',\n    tags=['olap', 'powerbi'],\n    pre_hook=\"{{ invalidate_replacement_olap('pickup_date_key') }}"
+    },
+    {
+      "path": "dbt_project/models/marts/olap/olap_monthly_route_kpi.sql",
+      "refs": [
+        "fact_taxi_trip",
+        "stg_yellow_taxi"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key=['source_year_month', 'pickup_zone_key', 'dropoff_zone_key'],\n    schema='olap',\n    tags=['olap', 'powerbi'],\n    pre_hook=\"{{ invalidate_replacement_olap('source_year_month') }}"
+    },
+    {
+      "path": "dbt_project/models/marts/olap/olap_monthly_zone_kpi.sql",
+      "refs": [
+        "fact_taxi_trip",
+        "stg_yellow_taxi"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key=['source_year_month', 'pickup_zone_key', 'vendor_key',\n                'payment_type_key', 'rate_code_key'],\n    schema='olap',\n    tags=['olap', 'powerbi'],\n    pre_hook=\"{{ invalidate_replacement_olap('source_year_month') }}"
+    },
+    {
+      "path": "dbt_project/models/quality/business_quarantine.sql",
+      "refs": [
+        "int_taxi_trip_classified"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key='source_record_key',\n    tags=['dq', 'persistent']\n) }}"
+    },
+    {
+      "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+      "refs": [
+        "int_taxi_trip_classified"
+      ],
+      "sources": [],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key='source_record_key',\n    tags=['dq', 'persistent']\n) }}"
+    },
+    {
+      "path": "dbt_project/models/quality/file_reconciliation.sql",
+      "refs": [
+        "business_quarantine",
+        "duplicate_quarantine",
+        "fact_taxi_trip"
+      ],
+      "sources": [
+        [
+          "stage",
+          "yellow_taxi_raw"
+        ],
+        [
+          "control",
+          "source_file_version"
+        ],
+        [
+          "stage",
+          "yellow_taxi_canonical"
+        ],
+        [
+          "control",
+          "source_file_version"
+        ],
+        [
+          "mage_dq",
+          "technical_quarantine"
+        ],
+        [
+          "control",
+          "source_file_version"
+        ]
+      ],
+      "config": "{{ config(\n    materialized='incremental',\n    incremental_strategy='delete+insert',\n    unique_key='file_version_id',\n    tags=['dq', 'reconciliation', 'persistent']\n) }}"
+    },
+    {
+      "path": "dbt_project/models/staging/stg_taxi_zone.sql",
+      "refs": [],
+      "sources": [
+        [
+          "stage",
+          "taxi_zone_raw"
+        ]
+      ],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/staging/stg_taxi_zone_geometry.sql",
+      "refs": [],
+      "sources": [
+        [
+          "stage",
+          "taxi_zone_geometry"
+        ]
+      ],
+      "config": "folder default"
+    },
+    {
+      "path": "dbt_project/models/staging/stg_yellow_taxi.sql",
+      "refs": [],
+      "sources": [
+        [
+          "stage",
+          "yellow_taxi_canonical"
+        ],
+        [
+          "control",
+          "source_file_version"
+        ]
+      ],
+      "config": "folder default"
+    }
+  ],
+  "consumers": {
+    "trip_key": [
+      {
+        "path": "dbt_project/README.md",
+        "lines": [
+          58,
+          62,
+          69
+        ]
+      },
+      {
+        "path": "dbt_project/docs/DBT_AUDIT_AND_REFACTOR_REPORT.md",
+        "lines": [
+          21,
+          32,
+          47,
+          81,
+          90,
+          108,
+          154
+        ]
+      },
+      {
+        "path": "dbt_project/docs/FACT_LIFECYCLE_RUNTIME_VALIDATION.md",
+        "lines": [
+          7,
+          49,
+          51,
+          64
+        ]
+      },
+      {
+        "path": "dbt_project/macros/fact_identity_materialization.sql",
+        "lines": [
+          4,
+          65,
+          66,
+          89,
+          125,
+          131,
+          132,
+          140,
+          142,
+          176,
+          177,
+          192,
+          194,
+          218,
+          220,
+          234,
+          235,
+          238,
+          240,
+          269,
+          271,
+          288,
+          291,
+          293
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_properties.yml",
+        "lines": [
+          5,
+          7
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_identity_constraints.sql",
+        "lines": [
+          6
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_lifecycle_history.sql",
+        "lines": [
+          10,
+          18,
+          24
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          344,
+          357
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          218,
+          250
+        ]
+      },
+      {
+        "path": "tests/run_fact_replacement_qa.py",
+        "lines": [
+          12
+        ]
+      }
+    ],
+    "raw_exact_fingerprint": [
+      {
+        "path": "dbt_project/macros/fact_identity_materialization.sql",
+        "lines": [
+          70
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/audit_properties.yml",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/cross_file_fingerprint_match.sql",
+        "lines": [
+          19,
+          25,
+          27
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/trip_fingerprint_history.sql",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_cross_file_warning.sql",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_fingerprint_history.sql",
+        "lines": [
+          12,
+          25
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+        "lines": [
+          11,
+          15,
+          20,
+          22,
+          23,
+          26,
+          29,
+          31,
+          33,
+          35,
+          56,
+          63
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql",
+        "lines": [
+          45
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/intermediate_properties.yml",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_properties.yml",
+        "lines": [
+          11
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+        "lines": [
+          8,
+          87,
+          88
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/business_quarantine.sql",
+        "lines": [
+          20
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+        "lines": [
+          20
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_accepted_membership.sql",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fingerprint_history_candidate_parity.sql",
+        "lines": [
+          11,
+          17
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/same_file_duplicate_survivor.sql",
+        "lines": [
+          12
+        ]
+      },
+      {
+        "path": "docs/decisions/PHASE2_DESIGN_FREEZE_PROPOSAL.md",
+        "lines": [
+          111,
+          114,
+          126
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          168,
+          174,
+          176
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          69,
+          90,
+          134,
+          220,
+          249,
+          279,
+          290
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          354,
+          364
+        ]
+      },
+      {
+        "path": "sql/control/002_control_indexes.sql",
+        "lines": [
+          66
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          193,
+          200,
+          230
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          96,
+          97
+        ]
+      },
+      {
+        "path": "tests/test_duplicate_survivor_fixture_sql.py",
+        "lines": [
+          24
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_candidate_sql.py",
+        "lines": [
+          26
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_golden_versions.py",
+        "lines": [
+          44,
+          45
+        ]
+      }
+    ],
+    "candidate_trip_fingerprint": [
+      {
+        "path": "dbt_project/macros/fact_identity_materialization.sql",
+        "lines": [
+          70
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/audit_properties.yml",
+        "lines": [
+          17
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/cross_file_fingerprint_match.sql",
+        "lines": [
+          33,
+          39
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/trip_fingerprint_history.sql",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_cross_file_warning.sql",
+        "lines": [
+          16
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_fingerprint_history.sql",
+        "lines": [
+          13,
+          26
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+        "lines": [
+          37,
+          39,
+          42,
+          45,
+          48,
+          50,
+          56,
+          64
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql",
+        "lines": [
+          55
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/intermediate_properties.yml",
+        "lines": [
+          16
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_properties.yml",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+        "lines": [
+          9,
+          92,
+          93
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/business_quarantine.sql",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_accepted_membership.sql",
+        "lines": [
+          22
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fingerprint_history_candidate_parity.sql",
+        "lines": [
+          11,
+          17
+        ]
+      },
+      {
+        "path": "docs/decisions/PHASE2_DESIGN_FREEZE_PROPOSAL.md",
+        "lines": [
+          112
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          168,
+          176
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          70,
+          221,
+          249
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          355,
+          366
+        ]
+      },
+      {
+        "path": "sql/control/002_control_indexes.sql",
+        "lines": [
+          69
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          194,
+          201,
+          232
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          98,
+          99
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_candidate_sql.py",
+        "lines": [
+          26
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_golden_versions.py",
+        "lines": [
+          46,
+          47
+        ]
+      }
+    ],
+    "fact_taxi_trip_history": [
+      {
+        "path": "dbt_project/README.md",
+        "lines": [
+          69
+        ]
+      },
+      {
+        "path": "dbt_project/dbt_project.yml",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dbt_project/docs/FACT_LIFECYCLE_RUNTIME_VALIDATION.md",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "path": "dbt_project/macros/fact_identity_materialization.sql",
+        "lines": [
+          15,
+          134
+        ]
+      },
+      {
+        "path": "tests/run_fact_replacement_qa.py",
+        "lines": [
+          38,
+          50
+        ]
+      },
+      {
+        "path": "tests/run_replacement_recovery_qa.py",
+        "lines": [
+          40
+        ]
+      }
+    ],
+    "trip_fingerprint_history": [
+      {
+        "path": "dbt_project/models/audit/audit_properties.yml",
+        "lines": [
+          4,
+          8
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/cross_file_fingerprint_match.sql",
+        "lines": [
+          10,
+          12
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_cross_file_warning.sql",
+        "lines": [
+          11
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+        "lines": [
+          1,
+          3
+        ]
+      },
+      {
+        "path": "dbt_project/models/sources/taxi_sources.yml",
+        "lines": [
+          75,
+          79
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fingerprint_history_candidate_parity.sql",
+        "lines": [
+          13,
+          19
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          170
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          348,
+          402
+        ]
+      },
+      {
+        "path": "sql/control/002_control_indexes.sql",
+        "lines": [
+          65,
+          66,
+          68,
+          69,
+          71,
+          72
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          188,
+          229,
+          230,
+          231,
+          232,
+          233,
+          234
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          47,
+          101
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_candidate_sql.py",
+        "lines": [
+          21,
+          33,
+          36,
+          37,
+          57
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_consumer_switch.py",
+        "lines": [
+          18,
+          19
+        ]
+      }
+    ],
+    "source_file_sha256": [
+      {
+        "path": "dbt_project/macros/fact_replacement_scope.sql",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/trip_fingerprint_history.sql",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dbt_project/models/audit/v_trip_fingerprint_history.sql",
+        "lines": [
+          11,
+          24
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+        "lines": [
+          11,
+          15,
+          24,
+          40
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+        "lines": [
+          65
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/business_quarantine.sql",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/file_reconciliation.sql",
+        "lines": [
+          13,
+          19,
+          25,
+          30,
+          37,
+          90
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/quality_properties.yml",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "path": "dbt_project/models/sources/taxi_sources.yml",
+        "lines": [
+          21,
+          104
+        ]
+      },
+      {
+        "path": "dbt_project/models/staging/stg_yellow_taxi.sql",
+        "lines": [
+          9,
+          41
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_accepted_membership.sql",
+        "lines": [
+          50,
+          54
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/file_reconciliation_balances.sql",
+        "lines": [
+          3
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fingerprint_history_candidate_parity.sql",
+        "lines": [
+          11,
+          17
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/same_file_duplicate_survivor.sql",
+        "lines": [
+          11
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/source_record_identity.sql",
+        "lines": [
+          6
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_3_CONTROL_METADATA_WATERMARK_PLAN.md",
+        "lines": [
+          52
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_5_PHYSICAL_STAGING_STEP_BY_STEP.md",
+        "lines": [
+          78
+        ]
+      },
+      {
+        "path": "docs/decisions/PHASE2_DESIGN_FREEZE_PROPOSAL.md",
+        "lines": [
+          110,
+          126
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          148,
+          155,
+          174,
+          274
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          39,
+          52,
+          134,
+          290
+        ]
+      },
+      {
+        "path": "mage_project/tests/integration/test_task_4_4_project_inputs.py",
+        "lines": [
+          169
+        ]
+      },
+      {
+        "path": "mage_project/tests/unit/test_task_4_4_utilities.py",
+        "lines": [
+          103
+        ]
+      },
+      {
+        "path": "mage_project/transformers/load_source_files.py",
+        "lines": [
+          41,
+          64,
+          65
+        ]
+      },
+      {
+        "path": "mage_project/transformers/verify_checksum.py",
+        "lines": [
+          16,
+          50,
+          139
+        ]
+      },
+      {
+        "path": "mage_project/transformers/verify_stage.py",
+        "lines": [
+          9,
+          17,
+          21,
+          25
+        ]
+      },
+      {
+        "path": "mage_project/utils/canonical.py",
+        "lines": [
+          70
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          99,
+          105,
+          110,
+          127,
+          163,
+          164,
+          180,
+          353,
+          362
+        ]
+      },
+      {
+        "path": "sql/control/002_control_indexes.sql",
+        "lines": [
+          31,
+          32,
+          42
+        ]
+      },
+      {
+        "path": "sql/control/003_control_functions.sql",
+        "lines": [
+          428,
+          503,
+          544,
+          550,
+          555,
+          558,
+          575,
+          581,
+          588,
+          589,
+          602,
+          615,
+          632
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          12,
+          18,
+          23,
+          35,
+          39,
+          40,
+          44,
+          48,
+          49,
+          56,
+          192,
+          199
+        ]
+      },
+      {
+        "path": "sql/migrations/006_backfill_recovery_and_cleanup.sql",
+        "lines": [
+          58,
+          61,
+          114
+        ]
+      },
+      {
+        "path": "sql/migrations/007_replacement_recovery.sql",
+        "lines": [
+          32,
+          41
+        ]
+      },
+      {
+        "path": "sql/stage/001_stage_tables.sql",
+        "lines": [
+          64,
+          83,
+          124,
+          145,
+          190,
+          215
+        ]
+      },
+      {
+        "path": "sql/stage/002_stage_indexes.sql",
+        "lines": [
+          8,
+          11,
+          18
+        ]
+      },
+      {
+        "path": "sql/stage/003_stage_comments.sql",
+        "lines": [
+          15
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          43,
+          104
+        ]
+      },
+      {
+        "path": "tests/control/test_file_version_change.sql",
+        "lines": [
+          12
+        ]
+      },
+      {
+        "path": "tests/control/test_pipeline_scoped_file_history.sql",
+        "lines": [
+          25
+        ]
+      },
+      {
+        "path": "tests/control/test_retry_idempotency.sql",
+        "lines": [
+          18
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_constraints.sql",
+        "lines": [
+          51,
+          61
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_schema.sql",
+        "lines": [
+          40
+        ]
+      },
+      {
+        "path": "tests/test_backfill_recovery_postgres.py",
+        "lines": [
+          43,
+          61,
+          72,
+          78,
+          97,
+          144,
+          201,
+          228
+        ]
+      },
+      {
+        "path": "tests/test_duplicate_survivor_fixture_sql.py",
+        "lines": [
+          24
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_candidate_sql.py",
+        "lines": [
+          26
+        ]
+      },
+      {
+        "path": "tests/test_reconciliation_fixture_sql.py",
+        "lines": [
+          22,
+          23,
+          25
+        ]
+      }
+    ],
+    "schema_version": [
+      {
+        "path": "dbt_project/docs/DBT_AUDIT_AND_REFACTOR_REPORT.md",
+        "lines": [
+          191
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql",
+        "lines": [
+          8
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+        "lines": [
+          68
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/business_quarantine.sql",
+        "lines": [
+          17
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+        "lines": [
+          17
+        ]
+      },
+      {
+        "path": "dbt_project/models/sources/taxi_sources.yml",
+        "lines": [
+          31
+        ]
+      },
+      {
+        "path": "dbt_project/models/staging/stg_yellow_taxi.sql",
+        "lines": [
+          45
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_accepted_membership.sql",
+        "lines": [
+          51,
+          55
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md",
+        "lines": [
+          160
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_5_PHYSICAL_STAGING_STEP_BY_STEP.md",
+        "lines": [
+          82
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          150
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          43,
+          208
+        ]
+      },
+      {
+        "path": "mage_project/tests/integration/test_task_4_4_project_inputs.py",
+        "lines": [
+          38,
+          42,
+          171
+        ]
+      },
+      {
+        "path": "mage_project/tests/unit/test_task_4_4_utilities.py",
+        "lines": [
+          107
+        ]
+      },
+      {
+        "path": "mage_project/transformers/load_source_files.py",
+        "lines": [
+          72,
+          73
+        ]
+      },
+      {
+        "path": "mage_project/transformers/verify_checksum.py",
+        "lines": [
+          17,
+          52,
+          69,
+          108,
+          109,
+          120,
+          141
+        ]
+      },
+      {
+        "path": "mage_project/utils/canonical.py",
+        "lines": [
+          71
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          101,
+          129,
+          183
+        ]
+      },
+      {
+        "path": "sql/control/003_control_functions.sql",
+        "lines": [
+          505,
+          551,
+          555,
+          562,
+          634
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          14,
+          36,
+          41,
+          46
+        ]
+      },
+      {
+        "path": "sql/stage/001_stage_tables.sql",
+        "lines": [
+          68,
+          90,
+          91,
+          128,
+          152,
+          153,
+          194,
+          222,
+          223
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          44,
+          50,
+          64,
+          75
+        ]
+      },
+      {
+        "path": "tests/control/test_pipeline_scoped_file_history.sql",
+        "lines": [
+          25
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_constraints.sql",
+        "lines": [
+          52,
+          62
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_schema.sql",
+        "lines": [
+          41
+        ]
+      },
+      {
+        "path": "tests/test_backfill_recovery_postgres.py",
+        "lines": [
+          44,
+          61,
+          73,
+          79,
+          98,
+          145,
+          202,
+          228
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_golden_versions.py",
+        "lines": [
+          28
+        ]
+      }
+    ],
+    "source_year_month": [
+      {
+        "path": "dbt_project/docs/DBT_AUDIT_AND_REFACTOR_REPORT.md",
+        "lines": [
+          191
+        ]
+      },
+      {
+        "path": "dbt_project/macros/replacement_olap_scope.sql",
+        "lines": [
+          17,
+          18,
+          21
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_classified.sql",
+        "lines": [
+          74
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_enriched.sql",
+        "lines": [
+          8
+        ]
+      },
+      {
+        "path": "dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql",
+        "lines": [
+          42
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/facts/fact_taxi_trip.sql",
+        "lines": [
+          64
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/olap/olap_monthly_route_kpi.sql",
+        "lines": [
+          4,
+          7,
+          12,
+          20,
+          30
+        ]
+      },
+      {
+        "path": "dbt_project/models/marts/olap/olap_monthly_zone_kpi.sql",
+        "lines": [
+          4,
+          8,
+          13,
+          21,
+          42
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/business_quarantine.sql",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "path": "dbt_project/models/quality/duplicate_quarantine.sql",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "path": "dbt_project/models/sources/taxi_sources.yml",
+        "lines": [
+          27
+        ]
+      },
+      {
+        "path": "dbt_project/models/staging/stg_yellow_taxi.sql",
+        "lines": [
+          40
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/cbd_schema_consistency.sql",
+        "lines": [
+          3,
+          5
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/fact_accepted_membership.sql",
+        "lines": [
+          49,
+          53
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/file_month_and_cbd_consistency.sql",
+        "lines": [
+          4,
+          6
+        ]
+      },
+      {
+        "path": "dbt_project/tests/singular/raw_fingerprint_input_contract.sql",
+        "lines": [
+          13,
+          15
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_1_4_2_STEP_BY_STEP.md",
+        "lines": [
+          160,
+          170,
+          173
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_4_MAGE_PIPELINES_STEP_BY_STEP.md",
+        "lines": [
+          245,
+          246
+        ]
+      },
+      {
+        "path": "deployment/runbooks/PHASE2_4_5_PHYSICAL_STAGING_STEP_BY_STEP.md",
+        "lines": [
+          77
+        ]
+      },
+      {
+        "path": "deployment/scripts/run_24_month_backfill.py",
+        "lines": [
+          524,
+          525,
+          553,
+          554,
+          570,
+          571,
+          572,
+          592,
+          599,
+          717,
+          720,
+          722,
+          726,
+          755
+        ]
+      },
+      {
+        "path": "docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md",
+        "lines": [
+          147
+        ]
+      },
+      {
+        "path": "docs/mapping/DBT_HANDOVER_CONTRACT.md",
+        "lines": [
+          38
+        ]
+      },
+      {
+        "path": "mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml",
+        "lines": [
+          198,
+          199
+        ]
+      },
+      {
+        "path": "mage_project/tests/integration/test_task_4_4_project_inputs.py",
+        "lines": [
+          30,
+          168
+        ]
+      },
+      {
+        "path": "mage_project/tests/unit/test_task_4_4_utilities.py",
+        "lines": [
+          105
+        ]
+      },
+      {
+        "path": "mage_project/transformers/discover_source_files.py",
+        "lines": [
+          16,
+          17,
+          19,
+          20,
+          47,
+          53
+        ]
+      },
+      {
+        "path": "mage_project/transformers/load_source_files.py",
+        "lines": [
+          60,
+          61
+        ]
+      },
+      {
+        "path": "mage_project/utils/canonical.py",
+        "lines": [
+          69
+        ]
+      },
+      {
+        "path": "sql/control/001_control_tables.sql",
+        "lines": [
+          98,
+          107,
+          123,
+          152,
+          322,
+          333,
+          336
+        ]
+      },
+      {
+        "path": "sql/control/002_control_indexes.sql",
+        "lines": [
+          35,
+          63
+        ]
+      },
+      {
+        "path": "sql/control/003_control_functions.sql",
+        "lines": [
+          452,
+          463,
+          467,
+          550,
+          554,
+          560
+        ]
+      },
+      {
+        "path": "sql/migrations/005_storage_optimization_v2.sql",
+        "lines": [
+          11,
+          20,
+          35,
+          40,
+          173,
+          179,
+          181,
+          228
+        ]
+      },
+      {
+        "path": "sql/migrations/007_replacement_recovery.sql",
+        "lines": [
+          28,
+          37
+        ]
+      },
+      {
+        "path": "sql/stage/001_stage_tables.sql",
+        "lines": [
+          63,
+          81,
+          123,
+          143,
+          189,
+          213
+        ]
+      },
+      {
+        "path": "sql/stage/002_stage_indexes.sql",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "path": "tests/check_storage_historical_sample.py",
+        "lines": [
+          46,
+          63,
+          82
+        ]
+      },
+      {
+        "path": "tests/control/test_pipeline_scoped_file_history.sql",
+        "lines": [
+          24,
+          46
+        ]
+      },
+      {
+        "path": "tests/run_storage_fixture.py",
+        "lines": [
+          34,
+          38
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_constraints.sql",
+        "lines": [
+          51,
+          61
+        ]
+      },
+      {
+        "path": "tests/stage/test_stage_schema.sql",
+        "lines": [
+          40
+        ]
+      },
+      {
+        "path": "tests/test_backfill_recovery_postgres.py",
+        "lines": [
+          43,
+          60,
+          72,
+          78,
+          97,
+          144,
+          175,
+          201,
+          227
+        ]
+      },
+      {
+        "path": "tests/test_fingerprint_golden_versions.py",
+        "lines": [
+          30
+        ]
+      },
+      {
+        "path": "tests/test_olap_kpi_fixture_sql.py",
+        "lines": [
+          26
+        ]
+      }
+    ]
+  },
+  "migrations": [
+    "sql/migrations/005_storage_optimization_v2.sql",
+    "sql/migrations/006_backfill_recovery_and_cleanup.sql",
+    "sql/migrations/007_replacement_recovery.sql"
+  ],
+  "powerbi_olap_files": [
+    "olap/models/.gitkeep",
+    "olap/queries/.gitkeep",
+    "powerbi/project/.gitkeep",
+    "powerbi/reports/.gitkeep",
+    "powerbi/semantic_model/.gitkeep"
+  ]
+}

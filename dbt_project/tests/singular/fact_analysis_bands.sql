@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 select f.source_record_key
 from {{ ref('fact_taxi_trip') }} f
 left join {{ ref('dim_time') }} pickup_time on pickup_time.time_key = f.pickup_time_key

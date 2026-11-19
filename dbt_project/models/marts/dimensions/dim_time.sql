@@ -1,3 +1,6 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='minimal_reference',tags=['minimal_reference'], reference_key='time_key', reference_natural_key='time_of_day',reference_dependencies=[]) }}
+{% endif %}
 with minutes as (
     select generate_series(0, 1439) as minute_of_day
 ), members as (

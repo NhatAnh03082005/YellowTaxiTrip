@@ -1,0 +1,75 @@
+$ .venv-dbt/Scripts/python.exe -m unittest discover -s tests -p test_dbt_minimal_contract.py -v
+test_all_literal_rows_and_eligibility (test_dbt_minimal_contract.MinimalContractFixtures.test_all_literal_rows_and_eligibility) ... ok
+test_bad_fixture_input_contract_is_rejected (test_dbt_minimal_contract.MinimalContractFixtures.test_bad_fixture_input_contract_is_rejected) ... ok
+test_branch_reconciliation_with_invalid_amount_counts (test_dbt_minimal_contract.MinimalContractFixtures.test_branch_reconciliation_with_invalid_amount_counts) ... ok
+test_cross_file_match_does_not_rewrite_previous_rows (test_dbt_minimal_contract.MinimalContractFixtures.test_cross_file_match_does_not_rewrite_previous_rows) ... ok
+test_exact_survivor_and_precision_distinction (test_dbt_minimal_contract.MinimalContractFixtures.test_exact_survivor_and_precision_distinction) ... ok
+test_fixture_schema_shape (test_dbt_minimal_contract.MinimalContractFixtures.test_fixture_schema_shape) ... ok
+test_legacy_raw_golden_vectors_independent_of_sql (test_dbt_minimal_contract.MinimalContractFixtures.test_legacy_raw_golden_vectors_independent_of_sql) ... ok
+test_literal_counts_money_and_kpi_sufficient_statistics (test_dbt_minimal_contract.MinimalContractFixtures.test_literal_counts_money_and_kpi_sufficient_statistics) ... ok
+test_negative_actual_outputs_are_rejected (test_dbt_minimal_contract.MinimalContractFixtures.test_negative_actual_outputs_are_rejected) ... ok
+test_ratio_of_sums_is_not_average_of_averages (test_dbt_minimal_contract.MinimalContractFixtures.test_ratio_of_sums_is_not_average_of_averages) ... ok
+test_shared_day_and_replacement_expected_grains (test_dbt_minimal_contract.MinimalContractFixtures.test_shared_day_and_replacement_expected_grains) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.007s
+
+OK
+
+exit_code=0
+
+$ .venv/Scripts/python.exe tests/validate_fixtures.py
+Fixture validation passed
+
+exit_code=0
+
+$ git diff --check
+warning: in the working copy of 'dbt_project/README.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/dbt_project.yml', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/audit/cross_file_fingerprint_match.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/audit/trip_fingerprint_history.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/audit/v_trip_cross_file_warning.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/audit/v_trip_fingerprint_history.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/intermediate/int_taxi_trip_classified.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/intermediate/int_taxi_trip_fingerprinted.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_date.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_payment_type.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_rate_code.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_time.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_vendor.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/dimensions/dim_zone.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/facts/fact_properties.yml', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/facts/fact_taxi_trip.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/olap/olap_daily_kpi.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/olap/olap_monthly_route_kpi.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/marts/olap/olap_monthly_zone_kpi.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/quality/business_quarantine.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/quality/duplicate_quarantine.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/models/staging/stg_yellow_taxi.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/business_fixture_rules.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/component_warning_policy.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/cross_file_match_retention.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/dq_policy_configuration.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/dq_rule_mapping_complete.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/dq_rule_policy_consistency.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/fact_accepted_membership.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/fact_analysis_bands.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/fact_kpi_eligibility.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/fact_lifecycle_history.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/file_month_and_cbd_consistency.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/fingerprint_history_candidate_parity.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/raw_fingerprint_input_contract.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/same_file_duplicate_survivor.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'dbt_project/tests/singular/trip_classification_partition.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/decisions/PHASE2_DESIGN_FREEZE_PROPOSAL.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/etl_design/STORAGE_OPTIMIZATION_FINAL_24_MONTHS.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/mapping/DBT_HANDOVER_CONTRACT.md', CRLF will be replaced by LF the next time Git touches it
+
+exit_code=0
+
+T02 fixture/expected/scenario checksums unchanged: PASS
+
+Owned docs local links/code fences/trailing whitespace: PASS
+
+Final actual SQL QA: PASS (25 dbt calls: 13 successful, 12 expected failures with intended messages; 6 selected legacy tests).
+Dedicated PostgreSQL 18 QA instance stopped cleanly using its own data directory; fixture files retained under tmp, no live database touched.

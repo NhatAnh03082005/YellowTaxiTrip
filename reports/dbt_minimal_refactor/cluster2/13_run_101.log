@@ -1,0 +1,22 @@
+[0m10:06:59  Running with dbt=1.8.7
+[0m10:07:00  Registered adapter: postgres=1.8.2
+[0m10:07:00  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m10:07:00  
+[0m10:07:01  Concurrency: 1 threads (target='qa')
+[0m10:07:01  
+[0m10:07:01  1 of 5 START sql view model dds.stg_taxi_zone .................................. [RUN]
+[0m10:07:01  1 of 5 OK created sql view model dds.stg_taxi_zone ............................. [[32mCREATE VIEW[0m in 0.09s]
+[0m10:07:01  2 of 5 START sql view model dds.stg_yellow_taxi ................................ [RUN]
+[0m10:07:01  2 of 5 OK created sql view model dds.stg_yellow_taxi ........................... [[32mCREATE VIEW[0m in 0.06s]
+[0m10:07:01  3 of 5 START sql view model dds.int_taxi_trip_enriched ......................... [RUN]
+[0m10:07:01  3 of 5 OK created sql view model dds.int_taxi_trip_enriched .................... [[32mCREATE VIEW[0m in 0.16s]
+[0m10:07:01  4 of 5 START sql table model dds.int_taxi_trip_classified ...................... [RUN]
+[0m10:07:01  4 of 5 OK created sql table model dds.int_taxi_trip_classified ................. [[32mSELECT 24[0m in 0.19s]
+[0m10:07:01  5 of 5 START sql view model dds.int_taxi_trip_accepted ......................... [RUN]
+[0m10:07:01  5 of 5 OK created sql view model dds.int_taxi_trip_accepted .................... [[32mCREATE VIEW[0m in 0.04s]
+[0m10:07:01  
+[0m10:07:01  Finished running 4 view models, 1 table model in 0 hours 0 minutes and 1.14 seconds (1.14s).
+[0m10:07:01  
+[0m10:07:01  [32mCompleted successfully[0m
+[0m10:07:01  
+[0m10:07:01  Done. PASS=5 WARN=0 ERROR=0 SKIP=0 TOTAL=5

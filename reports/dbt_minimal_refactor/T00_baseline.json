@@ -1,0 +1,53 @@
+{
+  "observed_date_local": "2026-11-19",
+  "timezone": "Asia/Bangkok",
+  "database_metadata": "UNAVAILABLE: Docker daemon not running; no startup performed",
+  "postgres_settings": "UNAVAILABLE",
+  "live_batch_status": "UNAVAILABLE",
+  "host_free_bytes_snapshot": {
+    "C": 67372912640,
+    "D": 91155378176
+  },
+  "artifacts": {
+    "dbt_project/target/manifest.json": {
+      "size_bytes": 990570,
+      "sha256": "02a8e14618a98605884134065a4871768a131ee787138a9969943f380209a694"
+    },
+    "dbt_project/target/run_results.json": {
+      "size_bytes": 4556,
+      "sha256": "d228b48121b911917f5fbfb822b80981701b7d20acc75355cbe1f0f5c93df1a9"
+    },
+    "dbt_project/logs/dbt.log": {
+      "size_bytes": 9182732,
+      "sha256": "8339aa690a1e0b1264e7db70d98fa11abed34cfb6ed8124f2dec7503a744553b"
+    }
+  },
+  "last_run_result": {
+    "generated_at": "2026-11-19T04:03:43.037377Z",
+    "invocation_id": "181e3bb3-fdf3-4ca0-9ca9-d67213857847",
+    "command": "seed",
+    "elapsed_seconds": 0.9939408302307129,
+    "nodes": [
+      {
+        "unique_id": "seed.yellow_taxi_bi.payment_type_codes",
+        "status": "success"
+      },
+      {
+        "unique_id": "seed.yellow_taxi_bi.rate_codes",
+        "status": "success"
+      },
+      {
+        "unique_id": "seed.yellow_taxi_bi.vendor_codes",
+        "status": "success"
+      },
+      {
+        "unique_id": "seed.yellow_taxi_bi.dq_rule_policy",
+        "status": "success"
+      },
+      {
+        "unique_id": "seed.yellow_taxi_bi.zone_key_map",
+        "status": "success"
+      }
+    ]
+  }
+}

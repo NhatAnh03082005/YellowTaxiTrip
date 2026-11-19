@@ -1,4 +1,5 @@
-{{ config(materialized='view', schema='audit', enabled=var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and var('enable_fingerprint_history_candidate', false)) }}
+{{ config(materialized='view', schema='audit', enabled=(not var('dbt_minimal_mode', false)) and var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
 
 with match_members as (
     select m.fingerprint_type, m.fingerprint, member.file_version_id

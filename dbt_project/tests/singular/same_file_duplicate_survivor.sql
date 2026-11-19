@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 select loser.source_record_key
 from {{ ref('duplicate_quarantine') }} loser
 left join {{ ref('int_taxi_trip_classified') }} winner

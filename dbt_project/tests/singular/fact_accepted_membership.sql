@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 with accepted_for_load as (
     select source_record_key
     from {{ ref('int_taxi_trip_accepted') }}

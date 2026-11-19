@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 select source_record_key
 from {{ ref('fact_taxi_trip') }}
 where (pickup_datetime is not null

@@ -1,0 +1,4 @@
+[0m10:06:01  Running with dbt=1.8.7
+[0m10:06:01  Registered adapter: postgres=1.8.2
+[0m10:06:01  Unable to do partial parsing because config vars, config profile, or config target have changed
+[0m10:06:02  Performance info: D:\BI\DATH\NYC_TAXI_BI_PROJECT\tmp\dbt_minimal_cluster2_qa\target\perf_info.json

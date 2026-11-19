@@ -1,5 +1,7 @@
 # dbt — NYC Yellow Taxi
 
+> Cập nhật 2026-11-19: Cụm 2 đã có DDS tối giản **opt-in**; xem [implementation guide](../docs/etl_design/DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md). Mặc định vẫn legacy. Chưa chuyển live; runner/tests/reconciliation/OLAP mới thuộc Cụm 3. Các phần lifecycle/archive dưới đây mô tả luồng legacy, không phải yêu cầu của mode tối giản.
+
 Dự án dbt biến dữ liệu taxi đã được kiểm tra kiểu dữ liệu thành các bảng chất lượng (`dq`) và mô hình phân tích (`dds`). Phạm vi file team chọn là 2024–2025; dbt **không loại chuyến chỉ vì ngày pickup nằm ngoài hai năm đó**. Quy tắc hiện hành được đối chiếu với [hợp đồng bàn giao](../docs/mapping/DBT_HANDOVER_CONTRACT.md).
 
 ## Trạng thái hiện tại

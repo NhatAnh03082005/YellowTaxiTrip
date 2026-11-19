@@ -1,0 +1,47 @@
+[0m10:06:45  Running with dbt=1.8.7
+[0m10:06:45  Registered adapter: postgres=1.8.2
+[0m10:06:46  Unable to do partial parsing because config vars, config profile, or config target have changed
+[0m10:06:47  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m10:06:47  
+[0m10:06:47  Concurrency: 1 threads (target='qa')
+[0m10:06:47  
+[0m10:06:47  1 of 15 START sql minimal_reference model dds.dim_date ......................... [RUN]
+[0m10:06:47  1 of 15 OK created sql minimal_reference model dds.dim_date .................... [[32mSELECT 1[0m in 0.06s]
+[0m10:06:47  2 of 15 START sql minimal_reference model dds.dim_payment_type ................. [RUN]
+[0m10:06:48  2 of 15 OK created sql minimal_reference model dds.dim_payment_type ............ [[32mSELECT 1[0m in 0.04s]
+[0m10:06:48  3 of 15 START sql minimal_reference model dds.dim_rate_code .................... [RUN]
+[0m10:06:48  3 of 15 OK created sql minimal_reference model dds.dim_rate_code ............... [[32mSELECT 1[0m in 0.05s]
+[0m10:06:48  4 of 15 START sql minimal_reference model dds.dim_time ......................... [RUN]
+[0m10:06:48  4 of 15 OK created sql minimal_reference model dds.dim_time .................... [[32mSELECT 1[0m in 0.04s]
+[0m10:06:48  5 of 15 START sql minimal_reference model dds.dim_vendor ....................... [RUN]
+[0m10:06:48  5 of 15 OK created sql minimal_reference model dds.dim_vendor .................. [[32mSELECT 1[0m in 0.05s]
+[0m10:06:48  6 of 15 START sql view model dds.stg_taxi_zone ................................. [RUN]
+[0m10:06:48  6 of 15 OK created sql view model dds.stg_taxi_zone ............................ [[32mCREATE VIEW[0m in 0.09s]
+[0m10:06:48  7 of 15 START sql view model dds.stg_yellow_taxi ............................... [RUN]
+[0m10:06:48  7 of 15 OK created sql view model dds.stg_yellow_taxi .......................... [[32mCREATE VIEW[0m in 0.06s]
+[0m10:06:48  8 of 15 START sql minimal_reference model dds.dim_zone ......................... [RUN]
+[0m10:06:48  8 of 15 OK created sql minimal_reference model dds.dim_zone .................... [[32mSELECT 1[0m in 0.06s]
+[0m10:06:48  9 of 15 START sql view model dds.int_taxi_trip_enriched ........................ [RUN]
+[0m10:06:48  9 of 15 OK created sql view model dds.int_taxi_trip_enriched ................... [[32mCREATE VIEW[0m in 0.05s]
+[0m10:06:48  10 of 15 START sql table model dds.int_taxi_trip_classified .................... [RUN]
+[0m10:06:48  10 of 15 OK created sql table model dds.int_taxi_trip_classified ............... [[32mSELECT 1[0m in 0.19s]
+[0m10:06:48  11 of 15 START sql minimal_file_replace model dq.business_quarantine ........... [RUN]
+[0m10:06:48  11 of 15 OK created sql minimal_file_replace model dq.business_quarantine ...... [[32mINSERT 0 0[0m in 0.12s]
+[0m10:06:48  12 of 15 START sql minimal_file_replace model dq.duplicate_quarantine .......... [RUN]
+[0m10:06:48  12 of 15 OK created sql minimal_file_replace model dq.duplicate_quarantine ..... [[32mINSERT 0 0[0m in 0.09s]
+[0m10:06:48  13 of 15 START sql view model dds.int_taxi_trip_accepted ....................... [RUN]
+[0m10:06:48  13 of 15 OK created sql view model dds.int_taxi_trip_accepted .................. [[32mCREATE VIEW[0m in 0.05s]
+[0m10:06:48  14 of 15 START sql minimal_fact model dds.fact_taxi_trip ....................... [RUN]
+[0m10:06:49  14 of 15 ERROR creating sql minimal_fact model dds.fact_taxi_trip .............. [[31mERROR[0m in 0.14s]
+[0m10:06:49  15 of 15 SKIP relation dds.v_fact_taxi_trip_analysis ........................... [[33mSKIP[0m]
+[0m10:06:49  
+[0m10:06:49  Finished running 6 minimal reference models, 5 view models, 1 table model, 2 minimal file replace models, 1 minimal fact model in 0 hours 0 minutes and 1.37 seconds (1.37s).
+[0m10:06:49  
+[0m10:06:49  [31mCompleted with 1 error and 0 warnings:[0m
+[0m10:06:49  
+[0m10:06:49    Database Error in model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+  QA forced insert failure after scoped delete
+  CONTEXT:  PL/pgSQL function dds.qa_fail_fact() line 2 at RAISE
+  compiled code at D:\BI\DATH\NYC_TAXI_BI_PROJECT\tmp\dbt_minimal_cluster2_qa\target\run\yellow_taxi_bi\models\marts\facts\fact_taxi_trip.sql
+[0m10:06:49  
+[0m10:06:49  Done. PASS=13 WARN=0 ERROR=1 SKIP=1 TOTAL=15

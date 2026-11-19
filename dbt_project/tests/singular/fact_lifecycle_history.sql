@@ -1,4 +1,4 @@
-{{ config(enabled=var('fact_lifecycle_mode', 'guard') == 'archive') }}
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and var('fact_lifecycle_mode', 'guard') == 'archive') }}
 
 with ordered as (
     select h.*,

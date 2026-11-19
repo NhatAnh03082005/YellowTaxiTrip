@@ -1,0 +1,14 @@
+[0m09:48:24  Running with dbt=1.8.7
+[0m09:48:24  Registered adapter: postgres=1.8.2
+[0m09:48:25  Found 21 models, 144 data tests, 5 seeds, 18 sources, 445 macros
+[0m09:48:25  
+[0m09:48:25  Concurrency: 1 threads (target='qa')
+[0m09:48:25  
+[0m09:48:25  1 of 1 START sql minimal_fact model dds.fact_taxi_trip ......................... [RUN]
+[0m09:48:25  1 of 1 OK created sql minimal_fact model dds.fact_taxi_trip .................... [[32mINSERT 0 0[0m in 0.19s]
+[0m09:48:26  
+[0m09:48:26  Finished running 1 minimal fact model in 0 hours 0 minutes and 0.86 seconds (0.86s).
+[0m09:48:26  
+[0m09:48:26  [32mCompleted successfully[0m
+[0m09:48:26  
+[0m09:48:26  Done. PASS=1 WARN=0 ERROR=0 SKIP=0 TOTAL=1

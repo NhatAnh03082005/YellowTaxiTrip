@@ -1,0 +1,19 @@
+[0m09:48:05  Running with dbt=1.8.7
+[0m09:48:05  Registered adapter: postgres=1.8.2
+[0m09:48:06  Found 21 models, 144 data tests, 5 seeds, 18 sources, 445 macros
+[0m09:48:06  
+[0m09:48:06  Concurrency: 1 threads (target='qa')
+[0m09:48:06  
+[0m09:48:06  1 of 1 START sql minimal_fact model dds.fact_taxi_trip ......................... [RUN]
+[0m09:48:06  1 of 1 ERROR creating sql minimal_fact model dds.fact_taxi_trip ................ [[31mERROR[0m in 0.09s]
+[0m09:48:06  
+[0m09:48:06  Finished running 1 minimal fact model in 0 hours 0 minutes and 0.62 seconds (0.62s).
+[0m09:48:06  
+[0m09:48:06  [31mCompleted with 1 error and 0 warnings:[0m
+[0m09:48:06  
+[0m09:48:06    Database Error in model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+  relation "dds.int_taxi_trip_accepted" does not exist
+  LINE 56: from "dbt_minimal_cluster2"."dds"."int_taxi_trip_accepted" e
+                ^
+[0m09:48:06  
+[0m09:48:06  Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1

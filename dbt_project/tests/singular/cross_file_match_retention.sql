@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 -- A cross-file match is a warning signal, never the sole duplicate exclusion.
 select source_record_key
 from {{ ref('int_taxi_trip_classified') }}

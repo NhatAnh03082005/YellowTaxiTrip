@@ -1,3 +1,5 @@
+{# Minimal affected-grain OLAP implementation is T07; never run legacy queries on slim Fact. #}
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 {{ config(
     materialized='incremental',
     incremental_strategy='delete+insert',

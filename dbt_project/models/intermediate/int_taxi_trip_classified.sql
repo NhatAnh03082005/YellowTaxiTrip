@@ -1,6 +1,16 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='table', tags=['minimal_dds'],
+    pre_hook=[{'sql': '{{ minimal_invalidate_workspace() }}', 'transaction': False},
+              '{{ minimal_validate_scope() }}'],
+    post_hook="{{ minimal_record_workspace() }}",
+    indexes=[{'columns':['source_record_key'],'unique':True},
+             {'columns':['file_version_id','primary_disposition']}]) }}
+{% endif %}
+{% if not var('dbt_minimal_mode', false) %}
 {% set history_relation = source('audit', 'v_trip_fingerprint_history')
     if var('use_fingerprint_history_candidate', false)
     else source('audit', 'trip_fingerprint_history') %}
+{% endif %}
 
 with fingerprinted as (
     select * from {{ ref('int_taxi_trip_fingerprinted') }}
@@ -16,6 +26,7 @@ with fingerprinted as (
             order by source_row_number
         ) as duplicate_survivor_source_record_key
     from fingerprinted f
+{% if not var('dbt_minimal_mode', false) %}
 ), current_cross_file_raw as (
     select raw_exact_fingerprint
     from fingerprinted
@@ -48,20 +59,27 @@ with fingerprinted as (
     select candidate_trip_fingerprint from current_cross_file_candidate
     union
     select candidate_trip_fingerprint from historical_cross_file_candidate
+{% endif %}
 ), lookups as (
     select
         d.*,
         (pu.location_id is null or dz.location_id is null) as has_unmapped_zone,
         (v.vendor_id is null or p.payment_type_id is null or rc.rate_code_id is null) as has_unmapped_code,
+        {% if var('dbt_minimal_mode', false) %}
+        count(*) over(partition by d.candidate_trip_fingerprint) > 1 as has_in_file_candidate_match
+        {% else %}
         (cr.raw_exact_fingerprint is not null or cc.candidate_trip_fingerprint is not null) as has_cross_file_match
+        {% endif %}
     from duplicate_ranked d
     left join {{ ref('stg_taxi_zone') }} pu on pu.location_id = d.pu_location_id
     left join {{ ref('stg_taxi_zone') }} dz on dz.location_id = d.do_location_id
     left join {{ ref('vendor_codes') }} v on v.vendor_id = d.vendor_id
     left join {{ ref('payment_type_codes') }} p on p.payment_type_id = d.payment_type_id
     left join {{ ref('rate_codes') }} rc on rc.rate_code_id = d.rate_code_id
+    {% if not var('dbt_minimal_mode', false) %}
     left join cross_file_raw cr on cr.raw_exact_fingerprint = d.raw_exact_fingerprint
     left join cross_file_candidate cc on cc.candidate_trip_fingerprint = d.candidate_trip_fingerprint
+    {% endif %}
 ), rule_flags as (
     select
         l.*,
@@ -99,7 +117,7 @@ with fingerprinted as (
             ({{ var('airport_pickup_zone_ids') | join(', ') }}))) as fee_001,
         (cbd_congestion_fee > 0 and pickup_datetime < '{{ var('cbd_fee_effective_date') }}'::timestamp) as fee_002,
         (duplicate_occurrence_number > 1) as dup_001,
-        has_cross_file_match as dup_002
+        {% if var('dbt_minimal_mode', false) %}false{% else %}has_cross_file_match{% endif %} as dup_002
     from lookups l
 ), grouped_rules as (
     select
@@ -165,7 +183,46 @@ with fingerprinted as (
     from policy_applied g
 )
 select
-    d.*,
+    {% if var('dbt_minimal_mode', false) %}
+    d.source_record_key,
+    d.file_version_id,
+    d.source_row_number,
+    d.batch_id,
+    d.vendor_id,
+    d.pickup_datetime,
+    d.dropoff_datetime,
+    d.passenger_count,
+    d.trip_distance,
+    d.rate_code_id,
+    d.store_and_fwd_flag,
+    d.pu_location_id,
+    d.do_location_id,
+    d.payment_type_id,
+    d.fare_amount,
+    d.extra,
+    d.mta_tax,
+    d.tip_amount,
+    d.tolls_amount,
+    d.improvement_surcharge,
+    d.total_amount,
+    d.congestion_surcharge,
+    d.airport_fee,
+    d.cbd_congestion_fee,
+    d.duration_seconds,
+    d.row_speed_mph,
+    d.reported_total_amount,
+    d.calculated_total_amount,
+    d.component_reconciliation_status,
+    d.raw_exact_fingerprint,
+    d.candidate_trip_fingerprint,
+    d.raw_contract_valid,
+    d.has_unmapped_rule,
+    d.duplicate_occurrence_number,
+    d.duplicate_survivor_source_record_key,
+    d.has_in_file_candidate_match,
+    d.primary_disposition,
+    d.dq_rule_ids,
+    {% else %}d.*,{% endif %}
     coalesce((primary_disposition in ('ACCEPTED', 'WARNING') and reported_total_amount > 0), false) as is_revenue_kpi_eligible,
     coalesce((primary_disposition in ('ACCEPTED', 'WARNING')
         and payment_type_id = {{ var('recorded_card_payment_code') }}
@@ -178,6 +235,8 @@ select
     coalesce((primary_disposition in ('ACCEPTED', 'WARNING')
         and passenger_count between 1 and {{ var('passenger_kpi_max') }}), false) as is_passenger_kpi_eligible,
     case when primary_disposition in ('ACCEPTED', 'WARNING') and reported_total_amount > 0
-        then reported_total_amount end::numeric(12,2) as revenue_amount,
+        then reported_total_amount end::numeric(12,2) as revenue_amount
+    {% if not var('dbt_minimal_mode', false) %},
     coalesce((amt_002 or amt_003), false) as reversal_or_adjustment_candidate
+    {% endif %}
 from dispositions d

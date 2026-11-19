@@ -1,3 +1,4 @@
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and true) }}
 {{ config(
     materialized='incremental',
     incremental_strategy='delete+insert',

@@ -1,0 +1,43 @@
+[0m09:47:33  Running with dbt=1.8.7
+[0m09:47:33  Registered adapter: postgres=1.8.2
+[0m09:47:34  Unable to do partial parsing because config vars, config profile, or config target have changed
+[0m09:47:35  Found 21 models, 144 data tests, 5 seeds, 18 sources, 445 macros
+[0m09:47:35  
+[0m09:47:36  Concurrency: 1 threads (target='qa')
+[0m09:47:36  
+[0m09:47:36  1 of 15 START sql minimal_reference model dds.dim_date ......................... [RUN]
+[0m09:47:36  1 of 15 OK created sql minimal_reference model dds.dim_date .................... [[32mSELECT 1[0m in 0.07s]
+[0m09:47:36  2 of 15 START sql minimal_reference model dds.dim_payment_type ................. [RUN]
+[0m09:47:36  2 of 15 OK created sql minimal_reference model dds.dim_payment_type ............ [[32mSELECT 1[0m in 0.05s]
+[0m09:47:36  3 of 15 START sql minimal_reference model dds.dim_rate_code .................... [RUN]
+[0m09:47:36  3 of 15 OK created sql minimal_reference model dds.dim_rate_code ............... [[32mSELECT 1[0m in 0.04s]
+[0m09:47:36  4 of 15 START sql minimal_reference model dds.dim_time ......................... [RUN]
+[0m09:47:36  4 of 15 OK created sql minimal_reference model dds.dim_time .................... [[32mSELECT 1[0m in 0.04s]
+[0m09:47:36  5 of 15 START sql minimal_reference model dds.dim_vendor ....................... [RUN]
+[0m09:47:36  5 of 15 OK created sql minimal_reference model dds.dim_vendor .................. [[32mSELECT 1[0m in 0.05s]
+[0m09:47:36  6 of 15 START sql view model dds.stg_taxi_zone ................................. [RUN]
+[0m09:47:36  6 of 15 OK created sql view model dds.stg_taxi_zone ............................ [[32mCREATE VIEW[0m in 0.09s]
+[0m09:47:36  7 of 15 START sql view model dds.stg_yellow_taxi ............................... [RUN]
+[0m09:47:36  7 of 15 OK created sql view model dds.stg_yellow_taxi .......................... [[32mCREATE VIEW[0m in 0.06s]
+[0m09:47:36  8 of 15 START sql minimal_reference model dds.dim_zone ......................... [RUN]
+[0m09:47:36  8 of 15 OK created sql minimal_reference model dds.dim_zone .................... [[32mSELECT 1[0m in 0.06s]
+[0m09:47:36  9 of 15 START sql view model dds.int_taxi_trip_enriched ........................ [RUN]
+[0m09:47:36  9 of 15 OK created sql view model dds.int_taxi_trip_enriched ................... [[32mCREATE VIEW[0m in 0.06s]
+[0m09:47:36  10 of 15 START sql table model dds.int_taxi_trip_classified .................... [RUN]
+[0m09:47:36  10 of 15 OK created sql table model dds.int_taxi_trip_classified ............... [[32mSELECT 1[0m in 0.21s]
+[0m09:47:36  11 of 15 START sql minimal_file_replace model dq.business_quarantine ........... [RUN]
+[0m09:47:37  11 of 15 OK created sql minimal_file_replace model dq.business_quarantine ...... [[32mINSERT 0 0[0m in 0.12s]
+[0m09:47:37  12 of 15 START sql minimal_file_replace model dq.duplicate_quarantine .......... [RUN]
+[0m09:47:37  12 of 15 OK created sql minimal_file_replace model dq.duplicate_quarantine ..... [[32mINSERT 0 0[0m in 0.10s]
+[0m09:47:37  13 of 15 START sql view model dds.int_taxi_trip_accepted ....................... [RUN]
+[0m09:47:37  13 of 15 OK created sql view model dds.int_taxi_trip_accepted .................. [[32mCREATE VIEW[0m in 0.05s]
+[0m09:47:37  14 of 15 START sql minimal_fact model dds.fact_taxi_trip ....................... [RUN]
+[0m09:47:37  14 of 15 OK created sql minimal_fact model dds.fact_taxi_trip .................. [[32mINSERT 0 1[0m in 0.16s]
+[0m09:47:37  15 of 15 START sql view model dds.v_fact_taxi_trip_analysis .................... [RUN]
+[0m09:47:37  15 of 15 OK created sql view model dds.v_fact_taxi_trip_analysis ............... [[32mCREATE VIEW[0m in 0.08s]
+[0m09:47:37  
+[0m09:47:37  Finished running 6 minimal reference models, 5 view models, 1 table model, 2 minimal file replace models, 1 minimal fact model in 0 hours 0 minutes and 1.90 seconds (1.90s).
+[0m09:47:37  
+[0m09:47:37  [32mCompleted successfully[0m
+[0m09:47:37  
+[0m09:47:37  Done. PASS=15 WARN=0 ERROR=0 SKIP=0 TOTAL=15

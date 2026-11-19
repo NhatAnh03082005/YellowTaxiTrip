@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 -- Fail if raw values needed by the approved ordered 19/20-column contract are missing.
 select source_record_key
 from {{ ref('int_taxi_trip_fingerprinted') }}

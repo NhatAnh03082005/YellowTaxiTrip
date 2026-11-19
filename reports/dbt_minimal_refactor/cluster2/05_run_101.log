@@ -1,0 +1,20 @@
+[0m10:06:20  Running with dbt=1.8.7
+[0m10:06:21  Registered adapter: postgres=1.8.2
+[0m10:06:21  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m10:06:21  
+[0m10:06:21  Concurrency: 1 threads (target='qa')
+[0m10:06:21  
+[0m10:06:21  1 of 1 START sql minimal_reference model dds.dim_vendor ........................ [RUN]
+[0m10:06:22  1 of 1 ERROR creating sql minimal_reference model dds.dim_vendor ............... [[31mERROR[0m in 0.23s]
+[0m10:06:22  
+[0m10:06:22  Finished running 1 minimal reference model in 0 hours 0 minutes and 0.59 seconds (0.59s).
+[0m10:06:22  
+[0m10:06:22  [31mCompleted with 1 error and 0 warnings:[0m
+[0m10:06:22  
+[0m10:06:22    Compilation Error in model dim_vendor (models\marts\dimensions\dim_vendor.sql)
+  Reference surrogate mapping drift; explicit migration required
+  
+  > in macro materialization_minimal_reference_postgres (macros\minimal_reference.sql)
+  > called by model dim_vendor (models\marts\dimensions\dim_vendor.sql)
+[0m10:06:22  
+[0m10:06:22  Done. PASS=0 WARN=0 ERROR=1 SKIP=0 TOTAL=1

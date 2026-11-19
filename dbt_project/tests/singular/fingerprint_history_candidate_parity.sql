@@ -1,9 +1,9 @@
-{{ config(enabled=var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
 
 {# Run only in an isolated fixture or for one explicitly selected file version.
    A zero-row result is necessary, not sufficient, for a production cutover. #}
 {% set file_version = var('fingerprint_parity_file_version', 0) | int %}
-{% if var('enable_fingerprint_history_candidate', false) and file_version <= 0 %}
+{% if not var('dbt_minimal_mode', false) and var('enable_fingerprint_history_candidate', false) and file_version <= 0 %}
     {{ exceptions.raise_compiler_error('fingerprint_parity_file_version must be a positive file version id') }}
 {% endif %}
 with legacy as (

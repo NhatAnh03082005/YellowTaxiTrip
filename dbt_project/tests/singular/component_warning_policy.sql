@@ -1,3 +1,4 @@
+{{ config(enabled=not var('dbt_minimal_mode', false)) }}
 select source_record_key
 from {{ ref('int_taxi_trip_classified') }}
 where (component_reconciliation_status = 'MATCHED'

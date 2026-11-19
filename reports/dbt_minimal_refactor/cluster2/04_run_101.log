@@ -1,0 +1,16 @@
+[0m10:06:17  Running with dbt=1.8.7
+[0m10:06:17  Registered adapter: postgres=1.8.2
+[0m10:06:18  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m10:06:18  
+[0m10:06:18  Concurrency: 1 threads (target='qa')
+[0m10:06:18  
+[0m10:06:18  1 of 2 START sql view model dds.stg_taxi_zone .................................. [RUN]
+[0m10:06:18  1 of 2 OK created sql view model dds.stg_taxi_zone ............................. [[32mCREATE VIEW[0m in 0.09s]
+[0m10:06:18  2 of 2 START sql minimal_reference model dds.dim_zone .......................... [RUN]
+[0m10:06:18  2 of 2 OK created sql minimal_reference model dds.dim_zone ..................... [[32mINSERT 0 1[0m in 0.14s]
+[0m10:06:18  
+[0m10:06:18  Finished running 1 view model, 1 minimal reference model in 0 hours 0 minutes and 0.58 seconds (0.58s).
+[0m10:06:18  
+[0m10:06:18  [32mCompleted successfully[0m
+[0m10:06:18  
+[0m10:06:18  Done. PASS=2 WARN=0 ERROR=0 SKIP=0 TOTAL=2

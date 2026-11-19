@@ -1,5 +1,7 @@
 # Đề xuất cuối cùng tối ưu lưu trữ và ETL Yellow Taxi 2024–2025
 
+> Cập nhật phạm vi 2026-11-19: thiết kế dbt tối giản mới được chốt tại [DBT_MINIMAL_CONTRACT.md](DBT_MINIMAL_CONTRACT.md). Các phần registry/cross-file history/lifecycle archive và storage liên quan trong tài liệu này là thiết kế legacy; runtime/database chưa migrate. Các quyết định nghiệp vụ không bị contract mới thay thế vẫn giữ nguyên.
+
 **Ngày chốt đề xuất:** 18/11/2026  
 **Trạng thái:** `FINAL PROPOSAL — CHỜ PROJECT LEAD VÀ DBT OWNER KÝ DUYỆT`  
 **Phạm vi:** Mage, PostgreSQL/PostGIS, Staging, dbt DDS/DQ/OLAP, Control và Docker local  

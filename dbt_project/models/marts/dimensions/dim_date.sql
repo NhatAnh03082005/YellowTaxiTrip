@@ -1,3 +1,9 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='minimal_reference',tags=['minimal_reference'], reference_key='date_key', reference_natural_key='full_date',reference_dependencies=[]) }}
+{% endif %}
+{% if var('dbt_minimal_mode', false) %}
+with bounds as (select '{{ var("minimal_calendar_start") }}'::date as first_date, '{{ var("minimal_calendar_end") }}'::date as last_date
+{% else %}
 {{ config(materialized='incremental', incremental_strategy='delete+insert', unique_key='date_key') }}
 
 with observed_dates as (
@@ -13,6 +19,8 @@ with observed_dates as (
         min(full_date) as first_date,
         max(full_date) as last_date
     from observed_dates
+
+{% endif %}
 ), calendar as (
     select day_value::date as full_date
     from bounds,

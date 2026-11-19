@@ -1,0 +1,530 @@
+{
+  "A_2024": {
+    "raw_rows": 29,
+    "canonical_rows": 24,
+    "fact_rows": 17,
+    "technical_rows": 5,
+    "business_rows": 6,
+    "duplicate_rows": 1,
+    "candidate_rows": 4,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 29,
+          "sum": "279.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 5,
+          "sum": "50.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 6,
+          "sum": "49.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 17,
+          "sum": "170.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 29,
+          "sum": "29.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 5,
+          "sum": "5.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 6,
+          "sum": "6.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 17,
+          "sum": "17.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 27,
+          "sum": "328.03"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 3,
+          "sum": "39.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 1,
+          "sum": "13.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 6,
+          "sum": "54.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 17,
+          "sum": "222.03"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "222.03",
+      "tip_numerator": "15.00",
+      "tip_denominator": "150.00",
+      "speed_distance": "28.000",
+      "duration_sum": 9600,
+      "duration_count": 16,
+      "speed_seconds": 8400,
+      "passenger_sum": 22,
+      "passenger_count": 15
+    }
+  },
+  "B_2025": {
+    "raw_rows": 6,
+    "canonical_rows": 6,
+    "fact_rows": 5,
+    "technical_rows": 0,
+    "business_rows": 1,
+    "duplicate_rows": 0,
+    "candidate_rows": 0,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 6,
+          "sum": "65.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 5,
+          "sum": "55.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 6,
+          "sum": "10.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 5,
+          "sum": "9.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 6,
+          "sum": "100.75"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 1,
+          "sum": "15.75"
+        },
+        "TRUSTED": {
+          "eligible_count": 5,
+          "sum": "85.00"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "85.00",
+      "tip_numerator": "9.00",
+      "tip_denominator": "55.00",
+      "speed_distance": "17.000",
+      "duration_sum": 5520,
+      "duration_count": 5,
+      "speed_seconds": 5520,
+      "passenger_sum": 5,
+      "passenger_count": 5
+    }
+  },
+  "C_CROSS_FILE": {
+    "raw_rows": 1,
+    "canonical_rows": 1,
+    "fact_rows": 1,
+    "technical_rows": 0,
+    "business_rows": 0,
+    "duplicate_rows": 0,
+    "candidate_rows": 0,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "13.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "13.00"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "13.00",
+      "tip_numerator": "1.00",
+      "tip_denominator": "10.00",
+      "speed_distance": "2.000",
+      "duration_sum": 600,
+      "duration_count": 1,
+      "speed_seconds": 600,
+      "passenger_sum": 1,
+      "passenger_count": 1
+    }
+  },
+  "A_REPLACEMENT": {
+    "raw_rows": 1,
+    "canonical_rows": 1,
+    "fact_rows": 1,
+    "technical_rows": 0,
+    "business_rows": 0,
+    "duplicate_rows": 0,
+    "candidate_rows": 0,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "13.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 1,
+          "sum": "13.00"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "13.00",
+      "tip_numerator": "1.00",
+      "tip_denominator": "10.00",
+      "speed_distance": "2.000",
+      "duration_sum": 600,
+      "duration_count": 1,
+      "speed_seconds": 600,
+      "passenger_sum": 1,
+      "passenger_count": 1
+    }
+  },
+  "EMPTY_VALIDATED_SCOPE": {
+    "raw_rows": 0,
+    "canonical_rows": 0,
+    "fact_rows": 0,
+    "technical_rows": 0,
+    "business_rows": 0,
+    "duplicate_rows": 0,
+    "candidate_rows": 0,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "0.00",
+      "tip_numerator": "0.00",
+      "tip_denominator": "0.00",
+      "speed_distance": "0.00",
+      "duration_sum": 0,
+      "duration_count": 0,
+      "speed_seconds": 0,
+      "passenger_sum": 0,
+      "passenger_count": 0
+    }
+  },
+  "ALL_REJECTED": {
+    "raw_rows": 1,
+    "canonical_rows": 0,
+    "fact_rows": 0,
+    "technical_rows": 1,
+    "business_rows": 0,
+    "duplicate_rows": 0,
+    "candidate_rows": 0,
+    "measures": {
+      "fare": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 1,
+          "sum": "10.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      },
+      "tip": {
+        "ALL": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 1,
+          "sum": "1.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      },
+      "total": {
+        "ALL": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TECHNICAL_REJECT": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "DUPLICATE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "BUSINESS_QUARANTINE": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        },
+        "TRUSTED": {
+          "eligible_count": 0,
+          "sum": "0.00"
+        }
+      }
+    },
+    "kpi": {
+      "revenue": "0.00",
+      "tip_numerator": "0.00",
+      "tip_denominator": "0.00",
+      "speed_distance": "0.00",
+      "duration_sum": 0,
+      "duration_count": 0,
+      "speed_seconds": 0,
+      "passenger_sum": 0,
+      "passenger_count": 0
+    }
+  }
+}

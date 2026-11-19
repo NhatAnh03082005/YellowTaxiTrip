@@ -1,0 +1,304 @@
+{
+  "method": "Parquet footer min/max only; no row scan, not accepted-row bounds",
+  "files": [
+    {
+      "source_year_month": "2024-01",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-01\\yellow_tripdata_2024-01.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-02",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-02\\yellow_tripdata_2024-02.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-03",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-03\\yellow_tripdata_2024-03.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-04",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-04\\yellow_tripdata_2024-04.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-05",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-05\\yellow_tripdata_2024-05.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-06",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-06\\yellow_tripdata_2024-06.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-07",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-07\\yellow_tripdata_2024-07.parquet",
+      "columns": {},
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-08",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-08\\yellow_tripdata_2024-08.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2009-01-01 00:02:52",
+          "max": "2024-09-10 12:27:29"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 20:28:16",
+          "max": "2024-09-10 19:45:57"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-09",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-09\\yellow_tripdata_2024-09.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2008-12-31 23:03:46",
+          "max": "2024-10-01 21:24:53"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 14:28:23",
+          "max": "2024-10-02 17:28:37"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-10",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-10\\yellow_tripdata_2024-10.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2009-01-01 00:35:59",
+          "max": "2024-11-14 18:30:00"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 01:29:28",
+          "max": "2024-11-14 18:41:41"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-11",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-11\\yellow_tripdata_2024-11.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2002-12-31 22:17:43",
+          "max": "2024-12-01 22:04:33"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2002-12-31 22:23:55",
+          "max": "2024-12-01 23:10:54"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2024-12",
+      "path": "data\\yellow_taxi\\by_year_month\\2024-12\\yellow_tripdata_2024-12.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2008-12-31 23:03:59",
+          "max": "2025-03-23 20:42:06"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 00:30:36",
+          "max": "2025-03-23 22:52:56"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-01",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-01\\yellow_tripdata_2025-01.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2024-12-31 20:47:55",
+          "max": "2025-02-01 00:00:44"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2024-12-18 07:52:40",
+          "max": "2025-02-01 23:44:11"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-02",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-02\\yellow_tripdata_2025-02.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-01-31 22:22:53",
+          "max": "2025-03-01 00:06:32"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-01-31 22:30:00",
+          "max": "2025-03-01 23:13:42"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-03",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-03\\yellow_tripdata_2025-03.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2007-12-05 18:45:00",
+          "max": "2025-04-01 00:00:17"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2007-12-05 19:02:00",
+          "max": "2025-04-03 14:07:50"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-04",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-04\\yellow_tripdata_2025-04.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-03-31 23:45:01",
+          "max": "2025-05-01 00:48:13"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-03-31 23:54:54",
+          "max": "2025-05-01 21:42:14"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-05",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-05\\yellow_tripdata_2025-05.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2009-01-01 00:20:39",
+          "max": "2025-06-01 00:04:31"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 00:20:49",
+          "max": "2025-06-04 11:17:10"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-06",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-06\\yellow_tripdata_2025-06.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-05-31 22:34:26",
+          "max": "2025-06-30 23:59:59"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-05-31 22:43:36",
+          "max": "2025-07-01 22:36:42"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-07",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-07\\yellow_tripdata_2025-07.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2009-01-01 08:52:26",
+          "max": "2025-07-31 23:59:59"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 10:00:26",
+          "max": "2025-08-03 17:03:02"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-08",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-08\\yellow_tripdata_2025-08.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2009-01-01 12:52:15",
+          "max": "2025-09-01 00:00:29"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2009-01-01 13:12:15",
+          "max": "2025-09-02 08:17:29"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-09",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-09\\yellow_tripdata_2025-09.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-08-31 23:45:38",
+          "max": "2025-10-01 00:00:11"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-08-31 23:46:43",
+          "max": "2025-10-03 14:49:31"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-10",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-10\\yellow_tripdata_2025-10.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-09-30 22:54:51",
+          "max": "2025-11-01 00:32:12"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-09-30 23:04:41",
+          "max": "2025-11-03 09:38:20"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-11",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-11\\yellow_tripdata_2025-11.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2008-12-31 23:04:21",
+          "max": "2025-11-30 23:59:59"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2008-12-31 23:32:25",
+          "max": "2025-12-01 21:41:00"
+        }
+      },
+      "status": "footer_statistics_only"
+    },
+    {
+      "source_year_month": "2025-12",
+      "path": "data\\yellow_taxi\\by_year_month\\2025-12\\yellow_tripdata_2025-12.parquet",
+      "columns": {
+        "tpep_pickup_datetime": {
+          "min": "2025-11-30 20:48:56",
+          "max": "2025-12-31 23:59:59"
+        },
+        "tpep_dropoff_datetime": {
+          "min": "2025-11-30 20:57:48",
+          "max": "2026-01-05 13:00:34"
+        }
+      },
+      "status": "footer_statistics_only"
+    }
+  ],
+  "first_date": "2002-12-31",
+  "last_date": "2026-01-05"
+}

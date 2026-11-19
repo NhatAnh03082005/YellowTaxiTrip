@@ -1,4 +1,5 @@
-{{ config(materialized='view', schema='audit', enabled=var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and var('enable_fingerprint_history_candidate', false)) }}
+{{ config(materialized='view', schema='audit', enabled=(not var('dbt_minimal_mode', false)) and var('enable_fingerprint_history_candidate', false), tags=['fingerprint_candidate']) }}
 
 {# Candidate only: physical sources avoid a cycle through classification.  Do not
    switch consumers until legacy coverage and duplicate semantics are proven. #}

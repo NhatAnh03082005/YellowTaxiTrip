@@ -9,9 +9,15 @@ models:
       - name: source_record_key
         data_tests: [not_null, unique]
       - name: raw_exact_fingerprint
-        data_tests: [not_null]
+        data_tests:
+          - not_null:
+              config:
+                enabled: "{{ not var('dbt_minimal_mode', false) }}"
       - name: candidate_trip_fingerprint
-        data_tests: [not_null]
+        data_tests:
+          - not_null:
+              config:
+                enabled: "{{ not var('dbt_minimal_mode', false) }}"
       - name: pickup_date_key
         data_tests:
           - not_null

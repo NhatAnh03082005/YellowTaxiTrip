@@ -10,14 +10,17 @@ class DuplicateSurvivorFixtureSQL(unittest.TestCase):
     def test_lowest_source_row_is_survivor_within_file(self):
         root = Path(__file__).resolve().parents[1]
         text = (root / 'dbt_project/models/intermediate/int_taxi_trip_classified.sql').read_text(encoding='utf-8')
-        ranking = text.split('), current_cross_file_raw as (', 1)[0] + ')\nselect * from duplicate_ranked'
         env = jinja2.Environment()
         env.globals.update(
+            config=lambda **kwargs: '',
             ref=lambda name: 'pg_temp.fingerprinted',
             source=lambda schema, table: 'pg_temp.' + table,
             var=lambda name, default=None: default,
         )
-        ranking = env.from_string(ranking).render()
+        # Render only the actual ranking CTE, before the optional legacy branch.
+        prefix = text.split('), current_cross_file_raw as (', 1)[0]
+        prefix = prefix.rsplit("{% if not var('dbt_minimal_mode', false) %}", 1)[0]
+        ranking = env.from_string(prefix + ')\nselect * from duplicate_ranked').render()
         sql = r"""
 BEGIN;
 CREATE TEMP TABLE fingerprinted(

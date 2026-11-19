@@ -1,3 +1,6 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='minimal_reference',tags=['minimal_reference'], reference_key='zone_key', reference_natural_key='location_id',reference_dependencies=['zone_key_map', 'stg_taxi_zone']) }}
+{% endif %}
 with members as (
     select
         m.zone_key,

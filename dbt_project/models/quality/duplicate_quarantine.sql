@@ -1,3 +1,38 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='minimal_file_replace',tags=['minimal_dds','dq','persistent']) }}
+select
+    source_record_key,
+    file_version_id,
+    source_row_number,
+    batch_id,
+    vendor_id,
+    pickup_datetime,
+    dropoff_datetime,
+    passenger_count,
+    trip_distance,
+    rate_code_id,
+    store_and_fwd_flag,
+    pu_location_id,
+    do_location_id,
+    payment_type_id,
+    fare_amount,
+    extra,
+    mta_tax,
+    tip_amount,
+    tolls_amount,
+    improvement_surcharge,
+    total_amount,
+    congestion_surcharge,
+    airport_fee,
+    cbd_congestion_fee,
+    primary_disposition,
+    dq_rule_ids,
+    component_reconciliation_status,
+    duplicate_occurrence_number,
+    duplicate_survivor_source_record_key
+from {{ ref('int_taxi_trip_classified') }}
+where primary_disposition='DUPLICATE'
+{% else %}
 {{ config(
     materialized='incremental',
     incremental_strategy='delete+insert',
@@ -64,3 +99,4 @@ select
     reversal_or_adjustment_candidate
 from {{ ref('int_taxi_trip_classified') }}
 where primary_disposition = 'DUPLICATE'
+{% endif %}

@@ -1,0 +1,9 @@
+[0m10:07:20  Running with dbt=1.8.7
+[0m10:07:20  Registered adapter: postgres=1.8.2
+[0m10:07:20  Unable to do partial parsing because config vars, config profile, or config target have changed
+[0m10:07:21  Encountered an error:
+Compilation Error in model int_taxi_trip_classified (models\intermediate\int_taxi_trip_classified.sql)
+  Minimal mode does not support archive or historical fingerprint flags; use the minimal runner/profile
+  
+  > in macro minimal_validate_scope (macros\minimal_scope.sql)
+  > called by model int_taxi_trip_classified (models\intermediate\int_taxi_trip_classified.sql)

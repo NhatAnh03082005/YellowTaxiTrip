@@ -1,5 +1,7 @@
 # Phase 2 Design Freeze — đã phê duyệt
 
+> Cập nhật phạm vi 2026-11-19: thiết kế dbt tối giản mới được chốt tại [DBT_MINIMAL_CONTRACT.md](../etl_design/DBT_MINIMAL_CONTRACT.md). Các phần registry/cross-file history/lifecycle archive và storage liên quan trong tài liệu này là thiết kế legacy; runtime/database chưa migrate. Các quyết định nghiệp vụ không bị contract mới thay thế vẫn giữ nguyên.
+
 **Phạm vi:** NYC Yellow Taxi, ETL 2024–2025  
 **Ngày lập:** 2026-11-15 (Asia/Bangkok)  
 **Cập nhật phê duyệt:** 2026-11-16 (Asia/Bangkok)  

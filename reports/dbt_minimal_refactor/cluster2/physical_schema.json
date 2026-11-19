@@ -1,0 +1,908 @@
+{
+  "physical_columns": [
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "source_record_key",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "pickup_date_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "dropoff_date_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "pickup_time_key",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "dropoff_time_key",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "pickup_zone_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "dropoff_zone_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "vendor_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "payment_type_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "rate_code_key",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "trip_count",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "pickup_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "dropoff_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "vendor_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "rate_code_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "payment_type_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "pu_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "do_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "passenger_count",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "trip_distance_miles",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "duration_seconds",
+      "data_type": "integer"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "row_speed_mph",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "fare_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "extra",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "mta_tax",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "tip_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "tolls_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "improvement_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "congestion_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "airport_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "cbd_congestion_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "calculated_total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "revenue_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "component_reconciliation_status",
+      "data_type": "text"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "is_revenue_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "is_tip_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "is_speed_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "is_duration_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "is_passenger_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "store_and_fwd_flag",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "primary_disposition",
+      "data_type": "character varying"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "dq_rule_ids",
+      "data_type": "ARRAY"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "batch_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "file_version_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "source_row_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "fact_taxi_trip",
+      "column_name": "trip_key",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "source_record_key",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "file_version_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "source_row_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "batch_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "vendor_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "pickup_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "dropoff_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "passenger_count",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "trip_distance",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "rate_code_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "store_and_fwd_flag",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "pu_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "do_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "payment_type_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "fare_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "extra",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "mta_tax",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "tip_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "tolls_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "improvement_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "congestion_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "airport_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "cbd_congestion_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "duration_seconds",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "row_speed_mph",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "reported_total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "calculated_total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "component_reconciliation_status",
+      "data_type": "text"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "raw_exact_fingerprint",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "candidate_trip_fingerprint",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "raw_contract_valid",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "has_unmapped_rule",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "duplicate_occurrence_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "duplicate_survivor_source_record_key",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "has_in_file_candidate_match",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "primary_disposition",
+      "data_type": "character varying"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "dq_rule_ids",
+      "data_type": "ARRAY"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "is_revenue_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "is_tip_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "is_speed_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "is_duration_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "is_passenger_kpi_eligible",
+      "data_type": "boolean"
+    },
+    {
+      "table_schema": "dds",
+      "table_name": "int_taxi_trip_classified",
+      "column_name": "revenue_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "source_record_key",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "file_version_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "source_row_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "batch_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "vendor_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "pickup_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "dropoff_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "passenger_count",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "trip_distance",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "rate_code_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "store_and_fwd_flag",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "pu_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "do_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "payment_type_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "fare_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "extra",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "mta_tax",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "tip_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "tolls_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "improvement_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "congestion_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "airport_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "cbd_congestion_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "primary_disposition",
+      "data_type": "character varying"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "dq_rule_ids",
+      "data_type": "ARRAY"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "business_quarantine",
+      "column_name": "component_reconciliation_status",
+      "data_type": "text"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "source_record_key",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "file_version_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "source_row_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "batch_id",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "vendor_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "pickup_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "dropoff_datetime",
+      "data_type": "timestamp without time zone"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "passenger_count",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "trip_distance",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "rate_code_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "store_and_fwd_flag",
+      "data_type": "character"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "pu_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "do_location_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "payment_type_id",
+      "data_type": "smallint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "fare_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "extra",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "mta_tax",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "tip_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "tolls_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "improvement_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "total_amount",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "congestion_surcharge",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "airport_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "cbd_congestion_fee",
+      "data_type": "numeric"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "primary_disposition",
+      "data_type": "character varying"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "dq_rule_ids",
+      "data_type": "ARRAY"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "component_reconciliation_status",
+      "data_type": "text"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "duplicate_occurrence_number",
+      "data_type": "bigint"
+    },
+    {
+      "table_schema": "dq",
+      "table_name": "duplicate_quarantine",
+      "column_name": "duplicate_survivor_source_record_key",
+      "data_type": "character"
+    }
+  ],
+  "physical_fingerprint": {
+    "physical_fingerprint": null
+  },
+  "calendar": {
+    "first_date": "2002-01-01",
+    "last_date": "2026-12-31",
+    "members": 9133
+  },
+  "identity": {
+    "column_name": "trip_key",
+    "is_identity": "YES",
+    "identity_generation": "ALWAYS"
+  },
+  "workspace": [
+    {
+      "model_name": "int_taxi_trip_classified",
+      "batch_id": 105,
+      "file_version_id": 105,
+      "valid": true
+    }
+  ],
+  "note": "Synthetic small QA snapshot; no size/time benchmark. Final Fact intentionally changed by zero-stale test, not a published batch."
+}

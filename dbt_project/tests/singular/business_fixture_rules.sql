@@ -1,4 +1,4 @@
-{{ config(enabled=var('fixture_mode', false)) }}
+{{ config(enabled=(not var('dbt_minimal_mode', false)) and var('fixture_mode', false)) }}
 
 with actual as (
     select source_row_number, dq_rule_ids, primary_disposition

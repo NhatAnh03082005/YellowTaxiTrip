@@ -1,0 +1,561 @@
+{
+  "A01_CONTROL": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": true,
+    "source_record_key": "b275cc3e1fd59369adf26b216d0196140480d9a5c0ec5b25151a8c1bef346cf7"
+  },
+  "A02_EXACT_LOSER": {
+    "disposition": "DUPLICATE",
+    "rules": [
+      "DUP-001"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": true,
+    "source_record_key": "67a259725e511dbbd2ae2de7a4c4244448ebcc88b38e8bb88669eb1e07b25f03"
+  },
+  "A03_CANDIDATE_ONLY": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-007"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": true,
+    "source_record_key": "619ebc53dd3bede34d0b1580fe77456b39d059e459d5d45a1a1e7bf1d0bab64e"
+  },
+  "A04_RAW_PRECISION_DISTINCT": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": true,
+    "source_record_key": "b60ea461d8d21728ae710a2daa8aa459664337a564d5579d354a10495109637f"
+  },
+  "A05_ZERO_PASSENGER": {
+    "disposition": "WARNING",
+    "rules": [
+      "PASS-001"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "d0ce7f5e2c3c63402254fdd79be97dfb051a6215d4a0c72ca484dcbfe9ef40aa"
+  },
+  "A06_NEGATIVE_DISTANCE": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "DIST-001"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "bdb04215fef34c6d0d50dbbcb0c8ed27752f9b2ae230942156af96b8a14d669e"
+  },
+  "A07_REVERSED_TIME": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "TIME-002"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "aa8fa9f242eddb885485ddf1f127f815d058cc36daa9108f9287f3e274de5d09"
+  },
+  "A08_ZERO_TOTAL": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "AMT-001",
+      "AMT-003",
+      "AMT-007"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "fa594e8311f99e2fee55b41bc47b60601063fba97cd734ec54e1377ddb9bc411"
+  },
+  "A09_BAD_TOTAL": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-003"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "e7490f5e745887c8a3bc19f9b444463a78300f1974abaed89bed99622b736ba5"
+  },
+  "A10_BAD_PICKUP": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-001"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "8f0fa9295d02af7e4d9cd2636f302204f6cecf6e8c7d582a0e3e58b6707048ec"
+  },
+  "A11_BAD_ZONE": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-002"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "000e6dce5c300d5ccf80f6500f3a9c089713e7039792318d9916c562e3c65fed"
+  },
+  "A12_UNMAPPED_ZONE": {
+    "disposition": "WARNING",
+    "rules": [
+      "LOC-001"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "c2ac523bc97510e53166d099c0540ea46cb5fa2ff843f3df7cdc631b93934c3a"
+  },
+  "A13_SPEED_WARNING": {
+    "disposition": "WARNING",
+    "rules": [
+      "SPEED-001"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": false,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "c5ec6b568f8f530b9a189604e53ebbe6bb88d8d298595286a9c1b78ba69ca098"
+  },
+  "A14_SPEED_REJECT": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "SPEED-002"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "df2753a01bfda95129d151dc7947d43123aeed71a9f8525f2a5724a1a8432fd2"
+  },
+  "A15_DURATION_WARNING": {
+    "disposition": "WARNING",
+    "rules": [
+      "TIME-004"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": false,
+      "duration": false,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "45b0f28ccd79a76833b8348ce947cf4d4ee1ecd082af2b99b9f016e99388e423"
+  },
+  "A16_MISSING_COMPONENT": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-008"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "1ba3a3b6438be15912967e9f44ff26cdb645c6594846c36823b57d42c57999f6"
+  },
+  "A17_ROUNDING_WARNING": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-006"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "54b3b9d6235f408f6adc4b610739ec4b4cc7e9aa26998d5bb23ee1513a6bcce8"
+  },
+  "A18_REVIEW_WARNING": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-007"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "2a0d5aec7ba289f88e59dd09c84040acf8e0547f7dfed373da3de20b262a5168"
+  },
+  "A19_NEGATIVE_COMPONENT": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "AMT-002"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "6ea2a4b57452a45101300434ecf38b5ec7923dc3465787a5a8d01821f3d2c0c3"
+  },
+  "A20_CASH_TIP": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-004"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": false,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "0f2718098ad64d66348bb6099e693724ca47319fe4c6e73f69ea213b38d5928d"
+  },
+  "A21_SOURCE_ZONE_264": {
+    "disposition": "ACCEPTED",
+    "rules": [
+      "LOC-002"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "a8a00fb9b267ff852102ac06330c73d7f2adf27e7ae4a9481ca8c5e211e71002"
+  },
+  "A22_GROUP_FOUR": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "f5fc3fef22c6c61f0601e160f7d4e0fcfe520290934aa79f15f1f66756d689cf"
+  },
+  "A23_GROUP_FIVE": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "4726f6e1190d2a52292b5024264c7606d9a00484e650867a34c7f2e5ab60dfcd"
+  },
+  "A24_NULL_PASSENGER": {
+    "disposition": "WARNING",
+    "rules": [
+      "PASS-001"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "43ec9a6e5a5cab64a9df280d13de4b7922c68a0cc44bf76024cb51e4803f30b2"
+  },
+  "A25_VOID": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "AMT-004",
+      "CODE-003"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "92450359a69835e7608681f0cf0dfc7529b8eac4c5c5a028885efc7bd67e48a8"
+  },
+  "A26_ZERO_DISTANCE": {
+    "disposition": "WARNING",
+    "rules": [
+      "DIST-002"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": false,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "74f2a7133fbea0fd063a077cd13d4ef8759f22f2b62afa091b82823077d01972"
+  },
+  "A27_UNMAPPED_CODES": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-004",
+      "CODE-001"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": false,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "bba57aa3f00ca1f0755baef275578fce88c66d82ce08c95aefdf14c59aca7ad7"
+  },
+  "A28_NULL_TOTAL": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-003"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "5917566521cc7220550e471ac0ea8baca9c6a7f2b42d1f504736097da603b483"
+  },
+  "A29_NULL_PICKUP": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-001"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "9dea32f37532b8e5ef7f825f18807faf624561f20b4d20ae4047957b92ea3537"
+  },
+  "B01_CBD_VALID": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "eccab807fd9eaf76e50cb55783013de5c85582022e61132fb4ef94ef94778cae"
+  },
+  "B02_OUT_OF_FILE_SHARED_DAY": {
+    "disposition": "WARNING",
+    "rules": [
+      "TIME-005"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "ab96afcc9d8f51ab7ec24ddeee37afcef9b3355e899f9d14a87181793e5b5563"
+  },
+  "B03_CBD_BEFORE_EFFECTIVE": {
+    "disposition": "BUSINESS_QUARANTINE",
+    "rules": [
+      "FEE-002",
+      "TIME-005"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "0f002260b09911890834b2fe226d837733437f91d021a45dd61b4e776c4f37e8"
+  },
+  "B04_MISSING_CBD": {
+    "disposition": "WARNING",
+    "rules": [
+      "AMT-008"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "599a6bf793131a8f80e5daa7a668d365b85deaadbdd09d8423c93da584355dbb"
+  },
+  "C01_CROSS_FILE_SAME_RAW": {
+    "disposition": "WARNING",
+    "rules": [
+      "TIME-005"
+    ],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "95cec145bc6797337713b3b83048ac8832200acbe04bab24aac6b2562bb1e70f"
+  },
+  "R01_NEW_DAY_ROUTE": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "b36d08cd1ea254297bebd55979729d2f4ef7471732c05f59cdb27f26518f811d"
+  },
+  "J01_ALL_TECH_REJECT": {
+    "disposition": "TECHNICAL_REJECT",
+    "rules": [
+      "CAST-003"
+    ],
+    "eligible": {
+      "revenue": false,
+      "tip": false,
+      "speed": false,
+      "duration": false,
+      "passenger": false
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "3b272575df10a64d25a83f9a484dcb254f59ebc992f619335834ed87ce8b17bc"
+  },
+  "B05_WEIGHTED_KPI_LONG": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "ebd4c3bf6d5f0fa69d03ee2c14a55067e04ace41700837f89f555111ecbac790"
+  },
+  "B06_WEIGHTED_KPI_SHORT": {
+    "disposition": "ACCEPTED",
+    "rules": [],
+    "eligible": {
+      "revenue": true,
+      "tip": true,
+      "speed": true,
+      "duration": true,
+      "passenger": true
+    },
+    "has_in_file_candidate_match": false,
+    "source_record_key": "f0b08a4746292808d4af64788ee90aa6ca8f8ec3dfd47cde92f9df8a0459fa9a"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "tests/fixtures/dbt_minimal/input.json": "76feaa1e1833f05c3966ced50ac10d1bbbf599cc05901ea623e896c7684c59c9",
+  "tests/fixtures/dbt_minimal/scenarios.json": "dff61562041cfd89405d79010ae308acafbf0e49c174e3b07eda83559adfc555",
+  "tests/expected_results/dbt_minimal_rows.json": "0f9b9531c5fb81e196d940139e62ff6023790f8624a1ea55c1ecef50e46c9370",
+  "tests/expected_results/dbt_minimal_summaries.json": "431ed68a7b53e910657169ee03bab2e1a50fed262f6fee734a92c621c0a46cb3"
+}

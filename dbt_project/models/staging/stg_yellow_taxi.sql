@@ -33,7 +33,7 @@ select
     airport_fee,
     cbd_congestion_fee,
     cast_error_flags,
-    raw_payload,
+    {% if not var('dbt_minimal_mode', false) %}raw_payload,{% endif %}
     batch_id,
     effective_file_version_id as file_version_id,
     source_file,
@@ -46,3 +46,7 @@ select
     source_last_modified,
     ingested_at
 from canonical
+
+{% if var('dbt_minimal_mode', false) %}
+where batch_id = {{ minimal_batch_id() }} and effective_file_version_id = {{ minimal_version_id() }}
+{% endif %}

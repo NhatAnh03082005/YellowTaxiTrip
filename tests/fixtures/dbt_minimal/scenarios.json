@@ -1,0 +1,82 @@
+{
+  "status": "Acceptance scenarios for T05-T09; not executed against dbt/runner in T02",
+  "scenarios": [
+    {
+      "id": "FIRST_LOAD_THEN_INCREMENTAL",
+      "steps": ["Load A_2024", "Load B_2025", "Load C_CROSS_FILE"],
+      "expected": {"fact_rows": 23, "revenue": "320.03", "daily_2024_05_01_rows": 19, "daily_2024_05_01_revenue": "248.03"},
+      "must_assert": ["Each successful file advances metadata once", "A rows not reclassified when C matches A raw hash", "Shared pickup date aggregates include all files"]
+    },
+    {
+      "id": "SUCCESS_UNCHANGED_SKIP",
+      "precondition": "A_2024 SUCCESS; same verified checksum and version; cleanup SUCCESS",
+      "steps": ["Request A_2024 again"],
+      "expected": {"action": "SKIP", "dbt_invocations": 0, "fact_rows": 17, "revenue": "222.03"},
+      "must_assert": ["Source-key to trip-key mapping unchanged", "No history/archive writes", "No new duplicate DQ rows", "Skip log does not create false new ingestion success"]
+    },
+    {
+      "id": "FAILED_BATCH_RETRY_SAME_VERSION",
+      "precondition": "A DDS committed; later phase failed; watermark uncommitted",
+      "steps": ["Resume same batch/version with verified staging", "Rebuild workspace and rerun downstream"],
+      "expected": {"fact_rows": 17, "revenue": "222.03", "business_rows": 6, "duplicate_rows": 1, "technical_rows": 5},
+      "must_assert": ["Existing accepted source keys retain trip_key", "Different file versions unchanged", "Watermark commits only after final tests", "Retry does not depend on stale workspace"]
+    },
+    {
+      "id": "APPROVED_REPLACEMENT_REMOVES_OLD_GROUP",
+      "precondition": "A_2024, B_2025, C_CROSS_FILE published; explicit old=101 new=104 replacement request",
+      "steps": ["Capture affected grains from old and new", "Replace only version 101 with A_REPLACEMENT", "Rebuild affected OLAP grains from current Fact"],
+      "expected": {"fact_rows": 7, "revenue": "111.00", "daily_2024_05_01_rows": 2, "daily_2024_05_01_revenue": "26.00", "daily_2024_05_02_rows": 1, "daily_2024_05_02_revenue": "13.00"},
+      "must_assert": ["Old source-month A route 132->138 disappears from source-month 2024-05 aggregate", "B and C rows and their trip_keys unchanged", "New source key gets new identity", "No lifecycle archive required", "Replacement replay after SUCCESS skips mutations"]
+    },
+    {
+      "id": "CHANGED_CHECKSUM_WITHOUT_REPLACEMENT",
+      "precondition": "A_2024 SUCCESS, A_REPLACEMENT discovered under same source filename",
+      "steps": ["Request version 104 without explicit replacement binding"],
+      "expected": {"action": "STOP_SOURCE_VERSION_CHANGED", "old_version_removed": false, "watermark_advanced": false},
+      "must_assert": ["Do not interpret discovery as permission to retire version 101"]
+    },
+    {
+      "id": "ALL_REJECTED_NO_STALE_FACT",
+      "steps": ["Process ALL_REJECTED scope"],
+      "expected": {"raw_rows": 1, "canonical_rows": 0, "fact_rows": 0, "technical_rows": 1, "total_numeric_eligible_rows": 0},
+      "must_assert": ["Runner/model handles zero accepted rows", "No zero-valued valid total synthesized", "If replacing old version, old affected grains must still be invalidated"]
+    },
+    {
+      "id": "EMPTY_VALIDATED_DOWNSTREAM_SCOPE",
+      "steps": ["Exercise EMPTY_VALIDATED_SCOPE in SQL adapter with explicit processing scope"],
+      "expected": {"fact_rows": 0, "revenue": "0.00"},
+      "must_assert": ["No accidental delete outside processing scope", "Empty new set can clear stale scoped output", "Does not authorize ingesting empty Parquet; current source validation rejects empty files"]
+    },
+    {
+      "id": "MIXED_STAGING_SCOPE",
+      "steps": ["Place canonical/raw rows from 101 and 102 in staging", "Request processing only 101"],
+      "expected": {"action": "FAIL_SCOPE_VALIDATION", "persistent_mutations": 0, "watermark_advanced": false},
+      "must_assert": ["Do not silently process all staging or truncate other batch data"]
+    },
+    {
+      "id": "MISSING_RAW_HASH_INPUT",
+      "steps": ["Remove required raw field/row needed for exact fingerprint", "Attempt classification"],
+      "expected": {"action": "FAIL_RAW_CONTRACT", "watermark_advanced": false},
+      "must_assert": ["No null-hash duplicate partition", "No reconstruction from rounded canonical distance"]
+    },
+    {
+      "id": "FAULT_MATRIX",
+      "inject_after": ["Fact statement inside transaction", "DDS model commit", "batch tests", "OLAP write", "OLAP tests", "inside success/watermark transaction"],
+      "expected": {"watermark_advanced_on_failure": false, "cleanup_before_success": false},
+      "must_assert": ["Fact transaction failure rolls back its mutations", "Later failure permits documented roll-forward retry", "Success and watermark commit together", "Do not claim whole dbt DAG is transactional", "BI refresh remains blocked while pending"]
+    },
+    {
+      "id": "SUCCESS_CLEANUP_FAILURE",
+      "precondition": "All tests/reconciliation/OLAP PASS and success/watermark committed",
+      "steps": ["Inject cleanup failure", "Resume cleanup", "Attempt next file before cleanup completes"],
+      "expected": {"dbt_invocations_on_cleanup_retry": 0, "persistent_fact_removed": false},
+      "must_assert": ["Next file blocked while cleanup pending", "Cleanup retry only touches correct staging/workspace", "Failure does not repeat committed load"]
+    },
+    {
+      "id": "OUT_OF_RANGE_VALID_DATE",
+      "steps": ["Use B02 out-of-file pickup date", "Also test a valid accepted date outside configured calendar"],
+      "expected": {"out_of_file_record_kept": true},
+      "must_assert": ["Date dimension expands or explicit pre-Fact failure", "No silent unknown key for valid missing calendar date", "Source year range does not filter pickup year"]
+    }
+  ]
+}
