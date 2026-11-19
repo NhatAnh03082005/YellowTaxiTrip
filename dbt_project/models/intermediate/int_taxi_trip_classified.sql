@@ -1,3 +1,7 @@
+{% set history_relation = source('audit', 'v_trip_fingerprint_history')
+    if var('use_fingerprint_history_candidate', false)
+    else source('audit', 'trip_fingerprint_history') %}
+
 with fingerprinted as (
     select * from {{ ref('int_taxi_trip_fingerprinted') }}
 ), duplicate_ranked as (
@@ -21,7 +25,7 @@ with fingerprinted as (
 ), historical_cross_file_raw as (
     select distinct f.raw_exact_fingerprint
     from fingerprinted f
-    join {{ source('audit', 'trip_fingerprint_history') }} h
+    join {{ history_relation }} h
       on h.raw_exact_fingerprint = decode(trim(f.raw_exact_fingerprint), 'hex')
      and h.file_version_id <> f.file_version_id
     where f.raw_exact_fingerprint is not null
@@ -37,7 +41,7 @@ with fingerprinted as (
 ), historical_cross_file_candidate as (
     select distinct f.candidate_trip_fingerprint
     from fingerprinted f
-    join {{ source('audit', 'trip_fingerprint_history') }} h
+    join {{ history_relation }} h
       on h.candidate_trip_fingerprint = decode(trim(f.candidate_trip_fingerprint), 'hex')
      and h.file_version_id <> f.file_version_id
 ), cross_file_candidate as (

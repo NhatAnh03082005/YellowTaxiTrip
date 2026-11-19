@@ -1,0 +1,13 @@
+{"disk_preflight": {"total_bytes": 125829115904, "free_bytes": 43269738496, "expected_peak_bytes": 536870912, "projected_free_bytes": 42732867584, "reserved_bytes": 31457278976}}
+Traceback (most recent call last):
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_storage_fixture.py", line 56, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_storage_fixture.py", line 52, in main
+    return runner.main()
+           ^^^^^^^^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 656, in main
+    require_no_pending_cleanup()
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 434, in require_no_pending_cleanup
+    raise RuntimeError('Cleanup pending for batch {}; use --retry-cleanup'.format(pending[0]['batch_id']))
+RuntimeError: Cleanup pending for batch 2; use --retry-cleanup

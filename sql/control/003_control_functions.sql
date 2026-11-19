@@ -50,6 +50,9 @@ DECLARE
     v_cet timestamptz;
     v_parent_status varchar(24);
 BEGIN
+    IF p_pipeline_name = 'pl_taxi_master' THEN
+        PERFORM pg_advisory_xact_lock(hashtext('yellow_taxi_staging_writer'));
+    END IF;
     IF p_run_type NOT IN ('BACKFILL', 'INCREMENTAL', 'RETRY', 'TEST') THEN
         RAISE EXCEPTION 'Unsupported run_type: %', p_run_type;
     END IF;

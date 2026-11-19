@@ -1,0 +1,19 @@
+{"disk_preflight": {"total_bytes": 125829115904, "free_bytes": 43269140480, "expected_peak_bytes": 536870912, "projected_free_bytes": 42732269568, "reserved_bytes": 31457278976}}
+[1/1] Processing 2024-05
+Traceback (most recent call last):
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_storage_fixture.py", line 66, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_storage_fixture.py", line 62, in main
+    return runner.main()
+           ^^^^^^^^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 680, in main
+    run_files(args, months)
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 711, in run_files
+    ingestion = run_ingestion(
+                ^^^^^^^^^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 509, in run_ingestion
+    require_safe_file_version(context)
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 478, in require_safe_file_version
+    raise RuntimeError(message)
+RuntimeError: Replacement blocked until prior Fact retirement and historical lineage are verified

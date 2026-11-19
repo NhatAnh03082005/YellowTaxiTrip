@@ -54,6 +54,8 @@ sources:
         columns:
           - name: batch_id
             data_tests: [not_null, unique]
+      - name: etl_replacement
+        description: Reviewed old and new file versions bound to a single recoverable batch.
       - name: etl_file
         description: Source file checksum, schema version, period and validation metadata.
       - name: etl_watermark
@@ -74,6 +76,20 @@ sources:
         description: Binary fingerprint history for cross-file duplicate warnings.
       - name: cross_file_fingerprint_match
         description: Fingerprints observed in more than one immutable file version.
+      - name: v_trip_fingerprint_history
+        description: Opt-in UNION ALL candidate over persistent Fact and DQ branches; not a production consumer until V2 approval and parity gates pass.
+
+  - name: fingerprint_persistent
+    description: Physical persistent branches used by the optional fingerprint history candidate.
+    schema: dds
+    tables:
+      - name: fact_taxi_trip
+
+  - name: fingerprint_dq
+    schema: dq
+    tables:
+      - name: business_quarantine
+      - name: duplicate_quarantine
 
   - name: mage_dq
     description: Temporary configurable interface for Mage-owned technical row rejects, pending its physical DDL.

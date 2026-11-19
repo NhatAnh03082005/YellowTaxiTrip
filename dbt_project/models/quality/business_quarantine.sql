@@ -1,4 +1,4 @@
-+{{ config(
+{{ config(
     materialized='incremental',
     incremental_strategy='delete+insert',
     unique_key='source_record_key',

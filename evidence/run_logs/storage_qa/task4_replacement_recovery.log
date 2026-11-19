@@ -1,0 +1,530 @@
+Completed source file 1/1: yellow_tripdata_2024-05.parquet (131 rows)
+Completed raw chunk 1/1: D:\BI\DATH\NYC_TAXI_BI_PROJECT\evidence\run_logs\storage_qa\fixture_recovery_work\9\raw\yellow_tripdata_2024-05_part00000.parquet
+Running: dbt seed
+02:15:11  Running with dbt=1.8.7
+02:15:11  Registered adapter: postgres=1.8.2
+02:15:12  Unable to do partial parsing because config vars, config profile, or config target have changed
+02:15:12  Unable to do partial parsing because profile has changed
+02:15:14  Found 22 models, 165 data tests, 5 seeds, 18 sources, 435 macros
+02:15:14  
+02:15:15  Concurrency: 4 threads (target='dev')
+02:15:15  
+02:15:15  1 of 5 START seed file dds.dq_rule_policy ...................................... [RUN]
+02:15:15  2 of 5 START seed file dds.payment_type_codes .................................. [RUN]
+02:15:15  3 of 5 START seed file dds.rate_codes .......................................... [RUN]
+02:15:15  4 of 5 START seed file dds.vendor_codes ........................................ [RUN]
+02:15:15  3 of 5 OK loaded seed file dds.rate_codes ...................................... [INSERT 7 in 0.23s]
+02:15:15  1 of 5 OK loaded seed file dds.dq_rule_policy .................................. [INSERT 26 in 0.24s]
+02:15:15  5 of 5 START seed file dds.zone_key_map ........................................ [RUN]
+02:15:15  4 of 5 OK loaded seed file dds.vendor_codes .................................... [INSERT 4 in 0.25s]
+02:15:15  2 of 5 OK loaded seed file dds.payment_type_codes .............................. [INSERT 7 in 0.25s]
+02:15:15  5 of 5 OK loaded seed file dds.zone_key_map .................................... [INSERT 265 in 0.13s]
+02:15:15  
+02:15:15  Finished running 5 seeds in 0 hours 0 minutes and 0.76 seconds (0.76s).
+02:15:15  
+02:15:15  Completed successfully
+02:15:15  
+02:15:15  Done. PASS=5 WARN=0 ERROR=0 SKIP=0 TOTAL=5
+Running: dbt run --exclude tag:olap
+02:15:20  Running with dbt=1.8.7
+02:15:20  Registered adapter: postgres=1.8.2
+02:15:20  Unable to do partial parsing because config vars, config profile, or config target have changed
+02:15:23  Found 22 models, 171 data tests, 6 seeds, 18 sources, 435 macros
+02:15:23  
+02:15:24  Concurrency: 4 threads (target='dev')
+02:15:24  
+02:15:24  1 of 19 START sql table model dds.dim_payment_type ............................. [RUN]
+02:15:24  2 of 19 START sql table model dds.dim_rate_code ................................ [RUN]
+02:15:24  3 of 19 START sql table model dds.dim_time ..................................... [RUN]
+02:15:24  4 of 19 START sql table model dds.dim_vendor ................................... [RUN]
+02:15:24  1 of 19 OK created sql table model dds.dim_payment_type ........................ [SELECT 9 in 0.31s]
+02:15:24  5 of 19 START sql view model dds.stg_taxi_zone ................................. [RUN]
+02:15:24  4 of 19 OK created sql table model dds.dim_vendor .............................. [SELECT 6 in 0.34s]
+02:15:24  2 of 19 OK created sql table model dds.dim_rate_code ........................... [SELECT 9 in 0.37s]
+02:15:24  3 of 19 OK created sql table model dds.dim_time ................................ [SELECT 1442 in 0.37s]
+02:15:24  6 of 19 START sql view model dds.stg_taxi_zone_geometry ........................ [RUN]
+02:15:24  7 of 19 START sql view model dds.stg_yellow_taxi ............................... [RUN]
+02:15:24  5 of 19 OK created sql view model dds.stg_taxi_zone ............................ [CREATE VIEW in 0.15s]
+02:15:24  8 of 19 START sql table model dds.dim_zone ..................................... [RUN]
+02:15:24  7 of 19 OK created sql view model dds.stg_yellow_taxi .......................... [CREATE VIEW in 0.14s]
+02:15:24  9 of 19 START sql view model dds.int_taxi_trip_enriched ........................ [RUN]
+02:15:24  6 of 19 OK created sql view model dds.stg_taxi_zone_geometry ................... [CREATE VIEW in 0.17s]
+02:15:24  8 of 19 OK created sql table model dds.dim_zone ................................ [SELECT 267 in 0.13s]
+02:15:24  9 of 19 OK created sql view model dds.int_taxi_trip_enriched ................... [CREATE VIEW in 0.10s]
+02:15:24  10 of 19 START sql view model dds.int_taxi_trip_fingerprinted .................. [RUN]
+02:15:24  10 of 19 OK created sql view model dds.int_taxi_trip_fingerprinted ............. [CREATE VIEW in 0.11s]
+02:15:24  11 of 19 START sql incremental model audit.cross_file_fingerprint_match ........ [RUN]
+02:15:24  12 of 19 START sql view model dds.int_taxi_trip_classified ..................... [RUN]
+02:15:25  12 of 19 OK created sql view model dds.int_taxi_trip_classified ................ [CREATE VIEW in 0.20s]
+02:15:25  13 of 19 START sql incremental model dq.business_quarantine .................... [RUN]
+02:15:25  14 of 19 START sql incremental model dq.duplicate_quarantine ................... [RUN]
+02:15:25  15 of 19 START sql view model dds.int_taxi_trip_accepted ....................... [RUN]
+02:15:25  11 of 19 OK created sql incremental model audit.cross_file_fingerprint_match ... [INSERT 0 516 in 0.32s]
+02:15:25  16 of 19 START sql incremental model audit.trip_fingerprint_history ............ [RUN]
+02:15:25  15 of 19 OK created sql view model dds.int_taxi_trip_accepted .................. [CREATE VIEW in 0.13s]
+02:15:25  17 of 19 START sql incremental model dds.dim_date .............................. [RUN]
+02:15:25  14 of 19 OK created sql incremental model dq.duplicate_quarantine .............. [INSERT 0 1 in 0.28s]
+02:15:25  13 of 19 OK created sql incremental model dq.business_quarantine ............... [INSERT 0 1 in 0.28s]
+02:15:25  16 of 19 OK created sql incremental model audit.trip_fingerprint_history ....... [INSERT 0 131 in 0.22s]
+02:15:25  17 of 19 OK created sql incremental model dds.dim_date ......................... [INSERT 0 399 in 0.26s]
+02:15:25  18 of 19 START sql fact_identity model dds.fact_taxi_trip ...................... [RUN]
+02:15:29  18 of 19 ERROR creating sql fact_identity model dds.fact_taxi_trip ............. [ERROR in 4.21s]
+02:15:29  19 of 19 SKIP relation dq.file_reconciliation .................................. [SKIP]
+02:15:29  
+02:15:29  Finished running 5 table models, 7 view models, 6 incremental models, 1 fact identity model in 0 hours 0 minutes and 6.05 seconds (6.05s).
+02:15:30  
+02:15:30  Completed with 1 error and 0 warnings:
+02:15:30  
+02:15:30    Database Error in model fact_taxi_trip (models\marts\facts\fact_taxi_trip.sql)
+  division by zero
+02:15:30  
+02:15:30  Done. PASS=17 WARN=0 ERROR=1 SKIP=1 TOTAL=19
+PASS Fact rollback with preserved Staging
+Running: dbt seed
+02:15:34  Running with dbt=1.8.7
+02:15:34  Registered adapter: postgres=1.8.2
+02:15:34  Unable to do partial parsing because config vars, config profile, or config target have changed
+02:15:37  Found 22 models, 165 data tests, 5 seeds, 18 sources, 435 macros
+02:15:37  
+02:15:37  Concurrency: 4 threads (target='dev')
+02:15:37  
+02:15:37  1 of 5 START seed file dds.dq_rule_policy ...................................... [RUN]
+02:15:37  2 of 5 START seed file dds.payment_type_codes .................................. [RUN]
+02:15:37  3 of 5 START seed file dds.rate_codes .......................................... [RUN]
+02:15:37  4 of 5 START seed file dds.vendor_codes ........................................ [RUN]
+02:15:38  1 of 5 OK loaded seed file dds.dq_rule_policy .................................. [INSERT 26 in 0.29s]
+02:15:38  2 of 5 OK loaded seed file dds.payment_type_codes .............................. [INSERT 7 in 0.29s]
+02:15:38  3 of 5 OK loaded seed file dds.rate_codes ...................................... [INSERT 7 in 0.30s]
+02:15:38  5 of 5 START seed file dds.zone_key_map ........................................ [RUN]
+02:15:38  4 of 5 OK loaded seed file dds.vendor_codes .................................... [INSERT 4 in 0.30s]
+02:15:38  5 of 5 OK loaded seed file dds.zone_key_map .................................... [INSERT 265 in 0.14s]
+02:15:38  
+02:15:38  Finished running 5 seeds in 0 hours 0 minutes and 0.85 seconds (0.85s).
+02:15:38  
+02:15:38  Completed successfully
+02:15:38  
+02:15:38  Done. PASS=5 WARN=0 ERROR=0 SKIP=0 TOTAL=5
+Running: dbt run --exclude tag:olap
+02:15:42  Running with dbt=1.8.7
+02:15:42  Registered adapter: postgres=1.8.2
+02:15:43  Found 22 models, 165 data tests, 5 seeds, 18 sources, 435 macros
+02:15:43  
+02:15:43  Concurrency: 4 threads (target='dev')
+02:15:43  
+02:15:43  1 of 19 START sql table model dds.dim_payment_type ............................. [RUN]
+02:15:43  2 of 19 START sql table model dds.dim_rate_code ................................ [RUN]
+02:15:43  3 of 19 START sql table model dds.dim_time ..................................... [RUN]
+02:15:43  4 of 19 START sql table model dds.dim_vendor ................................... [RUN]
+02:15:43  2 of 19 OK created sql table model dds.dim_rate_code ........................... [SELECT 9 in 0.16s]
+02:15:43  3 of 19 OK created sql table model dds.dim_time ................................ [SELECT 1442 in 0.17s]
+02:15:43  1 of 19 OK created sql table model dds.dim_payment_type ........................ [SELECT 9 in 0.17s]
+02:15:43  4 of 19 OK created sql table model dds.dim_vendor .............................. [SELECT 6 in 0.17s]
+02:15:43  5 of 19 START sql view model dds.stg_taxi_zone ................................. [RUN]
+02:15:43  6 of 19 START sql view model dds.stg_taxi_zone_geometry ........................ [RUN]
+02:15:43  7 of 19 START sql view model dds.stg_yellow_taxi ............................... [RUN]
+02:15:43  5 of 19 OK created sql view model dds.stg_taxi_zone ............................ [CREATE VIEW in 0.07s]
+02:15:43  8 of 19 START sql table model dds.dim_zone ..................................... [RUN]
+02:15:43  6 of 19 OK created sql view model dds.stg_taxi_zone_geometry ................... [CREATE VIEW in 0.10s]
+02:15:43  7 of 19 OK created sql view model dds.stg_yellow_taxi .......................... [CREATE VIEW in 0.11s]
+02:15:43  9 of 19 START sql view model dds.int_taxi_trip_enriched ........................ [RUN]
+02:15:43  8 of 19 OK created sql table model dds.dim_zone ................................ [SELECT 267 in 0.06s]
+02:15:43  9 of 19 OK created sql view model dds.int_taxi_trip_enriched ................... [CREATE VIEW in 0.08s]
+02:15:43  10 of 19 START sql view model dds.int_taxi_trip_fingerprinted .................. [RUN]
+02:15:43  10 of 19 OK created sql view model dds.int_taxi_trip_fingerprinted ............. [CREATE VIEW in 0.09s]
+02:15:43  11 of 19 START sql incremental model audit.cross_file_fingerprint_match ........ [RUN]
+02:15:43  12 of 19 START sql view model dds.int_taxi_trip_classified ..................... [RUN]
+02:15:44  12 of 19 OK created sql view model dds.int_taxi_trip_classified ................ [CREATE VIEW in 0.24s]
+02:15:44  13 of 19 START sql incremental model dq.business_quarantine .................... [RUN]
+02:15:44  14 of 19 START sql incremental model dq.duplicate_quarantine ................... [RUN]
+02:15:44  15 of 19 START sql view model dds.int_taxi_trip_accepted ....................... [RUN]
+02:15:44  11 of 19 OK created sql incremental model audit.cross_file_fingerprint_match ... [INSERT 0 516 in 0.29s]
+02:15:44  16 of 19 START sql incremental model audit.trip_fingerprint_history ............ [RUN]
+02:15:44  15 of 19 OK created sql view model dds.int_taxi_trip_accepted .................. [CREATE VIEW in 0.12s]
+02:15:44  17 of 19 START sql incremental model dds.dim_date .............................. [RUN]
+02:15:44  13 of 19 OK created sql incremental model dq.business_quarantine ............... [INSERT 0 1 in 0.26s]
+02:15:44  14 of 19 OK created sql incremental model dq.duplicate_quarantine .............. [INSERT 0 1 in 0.25s]
+02:15:44  16 of 19 OK created sql incremental model audit.trip_fingerprint_history ....... [INSERT 0 131 in 0.22s]
+02:15:44  17 of 19 OK created sql incremental model dds.dim_date ......................... [INSERT 0 399 in 0.26s]
+02:15:44  18 of 19 START sql fact_identity model dds.fact_taxi_trip ...................... [RUN]
+02:15:48  18 of 19 OK created sql fact_identity model dds.fact_taxi_trip ................. [INSERT 0 129 in 4.18s]
+02:15:48  19 of 19 START sql incremental model dq.file_reconciliation .................... [RUN]
+02:15:48  19 of 19 OK created sql incremental model dq.file_reconciliation ............... [INSERT 0 1 in 0.11s]
+02:15:48  
+02:15:48  Finished running 5 table models, 7 view models, 6 incremental models, 1 fact identity model in 0 hours 0 minutes and 5.73 seconds (5.73s).
+02:15:49  
+02:15:49  Completed successfully
+02:15:49  
+02:15:49  Done. PASS=19 WARN=0 ERROR=0 SKIP=0 TOTAL=19
+Running: dbt test
+02:15:52  Running with dbt=1.8.7
+02:15:52  Registered adapter: postgres=1.8.2
+02:15:53  Found 22 models, 165 data tests, 5 seeds, 18 sources, 435 macros
+02:15:53  
+02:15:53  Concurrency: 4 threads (target='dev')
+02:15:53  
+02:15:53  1 of 165 START test accepted_values_dq_rule_policy_disposition_action__INFO__WARNING__BUSINESS_QUARANTINE__DUPLICATE  [RUN]
+02:15:53  2 of 165 START test accepted_values_dq_rule_policy_severity__INFO__WARNING__HIGH  [RUN]
+02:15:53  3 of 165 START test accepted_values_fact_taxi_trip_primary_disposition__ACCEPTED__WARNING  [RUN]
+02:15:53  4 of 165 START test accepted_values_int_taxi_trip_classified_primary_disposition__DUPLICATE__BUSINESS_QUARANTINE__WARNING__ACCEPTED  [RUN]
+02:15:53  1 of 165 PASS accepted_values_dq_rule_policy_disposition_action__INFO__WARNING__BUSINESS_QUARANTINE__DUPLICATE  [PASS in 0.07s]
+02:15:53  5 of 165 START test business_code_members ...................................... [RUN]
+02:15:53  3 of 165 PASS accepted_values_fact_taxi_trip_primary_disposition__ACCEPTED__WARNING  [PASS in 0.08s]
+02:15:53  6 of 165 START test cbd_schema_consistency ..................................... [RUN]
+02:15:53  2 of 165 PASS accepted_values_dq_rule_policy_severity__INFO__WARNING__HIGH ..... [PASS in 0.10s]
+02:15:53  7 of 165 START test component_warning_policy ................................... [RUN]
+02:15:53  4 of 165 PASS accepted_values_int_taxi_trip_classified_primary_disposition__DUPLICATE__BUSINESS_QUARANTINE__WARNING__ACCEPTED  [PASS in 0.10s]
+02:15:53  8 of 165 START test cross_file_match_retention ................................. [RUN]
+02:15:53  6 of 165 PASS cbd_schema_consistency ........................................... [PASS in 0.04s]
+02:15:53  9 of 165 START test dimension_technical_members ................................ [RUN]
+02:15:53  5 of 165 PASS business_code_members ............................................ [PASS in 0.08s]
+02:15:53  10 of 165 START test dq_policy_configuration ................................... [RUN]
+02:15:53  9 of 165 PASS dimension_technical_members ...................................... [PASS in 0.04s]
+02:15:53  11 of 165 START test dq_rule_mapping_complete .................................. [RUN]
+02:15:53  8 of 165 PASS cross_file_match_retention ....................................... [PASS in 0.08s]
+02:15:53  7 of 165 PASS component_warning_policy ......................................... [PASS in 0.09s]
+02:15:53  12 of 165 START test dq_rule_policy_consistency ................................ [RUN]
+02:15:53  13 of 165 START test fact_accepted_membership .................................. [RUN]
+02:15:53  10 of 165 PASS dq_policy_configuration ......................................... [PASS in 0.06s]
+02:15:53  14 of 165 START test fact_analysis_bands ....................................... [RUN]
+02:15:53  12 of 165 PASS dq_rule_policy_consistency ...................................... [PASS in 0.05s]
+02:15:53  15 of 165 START test fact_business_code_members ................................ [RUN]
+02:15:53  11 of 165 PASS dq_rule_mapping_complete ........................................ [PASS in 0.08s]
+02:15:53  16 of 165 START test fact_date_time_role_keys .................................. [RUN]
+02:15:53  14 of 165 PASS fact_analysis_bands ............................................. [PASS in 0.06s]
+02:15:53  17 of 165 START test fact_dimension_key_mapping ................................ [RUN]
+02:15:53  15 of 165 PASS fact_business_code_members ...................................... [PASS in 0.05s]
+02:15:53  18 of 165 START test fact_identity_constraints ................................. [RUN]
+02:15:53  16 of 165 PASS fact_date_time_role_keys ........................................ [PASS in 0.05s]
+02:15:53  19 of 165 START test fact_kpi_eligibility ...................................... [RUN]
+02:15:53  17 of 165 PASS fact_dimension_key_mapping ...................................... [PASS in 0.05s]
+02:15:53  20 of 165 START test fact_lifecycle_history .................................... [RUN]
+02:15:53  18 of 165 PASS fact_identity_constraints ....................................... [PASS in 0.05s]
+02:15:53  13 of 165 PASS fact_accepted_membership ........................................ [PASS in 0.16s]
+02:15:53  21 of 165 START test fact_unknown_member_usage ................................. [RUN]
+02:15:53  22 of 165 START test file_month_and_cbd_consistency ............................ [RUN]
+02:15:53  19 of 165 PASS fact_kpi_eligibility ............................................ [PASS in 0.05s]
+02:15:53  23 of 165 START test file_reconciliation_balances .............................. [RUN]
+02:15:53  22 of 165 PASS file_month_and_cbd_consistency .................................. [PASS in 0.04s]
+02:15:53  24 of 165 START test fingerprint_serialization_vectors ......................... [RUN]
+02:15:54  23 of 165 PASS file_reconciliation_balances .................................... [PASS in 0.04s]
+02:15:54  25 of 165 START test not_null_business_quarantine_source_record_key ............ [RUN]
+02:15:54  21 of 165 PASS fact_unknown_member_usage ....................................... [PASS in 0.07s]
+02:15:54  26 of 165 START test not_null_cross_file_fingerprint_match_fingerprint ......... [RUN]
+02:15:54  24 of 165 PASS fingerprint_serialization_vectors ............................... [PASS in 0.05s]
+02:15:54  27 of 165 START test not_null_cross_file_fingerprint_match_fingerprint_type .... [RUN]
+02:15:54  26 of 165 PASS not_null_cross_file_fingerprint_match_fingerprint ............... [PASS in 0.05s]
+02:15:54  25 of 165 PASS not_null_business_quarantine_source_record_key .................. [PASS in 0.06s]
+02:15:54  28 of 165 START test not_null_dim_date_date_key ................................ [RUN]
+02:15:54  29 of 165 START test not_null_dim_payment_type_payment_type_key ................ [RUN]
+02:15:54  27 of 165 PASS not_null_cross_file_fingerprint_match_fingerprint_type .......... [PASS in 0.04s]
+02:15:54  30 of 165 START test not_null_dim_rate_code_rate_code_key ...................... [RUN]
+02:15:54  20 of 165 PASS fact_lifecycle_history .......................................... [PASS in 0.18s]
+02:15:54  31 of 165 START test not_null_dim_time_time_key ................................ [RUN]
+02:15:54  28 of 165 PASS not_null_dim_date_date_key ...................................... [PASS in 0.05s]
+02:15:54  29 of 165 PASS not_null_dim_payment_type_payment_type_key ...................... [PASS in 0.05s]
+02:15:54  32 of 165 START test not_null_dim_vendor_vendor_key ............................ [RUN]
+02:15:54  33 of 165 START test not_null_dim_zone_zone_key ................................ [RUN]
+02:15:54  31 of 165 PASS not_null_dim_time_time_key ...................................... [PASS in 0.07s]
+02:15:54  34 of 165 START test not_null_dq_rule_policy_disposition_action ................ [RUN]
+02:15:54  30 of 165 PASS not_null_dim_rate_code_rate_code_key ............................ [PASS in 0.09s]
+02:15:54  35 of 165 START test not_null_dq_rule_policy_rule_id ........................... [RUN]
+02:15:54  32 of 165 PASS not_null_dim_vendor_vendor_key .................................. [PASS in 0.11s]
+02:15:54  33 of 165 PASS not_null_dim_zone_zone_key ...................................... [PASS in 0.12s]
+02:15:54  36 of 165 START test not_null_dq_rule_policy_severity .......................... [RUN]
+02:15:54  37 of 165 START test not_null_dq_rule_policy_severity_rank ..................... [RUN]
+02:15:54  34 of 165 PASS not_null_dq_rule_policy_disposition_action ...................... [PASS in 0.11s]
+02:15:54  38 of 165 START test not_null_duplicate_quarantine_duplicate_survivor_source_record_key  [RUN]
+02:15:54  35 of 165 PASS not_null_dq_rule_policy_rule_id ................................. [PASS in 0.10s]
+02:15:54  39 of 165 START test not_null_duplicate_quarantine_source_record_key ........... [RUN]
+02:15:54  37 of 165 PASS not_null_dq_rule_policy_severity_rank ........................... [PASS in 0.10s]
+02:15:54  40 of 165 START test not_null_fact_taxi_trip_candidate_trip_fingerprint ........ [RUN]
+02:15:54  36 of 165 PASS not_null_dq_rule_policy_severity ................................ [PASS in 0.12s]
+02:15:54  41 of 165 START test not_null_fact_taxi_trip_dropoff_date_key .................. [RUN]
+02:15:54  38 of 165 PASS not_null_duplicate_quarantine_duplicate_survivor_source_record_key  [PASS in 0.10s]
+02:15:54  39 of 165 PASS not_null_duplicate_quarantine_source_record_key ................. [PASS in 0.10s]
+02:15:54  42 of 165 START test not_null_fact_taxi_trip_dropoff_time_key .................. [RUN]
+02:15:54  43 of 165 START test not_null_fact_taxi_trip_dropoff_zone_key .................. [RUN]
+02:15:54  40 of 165 PASS not_null_fact_taxi_trip_candidate_trip_fingerprint .............. [PASS in 0.10s]
+02:15:54  44 of 165 START test not_null_fact_taxi_trip_is_duration_kpi_eligible .......... [RUN]
+02:15:54  41 of 165 PASS not_null_fact_taxi_trip_dropoff_date_key ........................ [PASS in 0.10s]
+02:15:54  45 of 165 START test not_null_fact_taxi_trip_is_passenger_kpi_eligible ......... [RUN]
+02:15:54  42 of 165 PASS not_null_fact_taxi_trip_dropoff_time_key ........................ [PASS in 0.10s]
+02:15:54  43 of 165 PASS not_null_fact_taxi_trip_dropoff_zone_key ........................ [PASS in 0.09s]
+02:15:54  46 of 165 START test not_null_fact_taxi_trip_is_revenue_kpi_eligible ........... [RUN]
+02:15:54  47 of 165 START test not_null_fact_taxi_trip_is_speed_kpi_eligible ............. [RUN]
+02:15:54  44 of 165 PASS not_null_fact_taxi_trip_is_duration_kpi_eligible ................ [PASS in 0.10s]
+02:15:54  48 of 165 START test not_null_fact_taxi_trip_is_tip_kpi_eligible ............... [RUN]
+02:15:54  45 of 165 PASS not_null_fact_taxi_trip_is_passenger_kpi_eligible ............... [PASS in 0.10s]
+02:15:54  49 of 165 START test not_null_fact_taxi_trip_payment_type_key .................. [RUN]
+02:15:54  46 of 165 PASS not_null_fact_taxi_trip_is_revenue_kpi_eligible ................. [PASS in 0.08s]
+02:15:54  50 of 165 START test not_null_fact_taxi_trip_pickup_date_key ................... [RUN]
+02:15:54  47 of 165 PASS not_null_fact_taxi_trip_is_speed_kpi_eligible ................... [PASS in 0.10s]
+02:15:54  51 of 165 START test not_null_fact_taxi_trip_pickup_time_key ................... [RUN]
+02:15:54  48 of 165 PASS not_null_fact_taxi_trip_is_tip_kpi_eligible ..................... [PASS in 0.09s]
+02:15:54  52 of 165 START test not_null_fact_taxi_trip_pickup_zone_key ................... [RUN]
+02:15:54  49 of 165 PASS not_null_fact_taxi_trip_payment_type_key ........................ [PASS in 0.10s]
+02:15:54  53 of 165 START test not_null_fact_taxi_trip_primary_disposition ............... [RUN]
+02:15:54  50 of 165 PASS not_null_fact_taxi_trip_pickup_date_key ......................... [PASS in 0.10s]
+02:15:54  54 of 165 START test not_null_fact_taxi_trip_rate_code_key ..................... [RUN]
+02:15:54  51 of 165 PASS not_null_fact_taxi_trip_pickup_time_key ......................... [PASS in 0.10s]
+02:15:54  52 of 165 PASS not_null_fact_taxi_trip_pickup_zone_key ......................... [PASS in 0.08s]
+02:15:54  55 of 165 START test not_null_fact_taxi_trip_raw_exact_fingerprint ............. [RUN]
+02:15:54  56 of 165 START test not_null_fact_taxi_trip_source_record_key ................. [RUN]
+02:15:54  53 of 165 PASS not_null_fact_taxi_trip_primary_disposition ..................... [PASS in 0.10s]
+02:15:54  54 of 165 PASS not_null_fact_taxi_trip_rate_code_key ........................... [PASS in 0.08s]
+02:15:54  57 of 165 START test not_null_fact_taxi_trip_trip_count ........................ [RUN]
+02:15:54  58 of 165 START test not_null_fact_taxi_trip_trip_key .......................... [RUN]
+02:15:54  56 of 165 PASS not_null_fact_taxi_trip_source_record_key ....................... [PASS in 0.11s]
+02:15:54  55 of 165 PASS not_null_fact_taxi_trip_raw_exact_fingerprint ................... [PASS in 0.11s]
+02:15:54  59 of 165 START test not_null_fact_taxi_trip_vendor_key ........................ [RUN]
+02:15:54  60 of 165 START test not_null_file_reconciliation_file_version_id .............. [RUN]
+02:15:54  57 of 165 PASS not_null_fact_taxi_trip_trip_count .............................. [PASS in 0.10s]
+02:15:54  58 of 165 PASS not_null_fact_taxi_trip_trip_key ................................ [PASS in 0.11s]
+02:15:54  61 of 165 START test not_null_file_reconciliation_source_file .................. [RUN]
+02:15:54  62 of 165 START test not_null_file_reconciliation_source_file_sha256 ........... [RUN]
+02:15:55  60 of 165 PASS not_null_file_reconciliation_file_version_id .................... [PASS in 0.10s]
+02:15:55  63 of 165 START test not_null_int_taxi_trip_accepted_source_record_key ......... [RUN]
+02:15:55  59 of 165 PASS not_null_fact_taxi_trip_vendor_key .............................. [PASS in 0.11s]
+02:15:55  64 of 165 START test not_null_int_taxi_trip_classified_dq_rule_ids ............. [RUN]
+02:15:55  61 of 165 PASS not_null_file_reconciliation_source_file ........................ [PASS in 0.11s]
+02:15:55  62 of 165 PASS not_null_file_reconciliation_source_file_sha256 ................. [PASS in 0.11s]
+02:15:55  65 of 165 START test not_null_int_taxi_trip_classified_is_duration_kpi_eligible  [RUN]
+02:15:55  66 of 165 START test not_null_int_taxi_trip_classified_is_passenger_kpi_eligible  [RUN]
+02:15:55  63 of 165 PASS not_null_int_taxi_trip_accepted_source_record_key ............... [PASS in 0.11s]
+02:15:55  67 of 165 START test not_null_int_taxi_trip_classified_is_revenue_kpi_eligible . [RUN]
+02:15:55  64 of 165 PASS not_null_int_taxi_trip_classified_dq_rule_ids ................... [PASS in 0.12s]
+02:15:55  68 of 165 START test not_null_int_taxi_trip_classified_is_speed_kpi_eligible ... [RUN]
+02:15:55  66 of 165 PASS not_null_int_taxi_trip_classified_is_passenger_kpi_eligible ..... [PASS in 0.11s]
+02:15:55  65 of 165 PASS not_null_int_taxi_trip_classified_is_duration_kpi_eligible ...... [PASS in 0.12s]
+02:15:55  69 of 165 START test not_null_int_taxi_trip_classified_is_tip_kpi_eligible ..... [RUN]
+02:15:55  70 of 165 START test not_null_int_taxi_trip_classified_primary_disposition ..... [RUN]
+02:15:55  67 of 165 PASS not_null_int_taxi_trip_classified_is_revenue_kpi_eligible ....... [PASS in 0.18s]
+02:15:55  71 of 165 START test not_null_int_taxi_trip_classified_source_record_key ....... [RUN]
+02:15:55  68 of 165 PASS not_null_int_taxi_trip_classified_is_speed_kpi_eligible ......... [PASS in 0.19s]
+02:15:55  72 of 165 START test not_null_int_taxi_trip_enriched_source_record_key ......... [RUN]
+02:15:55  69 of 165 PASS not_null_int_taxi_trip_classified_is_tip_kpi_eligible ........... [PASS in 0.18s]
+02:15:55  70 of 165 PASS not_null_int_taxi_trip_classified_primary_disposition ........... [PASS in 0.19s]
+02:15:55  73 of 165 START test not_null_int_taxi_trip_fingerprinted_candidate_trip_fingerprint  [RUN]
+02:15:55  74 of 165 START test not_null_int_taxi_trip_fingerprinted_raw_exact_fingerprint  [RUN]
+02:15:55  71 of 165 PASS not_null_int_taxi_trip_classified_source_record_key ............. [PASS in 0.13s]
+02:15:55  75 of 165 START test not_null_int_taxi_trip_fingerprinted_source_record_key .... [RUN]
+02:15:55  72 of 165 PASS not_null_int_taxi_trip_enriched_source_record_key ............... [PASS in 0.11s]
+02:15:55  76 of 165 START test not_null_payment_type_codes_payment_type_id ............... [RUN]
+02:15:55  73 of 165 PASS not_null_int_taxi_trip_fingerprinted_candidate_trip_fingerprint . [PASS in 0.12s]
+02:15:55  74 of 165 PASS not_null_int_taxi_trip_fingerprinted_raw_exact_fingerprint ...... [PASS in 0.12s]
+02:15:55  77 of 165 START test not_null_payment_type_codes_payment_type_key .............. [RUN]
+02:15:55  78 of 165 START test not_null_payment_type_codes_payment_type_name ............. [RUN]
+02:15:55  75 of 165 PASS not_null_int_taxi_trip_fingerprinted_source_record_key .......... [PASS in 0.11s]
+02:15:55  79 of 165 START test not_null_rate_codes_rate_code_id .......................... [RUN]
+02:15:55  76 of 165 PASS not_null_payment_type_codes_payment_type_id ..................... [PASS in 0.10s]
+02:15:55  80 of 165 START test not_null_rate_codes_rate_code_key ......................... [RUN]
+02:15:55  77 of 165 PASS not_null_payment_type_codes_payment_type_key .................... [PASS in 0.09s]
+02:15:55  81 of 165 START test not_null_rate_codes_rate_code_name ........................ [RUN]
+02:15:55  78 of 165 PASS not_null_payment_type_codes_payment_type_name ................... [PASS in 0.10s]
+02:15:55  82 of 165 START test not_null_stg_taxi_zone_location_id ........................ [RUN]
+02:15:55  80 of 165 PASS not_null_rate_codes_rate_code_key ............................... [PASS in 0.08s]
+02:15:55  79 of 165 PASS not_null_rate_codes_rate_code_id ................................ [PASS in 0.10s]
+02:15:55  83 of 165 START test not_null_stg_yellow_taxi_batch_id ......................... [RUN]
+02:15:55  84 of 165 START test not_null_stg_yellow_taxi_schema_fingerprint ............... [RUN]
+02:15:55  82 of 165 PASS not_null_stg_taxi_zone_location_id .............................. [PASS in 0.08s]
+02:15:55  81 of 165 PASS not_null_rate_codes_rate_code_name .............................. [PASS in 0.10s]
+02:15:55  85 of 165 START test not_null_stg_yellow_taxi_source_record_key ................ [RUN]
+02:15:55  86 of 165 START test not_null_stg_yellow_taxi_source_row_number ................ [RUN]
+02:15:55  84 of 165 PASS not_null_stg_yellow_taxi_schema_fingerprint ..................... [PASS in 0.10s]
+02:15:55  83 of 165 PASS not_null_stg_yellow_taxi_batch_id ............................... [PASS in 0.10s]
+02:15:55  87 of 165 START test not_null_trip_fingerprint_history_candidate_trip_fingerprint  [RUN]
+02:15:55  88 of 165 START test not_null_trip_fingerprint_history_file_version_id ......... [RUN]
+02:15:55  86 of 165 PASS not_null_stg_yellow_taxi_source_row_number ...................... [PASS in 0.11s]
+02:15:55  85 of 165 PASS not_null_stg_yellow_taxi_source_record_key ...................... [PASS in 0.11s]
+02:15:55  89 of 165 START test not_null_trip_fingerprint_history_raw_exact_fingerprint ... [RUN]
+02:15:55  90 of 165 START test not_null_trip_fingerprint_history_source_record_key ....... [RUN]
+02:15:55  88 of 165 PASS not_null_trip_fingerprint_history_file_version_id ............... [PASS in 0.08s]
+02:15:55  91 of 165 START test not_null_vendor_codes_vendor_id ........................... [RUN]
+02:15:55  87 of 165 PASS not_null_trip_fingerprint_history_candidate_trip_fingerprint .... [PASS in 0.11s]
+02:15:55  92 of 165 START test not_null_vendor_codes_vendor_key .......................... [RUN]
+02:15:55  90 of 165 PASS not_null_trip_fingerprint_history_source_record_key ............. [PASS in 0.09s]
+02:15:55  89 of 165 PASS not_null_trip_fingerprint_history_raw_exact_fingerprint ......... [PASS in 0.09s]
+02:15:55  93 of 165 START test not_null_vendor_codes_vendor_name ......................... [RUN]
+02:15:55  94 of 165 START test not_null_zone_key_map_location_id ......................... [RUN]
+02:15:56  91 of 165 PASS not_null_vendor_codes_vendor_id ................................. [PASS in 0.12s]
+02:15:56  92 of 165 PASS not_null_vendor_codes_vendor_key ................................ [PASS in 0.10s]
+02:15:56  95 of 165 START test not_null_zone_key_map_zone_key ............................ [RUN]
+02:15:56  96 of 165 START test raw_fingerprint_input_contract ............................ [RUN]
+02:15:56  94 of 165 PASS not_null_zone_key_map_location_id ............................... [PASS in 0.11s]
+02:15:56  93 of 165 PASS not_null_vendor_codes_vendor_name ............................... [PASS in 0.11s]
+02:15:56  97 of 165 START test reference_seed_mapping_contract ........................... [RUN]
+02:15:56  98 of 165 START test relationships_fact_taxi_trip_dropoff_date_key__date_key__ref_dim_date_  [RUN]
+02:15:56  95 of 165 PASS not_null_zone_key_map_zone_key .................................. [PASS in 0.13s]
+02:15:56  96 of 165 PASS raw_fingerprint_input_contract .................................. [PASS in 0.14s]
+02:15:56  99 of 165 START test relationships_fact_taxi_trip_dropoff_time_key__time_key__ref_dim_time_  [RUN]
+02:15:56  100 of 165 START test relationships_fact_taxi_trip_dropoff_zone_key__zone_key__ref_dim_zone_  [RUN]
+02:15:56  98 of 165 PASS relationships_fact_taxi_trip_dropoff_date_key__date_key__ref_dim_date_  [PASS in 0.14s]
+02:15:56  97 of 165 PASS reference_seed_mapping_contract ................................. [PASS in 0.14s]
+02:15:56  101 of 165 START test relationships_fact_taxi_trip_payment_type_key__payment_type_key__ref_dim_payment_type_  [RUN]
+02:15:56  102 of 165 START test relationships_fact_taxi_trip_pickup_date_key__date_key__ref_dim_date_  [RUN]
+02:15:56  100 of 165 PASS relationships_fact_taxi_trip_dropoff_zone_key__zone_key__ref_dim_zone_  [PASS in 0.12s]
+02:15:56  99 of 165 PASS relationships_fact_taxi_trip_dropoff_time_key__time_key__ref_dim_time_  [PASS in 0.12s]
+02:15:56  104 of 165 START test relationships_fact_taxi_trip_pickup_zone_key__zone_key__ref_dim_zone_  [RUN]
+02:15:56  103 of 165 START test relationships_fact_taxi_trip_pickup_time_key__time_key__ref_dim_time_  [RUN]
+02:15:56  101 of 165 PASS relationships_fact_taxi_trip_payment_type_key__payment_type_key__ref_dim_payment_type_  [PASS in 0.11s]
+02:15:56  102 of 165 PASS relationships_fact_taxi_trip_pickup_date_key__date_key__ref_dim_date_  [PASS in 0.12s]
+02:15:56  105 of 165 START test relationships_fact_taxi_trip_rate_code_key__rate_code_key__ref_dim_rate_code_  [RUN]
+02:15:56  106 of 165 START test relationships_fact_taxi_trip_vendor_key__vendor_key__ref_dim_vendor_  [RUN]
+02:15:56  104 of 165 PASS relationships_fact_taxi_trip_pickup_zone_key__zone_key__ref_dim_zone_  [PASS in 0.11s]
+02:15:56  107 of 165 START test same_file_duplicate_survivor ............................. [RUN]
+02:15:56  103 of 165 PASS relationships_fact_taxi_trip_pickup_time_key__time_key__ref_dim_time_  [PASS in 0.10s]
+02:15:56  108 of 165 START test source_not_null_control_etl_batch_batch_id ............... [RUN]
+02:15:56  105 of 165 PASS relationships_fact_taxi_trip_rate_code_key__rate_code_key__ref_dim_rate_code_  [PASS in 0.10s]
+02:15:56  109 of 165 START test source_not_null_control_source_file_version_file_version_id  [RUN]
+02:15:56  106 of 165 PASS relationships_fact_taxi_trip_vendor_key__vendor_key__ref_dim_vendor_  [PASS in 0.10s]
+02:15:56  110 of 165 START test source_not_null_mage_dq_technical_quarantine_source_file . [RUN]
+02:15:56  108 of 165 PASS source_not_null_control_etl_batch_batch_id ..................... [PASS in 0.10s]
+02:15:56  111 of 165 START test source_not_null_mage_dq_technical_quarantine_source_file_sha256  [RUN]
+02:15:56  107 of 165 FAIL 1 same_file_duplicate_survivor ................................. [FAIL 1 in 0.13s]
+02:15:56  112 of 165 START test source_not_null_mage_dq_technical_quarantine_source_record_key  [RUN]
+02:15:56  109 of 165 PASS source_not_null_control_source_file_version_file_version_id .... [PASS in 0.09s]
+02:15:56  110 of 165 PASS source_not_null_mage_dq_technical_quarantine_source_file ....... [PASS in 0.08s]
+02:15:56  113 of 165 START test source_not_null_stage_yellow_taxi_canonical_batch_id ..... [RUN]
+02:15:56  114 of 165 START test source_not_null_stage_yellow_taxi_canonical_cast_error_flags  [RUN]
+02:15:56  111 of 165 PASS source_not_null_mage_dq_technical_quarantine_source_file_sha256  [PASS in 0.11s]
+02:15:56  115 of 165 START test source_not_null_stage_yellow_taxi_canonical_schema_fingerprint  [RUN]
+02:15:56  112 of 165 PASS source_not_null_mage_dq_technical_quarantine_source_record_key . [PASS in 0.10s]
+02:15:56  116 of 165 START test source_not_null_stage_yellow_taxi_canonical_schema_version  [RUN]
+02:15:56  114 of 165 PASS source_not_null_stage_yellow_taxi_canonical_cast_error_flags ... [PASS in 0.12s]
+02:15:56  113 of 165 PASS source_not_null_stage_yellow_taxi_canonical_batch_id ........... [PASS in 0.13s]
+02:15:56  117 of 165 START test source_not_null_stage_yellow_taxi_canonical_source_file .. [RUN]
+02:15:56  118 of 165 START test source_not_null_stage_yellow_taxi_canonical_source_file_sha256  [RUN]
+02:15:56  115 of 165 PASS source_not_null_stage_yellow_taxi_canonical_schema_fingerprint . [PASS in 0.12s]
+02:15:56  119 of 165 START test source_not_null_stage_yellow_taxi_canonical_source_record_key  [RUN]
+02:15:56  116 of 165 PASS source_not_null_stage_yellow_taxi_canonical_schema_version ..... [PASS in 0.10s]
+02:15:56  120 of 165 START test source_not_null_stage_yellow_taxi_canonical_source_row_number  [RUN]
+02:15:56  117 of 165 PASS source_not_null_stage_yellow_taxi_canonical_source_file ........ [PASS in 0.09s]
+02:15:56  121 of 165 START test source_not_null_stage_yellow_taxi_canonical_source_year_month  [RUN]
+02:15:56  118 of 165 PASS source_not_null_stage_yellow_taxi_canonical_source_file_sha256 . [PASS in 0.11s]
+02:15:56  122 of 165 START test source_not_null_stage_yellow_taxi_canonical_stage_row_id . [RUN]
+02:15:56  119 of 165 PASS source_not_null_stage_yellow_taxi_canonical_source_record_key .. [PASS in 0.09s]
+02:15:56  123 of 165 START test source_not_null_stage_yellow_taxi_raw_source_record_key .. [RUN]
+02:15:56  120 of 165 PASS source_not_null_stage_yellow_taxi_canonical_source_row_number .. [PASS in 0.09s]
+02:15:56  124 of 165 START test source_record_identity ................................... [RUN]
+02:15:56  121 of 165 PASS source_not_null_stage_yellow_taxi_canonical_source_year_month .. [PASS in 0.09s]
+02:15:56  125 of 165 START test source_relationships_stage_yellow_taxi_canonical_batch_id__batch_id__source_control_etl_batch_  [RUN]
+02:15:56  122 of 165 PASS source_not_null_stage_yellow_taxi_canonical_stage_row_id ....... [PASS in 0.10s]
+02:15:56  126 of 165 START test source_unique_control_etl_batch_batch_id ................. [RUN]
+02:15:57  123 of 165 PASS source_not_null_stage_yellow_taxi_raw_source_record_key ........ [PASS in 0.12s]
+02:15:57  124 of 165 PASS source_record_identity ......................................... [PASS in 0.11s]
+02:15:57  127 of 165 START test source_unique_control_source_file_version_file_version_id  [RUN]
+02:15:57  128 of 165 START test source_unique_mage_dq_technical_quarantine_source_record_key  [RUN]
+02:15:57  125 of 165 PASS source_relationships_stage_yellow_taxi_canonical_batch_id__batch_id__source_control_etl_batch_  [PASS in 0.11s]
+02:15:57  129 of 165 START test source_unique_stage_yellow_taxi_canonical_source_record_key  [RUN]
+02:15:57  126 of 165 PASS source_unique_control_etl_batch_batch_id ....................... [PASS in 0.13s]
+02:15:57  130 of 165 START test source_unique_stage_yellow_taxi_canonical_stage_row_id ... [RUN]
+02:15:57  128 of 165 PASS source_unique_mage_dq_technical_quarantine_source_record_key ... [PASS in 0.13s]
+02:15:57  127 of 165 PASS source_unique_control_source_file_version_file_version_id ...... [PASS in 0.14s]
+02:15:57  131 of 165 START test source_unique_stage_yellow_taxi_raw_source_record_key .... [RUN]
+02:15:57  132 of 165 START test trip_classification_partition ............................ [RUN]
+02:15:57  129 of 165 PASS source_unique_stage_yellow_taxi_canonical_source_record_key .... [PASS in 0.10s]
+02:15:57  133 of 165 START test unique_business_quarantine_source_record_key ............. [RUN]
+02:15:57  130 of 165 PASS source_unique_stage_yellow_taxi_canonical_stage_row_id ......... [PASS in 0.13s]
+02:15:57  134 of 165 START test unique_dim_date_date_key ................................. [RUN]
+02:15:57  133 of 165 PASS unique_business_quarantine_source_record_key ................... [PASS in 0.07s]
+02:15:57  135 of 165 START test unique_dim_payment_type_payment_type_id .................. [RUN]
+02:15:57  131 of 165 PASS source_unique_stage_yellow_taxi_raw_source_record_key .......... [PASS in 0.11s]
+02:15:57  136 of 165 START test unique_dim_payment_type_payment_type_key ................. [RUN]
+02:15:57  134 of 165 PASS unique_dim_date_date_key ....................................... [PASS in 0.07s]
+02:15:57  132 of 165 PASS trip_classification_partition .................................. [PASS in 0.15s]
+02:15:57  137 of 165 START test unique_dim_rate_code_rate_code_id ........................ [RUN]
+02:15:57  138 of 165 START test unique_dim_rate_code_rate_code_key ....................... [RUN]
+02:15:57  135 of 165 PASS unique_dim_payment_type_payment_type_id ........................ [PASS in 0.09s]
+02:15:57  139 of 165 START test unique_dim_time_time_key ................................. [RUN]
+02:15:57  136 of 165 PASS unique_dim_payment_type_payment_type_key ....................... [PASS in 0.08s]
+02:15:57  140 of 165 START test unique_dim_vendor_vendor_id .............................. [RUN]
+02:15:57  137 of 165 PASS unique_dim_rate_code_rate_code_id .............................. [PASS in 0.09s]
+02:15:57  138 of 165 PASS unique_dim_rate_code_rate_code_key ............................. [PASS in 0.10s]
+02:15:57  141 of 165 START test unique_dim_vendor_vendor_key ............................. [RUN]
+02:15:57  142 of 165 START test unique_dim_zone_location_id .............................. [RUN]
+02:15:57  139 of 165 PASS unique_dim_time_time_key ....................................... [PASS in 0.12s]
+02:15:57  140 of 165 PASS unique_dim_vendor_vendor_id .................................... [PASS in 0.11s]
+02:15:57  143 of 165 START test unique_dim_zone_zone_key ................................. [RUN]
+02:15:57  144 of 165 START test unique_dq_rule_policy_rule_id ............................ [RUN]
+02:15:57  141 of 165 PASS unique_dim_vendor_vendor_key ................................... [PASS in 0.12s]
+02:15:57  142 of 165 PASS unique_dim_zone_location_id .................................... [PASS in 0.12s]
+02:15:57  145 of 165 START test unique_duplicate_quarantine_source_record_key ............ [RUN]
+02:15:57  146 of 165 START test unique_fact_taxi_trip_source_record_key .................. [RUN]
+02:15:57  143 of 165 PASS unique_dim_zone_zone_key ....................................... [PASS in 0.12s]
+02:15:57  144 of 165 PASS unique_dq_rule_policy_rule_id .................................. [PASS in 0.13s]
+02:15:57  147 of 165 START test unique_fact_taxi_trip_trip_key ........................... [RUN]
+02:15:57  148 of 165 START test unique_file_reconciliation_file_version_id ............... [RUN]
+02:15:57  145 of 165 PASS unique_duplicate_quarantine_source_record_key .................. [PASS in 0.12s]
+02:15:57  146 of 165 PASS unique_fact_taxi_trip_source_record_key ........................ [PASS in 0.11s]
+02:15:57  149 of 165 START test unique_int_taxi_trip_accepted_source_record_key .......... [RUN]
+02:15:57  150 of 165 START test unique_int_taxi_trip_classified_source_record_key ........ [RUN]
+02:15:57  148 of 165 PASS unique_file_reconciliation_file_version_id ..................... [PASS in 0.10s]
+02:15:57  147 of 165 PASS unique_fact_taxi_trip_trip_key ................................. [PASS in 0.10s]
+02:15:57  151 of 165 START test unique_int_taxi_trip_enriched_source_record_key .......... [RUN]
+02:15:57  152 of 165 START test unique_int_taxi_trip_fingerprinted_source_record_key ..... [RUN]
+02:15:57  149 of 165 PASS unique_int_taxi_trip_accepted_source_record_key ................ [PASS in 0.11s]
+02:15:57  153 of 165 START test unique_payment_type_codes_payment_type_id ................ [RUN]
+02:15:57  150 of 165 PASS unique_int_taxi_trip_classified_source_record_key .............. [PASS in 0.12s]
+02:15:57  152 of 165 PASS unique_int_taxi_trip_fingerprinted_source_record_key ........... [PASS in 0.07s]
+02:15:57  154 of 165 START test unique_payment_type_codes_payment_type_key ............... [RUN]
+02:15:57  155 of 165 START test unique_rate_codes_rate_code_id ........................... [RUN]
+02:15:57  151 of 165 PASS unique_int_taxi_trip_enriched_source_record_key ................ [PASS in 0.12s]
+02:15:57  156 of 165 START test unique_rate_codes_rate_code_key .......................... [RUN]
+02:15:57  153 of 165 PASS unique_payment_type_codes_payment_type_id ...................... [PASS in 0.09s]
+02:15:57  157 of 165 START test unique_stg_taxi_zone_location_id ......................... [RUN]
+02:15:57  154 of 165 PASS unique_payment_type_codes_payment_type_key ..................... [PASS in 0.09s]
+02:15:57  158 of 165 START test unique_stg_yellow_taxi_source_record_key ................. [RUN]
+02:15:58  155 of 165 PASS unique_rate_codes_rate_code_id ................................. [PASS in 0.11s]
+02:15:58  159 of 165 START test unique_trip_fingerprint_history_source_record_key ........ [RUN]
+02:15:58  156 of 165 PASS unique_rate_codes_rate_code_key ................................ [PASS in 0.08s]
+02:15:58  160 of 165 START test unique_vendor_codes_vendor_id ............................ [RUN]
+02:15:58  157 of 165 PASS unique_stg_taxi_zone_location_id ............................... [PASS in 0.09s]
+02:15:58  161 of 165 START test unique_vendor_codes_vendor_key ........................... [RUN]
+02:15:58  158 of 165 PASS unique_stg_yellow_taxi_source_record_key ....................... [PASS in 0.09s]
+02:15:58  162 of 165 START test unique_zone_key_map_location_id .......................... [RUN]
+02:15:58  159 of 165 PASS unique_trip_fingerprint_history_source_record_key .............. [PASS in 0.09s]
+02:15:58  160 of 165 PASS unique_vendor_codes_vendor_id .................................. [PASS in 0.08s]
+02:15:58  163 of 165 START test unique_zone_key_map_zone_key ............................. [RUN]
+02:15:58  164 of 165 START test zone_geometry_membership ................................. [RUN]
+02:15:58  161 of 165 PASS unique_vendor_codes_vendor_key ................................. [PASS in 0.07s]
+02:15:58  165 of 165 START test zone_lookup_count ........................................ [RUN]
+02:15:58  162 of 165 PASS unique_zone_key_map_location_id ................................ [PASS in 0.10s]
+02:15:58  163 of 165 PASS unique_zone_key_map_zone_key ................................... [PASS in 0.08s]
+02:15:58  165 of 165 PASS zone_lookup_count .............................................. [PASS in 0.07s]
+02:15:58  164 of 165 PASS zone_geometry_membership ....................................... [PASS in 0.20s]
+02:15:58  
+02:15:58  Finished running 165 data tests in 0 hours 0 minutes and 4.94 seconds (4.94s).
+02:15:58  
+02:15:58  Completed with 1 error and 0 warnings:
+02:15:58  
+02:15:58  Failure in test same_file_duplicate_survivor (tests\singular\same_file_duplicate_survivor.sql)
+02:15:58    Got 1 result, configured to fail if != 0
+02:15:58  
+02:15:58    compiled code at target\compiled\yellow_taxi_bi\tests\singular\same_file_duplicate_survivor.sql
+02:15:58  
+02:15:58  Done. PASS=164 WARN=0 ERROR=1 SKIP=0 TOTAL=165
+Traceback (most recent call last):
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_replacement_recovery_qa.py", line 142, in <module>
+    main()
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_replacement_recovery_qa.py", line 98, in main
+    runner.run_downstream(batch)
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 307, in run_downstream
+    dbt(['test'])
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 296, in dbt
+    run_dbt(args, batch_id, {'apply_approved_fact_replacement': True})
+  File "C:\Users\PC\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py", line 1124, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py", line 1128, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py", line 1189, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\tests\run_replacement_recovery_qa.py", line 94, in fail_between_olap
+    run_dbt(args, batch_id, variables)
+  File "D:\BI\DATH\NYC_TAXI_BI_PROJECT\deployment\scripts\run_24_month_backfill.py", line 145, in run_dbt
+    subprocess.run(command, cwd=ROOT, env=os.environ.copy(), check=True)
+  File "C:\Users\PC\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['D:\\BI\\DATH\\NYC_TAXI_BI_PROJECT\\.venv-dbt\\Scripts\\dbt.exe', 'test', '--project-dir', 'D:\\BI\\DATH\\NYC_TAXI_BI_PROJECT\\dbt_project', '--profiles-dir', 'D:\\BI\\DATH\\NYC_TAXI_BI_PROJECT\\.dbt', '--vars', '{"load_batch_id": 9, "fact_lifecycle_mode": "archive", "apply_approved_fact_replacement": true}']' returned non-zero exit status 1.

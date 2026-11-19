@@ -38,6 +38,8 @@ vars:
   distance_band_edges_miles: [1, 5, 10]
   time_band_start_hours: [5, 12, 17, 21]
   fixture_mode: false
+  enable_fingerprint_history_candidate: false
+  use_fingerprint_history_candidate: false
   business_fixture_source_file: 'business_rule_cases.parquet'
   load_batch_id: null
   technical_quarantine_schema: dq

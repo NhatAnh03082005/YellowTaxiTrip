@@ -293,6 +293,9 @@ CREATE TABLE IF NOT EXISTS control.etl_backfill_run (
     started_at timestamptz NOT NULL DEFAULT clock_timestamp(),
     ended_at timestamptz NULL,
     error_message text NULL,
+    dds_validation_status varchar(16) NOT NULL DEFAULT 'PENDING',
+    olap_bi_validation_status varchar(16) NOT NULL DEFAULT 'PENDING',
+    validation_evidence jsonb NOT NULL DEFAULT '{}'::jsonb,
     CONSTRAINT ck_backfill_run_months CHECK (
         source_month_from ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
         AND source_month_to ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
@@ -304,6 +307,12 @@ CREATE TABLE IF NOT EXISTS control.etl_backfill_run (
     ),
     CONSTRAINT ck_backfill_run_status CHECK (
         status IN ('RUNNING', 'SUCCESS', 'FAILED')
+    ),
+    CONSTRAINT ck_etl_backfill_run_dds_validation CHECK (
+        dds_validation_status IN ('PENDING', 'SUCCESS', 'FAILED')
+    ),
+    CONSTRAINT ck_etl_backfill_run_bi_validation CHECK (
+        olap_bi_validation_status IN ('PENDING', 'SUCCESS', 'FAILED')
     )
 );
 
@@ -317,6 +326,9 @@ CREATE TABLE IF NOT EXISTS control.etl_backfill_file (
     status varchar(16) NOT NULL DEFAULT 'PENDING',
     completed_at timestamptz NULL,
     error_message text NULL,
+    cleanup_status varchar(16) NOT NULL DEFAULT 'PENDING',
+    cleaned_at timestamptz NULL,
+    cleanup_error text NULL,
     CONSTRAINT pk_etl_backfill_file PRIMARY KEY (
         backfill_run_id, source_year_month
     ),
@@ -325,6 +337,9 @@ CREATE TABLE IF NOT EXISTS control.etl_backfill_file (
     ),
     CONSTRAINT ck_etl_backfill_file_status CHECK (
         status IN ('PENDING', 'RUNNING', 'SUCCESS', 'FAILED')
+    ),
+    CONSTRAINT ck_etl_backfill_file_cleanup_status CHECK (
+        cleanup_status IN ('PENDING', 'RUNNING', 'SUCCESS', 'FAILED')
     )
 );
 

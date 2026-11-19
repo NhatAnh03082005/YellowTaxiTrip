@@ -1,6 +1,10 @@
 version: 2
 
 models:
+  - name: v_trip_fingerprint_history
+    description: Disabled-by-default V2 candidate view over persistent Fact and DQ branches.
+  - name: v_trip_cross_file_warning
+    description: Historical and current DUP-002 observation interface for matched file versions.
   - name: trip_fingerprint_history
     description: Compact binary fingerprint registry retained after transient Staging cleanup.
     columns:

@@ -7,6 +7,10 @@
     tags=['audit', 'fingerprint']
 ) }}
 
+{% set history_relation = source('audit', 'v_trip_fingerprint_history')
+    if var('use_fingerprint_history_candidate', false)
+    else source('audit', 'trip_fingerprint_history') %}
+
 with current_rows as (
     select * from {{ ref('int_taxi_trip_fingerprinted') }}
 ), matches as (
@@ -17,7 +21,7 @@ with current_rows as (
         greatest(c.file_version_id, h.file_version_id) as matched_file_version_id,
         c.batch_id as detected_batch_id
     from current_rows c
-    join {{ source('audit', 'trip_fingerprint_history') }} h
+    join {{ history_relation }} h
       on h.raw_exact_fingerprint = decode(trim(c.raw_exact_fingerprint), 'hex')
      and h.file_version_id <> c.file_version_id
     where c.raw_exact_fingerprint is not null
@@ -31,7 +35,7 @@ with current_rows as (
         greatest(c.file_version_id, h.file_version_id),
         c.batch_id
     from current_rows c
-    join {{ source('audit', 'trip_fingerprint_history') }} h
+    join {{ history_relation }} h
       on h.candidate_trip_fingerprint = decode(trim(c.candidate_trip_fingerprint), 'hex')
      and h.file_version_id <> c.file_version_id
 )

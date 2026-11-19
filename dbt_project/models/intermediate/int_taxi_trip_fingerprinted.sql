@@ -5,6 +5,9 @@ with raw_rows as (
         r.source_record_key,
         case when jsonb_typeof(to_jsonb(r) -> 'raw_payload') = 'object'
             then to_jsonb(r) -> 'raw_payload'
+            when r.schema_version = 'yt_schema_v001'
+                and to_jsonb(r) -> 'cbd_congestion_fee' = 'null'::jsonb
+            then to_jsonb(r) - 'cbd_congestion_fee'
             else to_jsonb(r)
         end as raw_values
     from {{ source('stage', 'yellow_taxi_raw') }} r

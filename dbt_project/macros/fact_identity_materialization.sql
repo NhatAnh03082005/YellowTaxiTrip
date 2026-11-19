@@ -14,6 +14,16 @@
     {% set history_schema = var('fact_lifecycle_history_schema', 'dq') %}
     {% set history_table = var('fact_lifecycle_history_table', 'fact_taxi_trip_history') %}
     {% set history_relation = adapter.quote(history_schema) ~ '.' ~ adapter.quote(history_table) %}
+    {% set load_batch_id = var('load_batch_id', none) %}
+    {% set replacement = var('apply_approved_fact_replacement', false) %}
+    {% if replacement and (load_batch_id is none or lifecycle_mode != 'archive') %}
+        {{ exceptions.raise_compiler_error('Approved replacement requires a load batch and Fact archive mode') }}
+    {% endif %}
+    {% set processing_versions %}
+        select distinct file_version_id
+        from {{ source('stage', 'yellow_taxi_raw') }}
+        {% if load_batch_id is not none %}where batch_id = {{ load_batch_id | int }}{% endif %}
+    {% endset %}
     {# Serialize Fact writers, including the first table creation. #}
     {% do run_query("select pg_advisory_xact_lock(hashtext('yellow_taxi_fact_identity'))") %}
 
@@ -37,8 +47,7 @@
         {# Guard mode is the safe default for databases not yet migrated. #}
         {% set stale_fact_probe = run_query(
             'select f.source_record_key from ' ~ target_relation ~ ' f ' ~
-            'where f.file_version_id in (select distinct file_version_id from ' ~
-            ref('int_taxi_trip_classified') ~ ') and not exists (select 1 from ' ~
+            'where f.file_version_id in (' ~ processing_versions ~ ') and not exists (select 1 from ' ~
             ref('int_taxi_trip_accepted') ~
             ' a where a.source_record_key = f.source_record_key) limit 1'
         ) %}
@@ -133,7 +142,7 @@
                 'select f.source_record_key, f.trip_key, ' ~
                 "'PREEXISTING', f.primary_disposition, f.dq_rule_ids, " ~
                 "'MIGRATE', f.batch_id, to_jsonb(f) " ~
-                'from ' ~ target_relation ~ ' f where not exists (' ~
+                'from ' ~ target_relation ~ ' f where f.file_version_id in (' ~ processing_versions ~ ') and not exists (' ~
                 'select 1 from ' ~ history_relation ~
                 ' h where h.source_record_key = f.source_record_key)'
             ) %}
@@ -153,9 +162,22 @@
             ' t on t.source_record_key = f.source_record_key ' ~
             'left join ' ~ source('stage', 'yellow_taxi_raw') ~
             ' r on r.source_record_key = f.source_record_key ' ~
-            'where f.file_version_id in (select distinct file_version_id from ' ~
-            ref('int_taxi_trip_classified') ~ ') and a.source_record_key is null'
+            'where f.file_version_id in (' ~ processing_versions ~ ') and a.source_record_key is null'
         ) %}
+        {% if replacement %}
+            {% set scope = fact_replacement_scope(load_batch_id) %}
+            {% set scope_result = run_query('select count(*) from (' ~ scope ~ ') approved_scope') %}
+            {% if scope_result.rows[0][0] != 1 %}
+                {{ exceptions.raise_compiler_error('Expected exactly one approved, staged replacement pair') }}
+            {% endif %}
+            {% do run_query(
+                'with removed as (delete from ' ~ target_relation ~ ' f using (' ~ scope ~ ') s ' ~
+                'where f.file_version_id = s.old_version_id returning f.*) insert into ' ~ history_relation ~
+                ' (source_record_key, trip_key, from_disposition, to_disposition, dq_rule_ids, change_type, batch_id, prior_fact) ' ~
+                "select f.source_record_key, f.trip_key, f.primary_disposition, 'SOURCE_VERSION_RETIRED', " ~
+                "f.dq_rule_ids, 'REPLACE_VERSION', " ~ (load_batch_id | int) ~ ', to_jsonb(f) from removed f'
+            ) %}
+        {% endif %}
         {% set untraceable = run_query('select source_record_key from ' ~ temp_stale ~
             ' where not has_raw or not has_branch limit 1') %}
         {% if untraceable.rows | length > 0 %}
