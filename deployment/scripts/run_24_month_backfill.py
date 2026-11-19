@@ -25,7 +25,9 @@ ROOT = Path(__file__).resolve().parents[2]
 MAGE_ROOT = ROOT / 'mage_project'
 DBT_ROOT = ROOT / 'dbt_project'
 DATA_ROOT = ROOT / 'data'
-WORK_ROOT = DATA_ROOT / 'work' / 'task_4_4'
+WORK_ROOT = Path(os.environ.get(
+    'YELLOW_TAXI_WORK_ROOT', str(DATA_ROOT / 'work' / 'task_4_4')
+)).resolve()
 CATALOG = DATA_ROOT / 'catalog' / 'yellow_taxi_2024_2025.csv'
 SCHEMA_REGISTRY = DATA_ROOT / 'catalog' / 'yellow_taxi_schema_registry.csv'
 
@@ -127,6 +129,12 @@ def apply_migration() -> None:
 
 
 def dbt_executable() -> str:
+    override = os.environ.get('DBT_EXECUTABLE')
+    if override:
+        executable = Path(override).resolve()
+        if not executable.is_file():
+            raise RuntimeError('DBT_EXECUTABLE does not exist: {}'.format(executable))
+        return str(executable)
     candidate = ROOT / '.venv-dbt' / 'Scripts' / 'dbt.exe'
     return str(candidate) if candidate.is_file() else 'dbt'
 
@@ -272,7 +280,7 @@ def persist_reconciliation(batch_id: int, query) -> dict:
     return {'rows': rows, 'totals': totals}
 
 
-def run_downstream(batch_id: int) -> dict:
+def run_downstream(batch_id: int, resume_dbt_select: str | None = None) -> dict:
     state = execute(
         '''SELECT b.status, r.batch_id IS NOT NULL AS replacement
            FROM control.etl_batch b LEFT JOIN control.etl_replacement r USING (batch_id)
@@ -300,7 +308,10 @@ def run_downstream(batch_id: int) -> dict:
     try:
         control_step(batch_id, 'DBT_BUILD_DDS', 'start')
         dbt(['seed'])
-        dbt(['run', '--exclude', 'tag:olap'])
+        if resume_dbt_select:
+            dbt(['run', '--select', *resume_dbt_select.split(), '--exclude', 'tag:olap'])
+        else:
+            dbt(['run', '--exclude', 'tag:olap'])
         control_step(batch_id, 'DBT_BUILD_DDS', 'success')
 
         control_step(batch_id, 'DBT_TEST', 'start')
@@ -392,6 +403,18 @@ def clean_transient_storage(batch_id: int) -> None:
                     TRUNCATE TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
                         RESTART IDENTITY;
                 """, {'batch': batch_id})
+                # dbt work tables share the single-writer staging lifecycle.
+                # Retain them on failure; release only inside successful cleanup.
+                for work_table in ('int_taxi_trip_classified', 'int_taxi_trip_fingerprinted'):
+                    relation = 'dds.' + work_table
+                    execute_cursor(cursor, """
+                        DO $$ BEGIN
+                            IF EXISTS (SELECT 1 FROM pg_class
+                                WHERE oid = to_regclass('%s') AND relkind = 'r') THEN
+                                TRUNCATE TABLE %s;
+                            END IF;
+                        END $$;
+                    """ % (relation, relation))
     except Exception as exception:
         execute("""
             UPDATE control.etl_backfill_file
@@ -657,8 +680,11 @@ def main() -> int:
     parser.add_argument('--replay-requested-by')
     parser.add_argument('--replay-reason')
     parser.add_argument('--expected-peak-bytes', type=int)
+    parser.add_argument('--resume-dbt-select', help='Select unfinished dbt models when resuming a batch')
     parser.add_argument('--v2-approval-file')
     args = parser.parse_args()
+    if args.resume_dbt_select and not args.resume_batch:
+        parser.error('--resume-dbt-select requires --resume-batch')
     load_dotenv()
     if args.apply_migration:
         apply_migration()
@@ -685,7 +711,7 @@ def main() -> int:
         with runner_lock():
             require_no_pending_cleanup(args.resume_batch)
             require_no_pending_replacement(args.resume_batch)
-            result = run_downstream(args.resume_batch)
+            result = run_downstream(args.resume_batch, args.resume_dbt_select)
             if args.enable_cleanup:
                 clean_transient_storage(args.resume_batch)
         print(json.dumps({'batch_id': args.resume_batch, 'result': result}, default=str))

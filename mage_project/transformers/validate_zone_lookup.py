@@ -1,5 +1,6 @@
 import pandas as pd
-from utils.decorators import test, transformer
+if 'transformer' not in globals():
+    from utils.decorators import test, transformer
 
 
 @transformer

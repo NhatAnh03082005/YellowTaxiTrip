@@ -1,4 +1,5 @@
-from utils.decorators import transformer
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 
 @transformer

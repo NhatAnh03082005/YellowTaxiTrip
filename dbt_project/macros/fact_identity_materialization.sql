@@ -149,6 +149,8 @@
         {% endif %}
         {% do run_query('create temporary table ' ~ temp_source ~
             ' on commit drop as select * from (' ~ sql ~ ') as source_rows') %}
+        {% do run_query('create unique index on ' ~ temp_source ~ ' (source_record_key)') %}
+        {% do run_query('analyze ' ~ temp_source) %}
         {% do run_query(
             'create temporary table ' ~ temp_stale ~ ' on commit drop as ' ~
             'select f.source_record_key, c.primary_disposition as new_disposition, ' ~
@@ -211,6 +213,8 @@
             'select source_rows.source_record_key from ' ~ temp_source ~ ' source_rows ' ~
             'left join ' ~ target_relation ~ ' f on f.source_record_key = source_rows.source_record_key ' ~
             'where f.source_record_key is null') %}
+        {% do run_query('create unique index on ' ~ temp_new ~ ' (source_record_key)') %}
+        {% do run_query('analyze ' ~ temp_new) %}
 
         {# Archive the previous Fact image before an in-place update. #}
         {% do run_query(

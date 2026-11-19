@@ -5,7 +5,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from utils.database import execute
-from utils.decorators import transformer
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 from utils.parquet_utils import make_source_record_key
 
 @transformer

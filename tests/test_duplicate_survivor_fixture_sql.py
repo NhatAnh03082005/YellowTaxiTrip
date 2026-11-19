@@ -13,6 +13,7 @@ class DuplicateSurvivorFixtureSQL(unittest.TestCase):
         ranking = text.split('), current_cross_file_raw as (', 1)[0] + ')\nselect * from duplicate_ranked'
         env = jinja2.Environment()
         env.globals.update(
+            config=lambda **kwargs: '',
             ref=lambda name: 'pg_temp.fingerprinted',
             source=lambda schema, table: 'pg_temp.' + table,
             var=lambda name, default=None: default,

@@ -20,11 +20,19 @@ BEGIN
     WHERE n.nspname = 'control' AND c.relkind = 'r'
       AND obj_description(c.oid, 'pg_class') IS NOT NULL;
 
-    IF v_tables <> 5 OR v_functions <> 18
-       OR v_named_indexes < 14 OR v_comments <> 5 THEN
+    IF v_tables < 10 OR v_functions < 24
+       OR v_named_indexes < 15 OR v_comments < 5
+       OR to_regclass('control.source_file_version') IS NULL
+       OR to_regclass('control.file_reconciliation_history') IS NULL
+       OR to_regclass('control.etl_backfill_run') IS NULL
+       OR to_regclass('control.etl_backfill_file') IS NULL
+       OR to_regclass('control.etl_replacement') IS NULL
+       OR to_regclass('audit.trip_fingerprint_history') IS NULL
+       OR to_regprocedure('control.resume_failed_downstream(bigint)') IS NULL
+       OR to_regprocedure('control.bind_approved_replacement(bigint,bigint)') IS NULL THEN
         RAISE EXCEPTION 'Schema mismatch: tables %, functions %, named indexes %, comments %',
             v_tables, v_functions, v_named_indexes, v_comments;
     END IF;
-    RAISE NOTICE 'PASS T15: 5 tables, 18 functions, indexes and table comments';
+    RAISE NOTICE 'PASS T15: current control, audit and recovery schema';
 END;
 $$;

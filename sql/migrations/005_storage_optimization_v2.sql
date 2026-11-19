@@ -2,6 +2,7 @@
 
 -- Online-compatible migration for an existing Phase 2 database. The base DDL
 -- already contains these objects for a clean rebuild.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS audit;
 
 CREATE TABLE IF NOT EXISTS control.source_file_version (

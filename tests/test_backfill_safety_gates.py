@@ -227,6 +227,9 @@ class BackfillSafetyGates(unittest.TestCase):
         self.assertIn('foreign_rows', transaction_sql)
         self.assertIn("cleanup_status = 'RUNNING'", transaction_sql)
         self.assertIn('TRUNCATE TABLE stage.yellow_taxi_raw', transaction_sql)
+        self.assertIn('TRUNCATE TABLE dds.int_taxi_trip_classified', transaction_sql)
+        self.assertIn('TRUNCATE TABLE dds.int_taxi_trip_fingerprinted', transaction_sql)
+        self.assertNotIn('TRUNCATE TABLE dds.fact_taxi_trip', transaction_sql)
         self.assertTrue(any("cleanup_status = 'SUCCESS'" in sql for sql in outside))
 
     def test_cleanup_rejects_foreign_batch_and_records_failure(self):

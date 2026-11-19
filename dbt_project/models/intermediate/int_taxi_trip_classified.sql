@@ -1,3 +1,8 @@
+{{ config(materialized='table', post_hook='analyze {{ this }}',
+    indexes=[{'columns': ['source_record_key'], 'unique': True},
+             {'columns': ['file_version_id', 'primary_disposition']}]) }}
+-- Shared batch result for Fact, DQ, audit and tests. Rebuilt on each run.
+
 {% set history_relation = source('audit', 'v_trip_fingerprint_history')
     if var('use_fingerprint_history_candidate', false)
     else source('audit', 'trip_fingerprint_history') %}

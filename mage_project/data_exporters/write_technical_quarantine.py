@@ -2,7 +2,8 @@ import pandas as pd
 
 from utils.database import require_tables
 from utils.stage_loader import upsert_dataframe
-from utils.decorators import data_exporter
+if 'data_exporter' not in globals():
+    from utils.decorators import data_exporter
 
 @data_exporter
 def write_technical_quarantine(ingestion_context, *args, **kwargs):

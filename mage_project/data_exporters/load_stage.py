@@ -4,7 +4,8 @@ import pandas as pd
 
 from utils.database import execute, fetch_one, require_tables
 import utils.stage_loader as stage_loader
-from utils.decorators import data_exporter
+if 'data_exporter' not in globals():
+    from utils.decorators import data_exporter
 
 @data_exporter
 def load_stage(ingestion_context, *args, **kwargs):

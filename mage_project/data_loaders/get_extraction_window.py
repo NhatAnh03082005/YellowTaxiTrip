@@ -1,5 +1,6 @@
 from utils.database import fetch_one
-from utils.decorators import data_loader, test
+if 'data_loader' not in globals():
+    from utils.decorators import data_loader, test
 
 
 @data_loader

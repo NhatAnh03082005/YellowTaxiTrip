@@ -1,3 +1,8 @@
+{{ config(materialized='table', post_hook='analyze {{ this }}',
+    indexes=[{'columns': ['source_record_key'], 'unique': True},
+             {'columns': ['raw_exact_fingerprint', 'file_version_id']},
+             {'columns': ['candidate_trip_fingerprint', 'file_version_id']}]) }}
+-- Batch workspace: rebuilt from staging, never accumulated across months.
 -- Source field order and logical types come from the approved 2024/2025 survey.
 -- Mage must retain the original typed values or equivalent lossless raw_payload.
 with raw_rows as (

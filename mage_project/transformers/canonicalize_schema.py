@@ -6,7 +6,8 @@ import pyarrow.parquet as pq
 
 from utils.canonical import canonicalize_dataframe, serialize_json_columns
 from utils.database import execute
-from utils.decorators import transformer
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 @transformer
 def canonicalize_schema(ingestion_context, *args, **kwargs):

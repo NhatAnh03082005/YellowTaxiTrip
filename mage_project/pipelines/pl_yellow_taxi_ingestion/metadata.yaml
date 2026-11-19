@@ -193,9 +193,9 @@ tags:
 type: python
 uuid: pl_yellow_taxi_ingestion
 variables:
-  catalog_path: /home/src/data/catalog/yellow_taxi_selected_2_months.csv
+  catalog_path: /home/src/data/catalog/yellow_taxi_2024_2025.csv
   run_type: BACKFILL
   source_year_month_from: 2024-05
-  source_year_month_to: 2025-05
+  source_year_month_to: 2024-05
 variables_dir: /home/src/mage_data/nyc_taxi_bi
 widgets: []

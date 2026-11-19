@@ -1,18 +1,20 @@
 {{ config(materialized='incremental', incremental_strategy='delete+insert', unique_key='date_key') }}
 
-with observed_dates as (
-    select pickup_datetime::date as full_date from {{ ref('int_taxi_trip_accepted') }}
-    union all
-    select dropoff_datetime::date from {{ ref('int_taxi_trip_accepted') }}
-    {% if is_incremental() %}
-    union all
-    select full_date from {{ this }}
-    {% endif %}
+with accepted_bounds as (
+    select
+        min(least(pickup_datetime::date, dropoff_datetime::date)) as first_date,
+        max(greatest(pickup_datetime::date, dropoff_datetime::date)) as last_date
+    from {{ ref('int_taxi_trip_accepted') }}
 ), bounds as (
     select
-        min(full_date) as first_date,
-        max(full_date) as last_date
-    from observed_dates
+        {% if is_incremental() %}
+        least(a.first_date, (select min(full_date) from {{ this }})) as first_date,
+        greatest(a.last_date, (select max(full_date) from {{ this }})) as last_date
+        {% else %}
+        a.first_date,
+        a.last_date
+        {% endif %}
+    from accepted_bounds a
 ), calendar as (
     select day_value::date as full_date
     from bounds,

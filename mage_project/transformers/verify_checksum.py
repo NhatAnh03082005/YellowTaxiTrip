@@ -3,7 +3,8 @@ from pathlib import Path
 import pandas as pd
 
 from utils.database import execute, fetch_one
-from utils.decorators import transformer
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 from utils.parquet_utils import calculate_file_sha256, inspect_parquet
 from utils.paths import resolve_data_path
 
