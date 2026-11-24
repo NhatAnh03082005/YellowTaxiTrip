@@ -2,6 +2,10 @@
 
 Ngày lập: 2026-11-19. Trạng thái: **Cụm 1–2 (T00–T05) DONE theo phạm vi; DDS opt-in đã kiểm QA, chưa chuyển live**.
 
+Cập nhật kế hoạch: **2026-11-24 — tách OLAP khỏi lượt nạp Source → DDS; phân công bốn người tại mục 9.** Đây là thay đổi kế hoạch, chưa phải xác nhận runner/control đã được sửa. T06–T12 vẫn cần triển khai và kiểm chứng; giữ nguyên bằng chứng T00–T05.
+
+“Tách OLAP khỏi dbt” trong yêu cầu này được triển khai theo nghĩa **không build/test OLAP trong lệnh dbt và runner nạp từng tháng**. Có thể tiếp tục dùng dbt để build OLAP bằng lệnh/job reporting riêng sau khi DDS được nghiệm thu. Không xóa OLAP, không bỏ yêu cầu phân tích, không chuyển việc tổng hợp toàn bộ Fact sang từng visual Power BI.
+
 ## 1. Mục tiêu và cách sử dụng
 
 Giảm tổng thời gian dbt, thời gian chạy lại và dung lượng đỉnh/giữ lâu dài, nhưng vẫn chứng minh đầy đủ ETL và phân tích theo yêu cầu đồ án. Không lấy số lượng model/test hay mức phức tạp production làm mục tiêu.
@@ -41,10 +45,18 @@ Immutable Parquet + file metadata/checksum
   → một classification table gọn, chỉ chứa dữ liệu đang xử lý
   → Fact hiện tại + quarantine gọn
   → batch tests + reconciliation
-  → cập nhật đúng phạm vi OLAP + OLAP tests
-  → SUCCESS/watermark
+  → commit DDS SUCCESS/watermark
   → cleanup staging/workspace
+
+Sau backfill 24 tháng + full audit DDS PASS:
+  DDS + dimensions + metadata bền vững
+  → job OLAP riêng → OLAP tests/parity
+  → đánh dấu reporting READY → refresh Power BI
 ```
+
+Đối với lịch incremental sau backfill: nạp file mới → DDS được kiểm chứng → commit watermark DDS; sau đó kích hoạt job reporting riêng. Watermark nạp dữ liệu và checkpoint/reporting status là hai trạng thái khác nhau. Nếu OLAP lỗi, giữ bản reporting đã công bố, ghi FAILED và retry reporting từ DDS; không nạp lại Mage hoặc rollback watermark DDS chỉ vì lỗi OLAP. Trong backfill không tự refresh Power BI theo từng tháng.
+
+Điều chỉnh này thay thế riêng các mô tả **OLAP là gate trước commit watermark/cleanup** trong contract và implementation guide cũ. T08 phải cập nhật các tài liệu đó cùng runtime; các contract grain, DQ, measures và lineage còn lại vẫn giữ. Không thực thi runbook cũ với giả định việc tách đã hoàn thành.
 
 ### Những tính năng loại khỏi luồng mới
 
@@ -116,12 +128,14 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 | T04  | Dimensions tĩnh, lookup keys                      | T01, T02  | DONE       |
 | T05  | Fact/DQ nạp theo file, bỏ lifecycle runtime       | T03, T04  | DONE       |
 | T06  | Tests theo batch và reconciliation                | T05       | TODO       |
-| T07  | OLAP gọn, đúng affected grains                    | T05, T06  | TODO       |
-| T08  | Runner skip/retry/cleanup, artifacts              | T06, T07  | TODO       |
+| T07  | Job OLAP riêng và nghiệm thu reporting           | T12A + DDS được nghiệm thu | TODO |
+| T08  | Runner DDS, skip/retry/cleanup, tách gate OLAP     | T06       | TODO       |
 | T09  | Migration QA và end-to-end fault/retry            | T08       | TODO       |
 | T10  | Benchmark thời gian và dung lượng                 | T09       | TODO       |
 | T11  | Tuning theo evidence, chốt phiên bản              | T10       | TODO       |
-| T12  | Runbook, full audit và bàn giao                   | T11       | TODO       |
+| T12  | T12A bàn giao DDS; T12B chốt reporting            | A: T11; B: T07 | TODO   |
+
+Thứ tự thực hiện ETL: **T06 → T08 → T09 → T10 ↔ T11 → T12A → người phụ trách chạy 24 tháng và full audit DDS → T07 → T12B**. T07 có thể chuẩn bị code/fixture/mapping sớm, nhưng nghiệm thu reporting thật sau DDS. T12A là mốc bàn giao bản ETL đã benchmark, không đòi phải chạy đủ 24 tháng trước khi bàn giao; T12B không chặn bàn giao ETL. Không đổi số hiệu T00–T12 để giữ liên kết evidence cũ.
 
 ## T00 — Inventory và baseline có thể so sánh
 
@@ -234,29 +248,33 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 - Batch tests kiểm scope/version, not-null, grain/unique, FK, classification partition, duplicate policy, schema mapping và measures; gom flags/null checks khi giúp giảm scan nhưng vẫn báo rule và số lỗi.
 - Reconciliation per file: source = canonical + technical; canonical = Fact + business/duplicate/excluded theo đúng các nhánh; mỗi dòng chỉ nằm một nhánh cuối.
 - Đối soát fare, tip, total, doanh thu và eligible counts theo T01. Với cast lỗi không có numeric hợp lệ, tách count eligible và sum, không coi amount không đọc được là zero hợp lệ.
-- Full audit riêng kiểm 24-file completeness, global unique/FK, tổng counts/amounts và OLAP parity. Không quét lịch sử lifecycle đã bỏ.
+- Full audit DDS riêng kiểm 24-file completeness, global unique/FK, tổng counts/amounts. OLAP parity thuộc T07, không là gate nạp tháng/cleanup DDS. Không quét lịch sử lifecycle đã bỏ.
 - Failure phải exit nonzero và chặn watermark. `--store-failures` chỉ lưu có kiểm soát, tránh tạo bản sao triệu dòng lỗi; aggregate diagnostics trước, sample có giới hạn.
 
 **Không làm:** sample tests để thay reconciliation đầy đủ của batch; bỏ errors bằng severity warn; dùng LIMIT khiến lỗi ngoài sample bị bỏ qua.
 
 **Nghiệm thu:** negative fixtures gây FAIL đúng; valid fixtures PASS; selectors batch/full audit phân biệt rõ; không còn test ref/source gãy.
 
-## T07 — OLAP nhỏ nhưng đủ dashboard, cập nhật đúng grain
+## T07 — OLAP độc lập sau DDS, phục vụ đủ năm trang dashboard
 
-**Files chính:** `models/marts/olap/*`, `macros/replacement_olap_scope.sql` hoặc macro mới, docs Power BI.
+**Chủ trì:** người 4. **Files chính:** `dbt_project/models/marts/olap/*`, macros/selector reporting, job/script reporting riêng và docs Power BI. Được chuẩn bị sớm bằng fixtures; không là dependency của T08–T12A.
 
 **Cần làm:**
 
+- Tạo entry point riêng cho build/test OLAP; đọc Fact, dimensions và metadata bền vững. Chạy được sau khi staging/classification đã cleanup, không phụ thuộc current batch hoặc workspace còn sót lại.
+- Lần đầu sau backfill: build từ toàn bộ DDS đã nghiệm thu, một lần cho tập 24 tháng; kiểm đủ file theo catalog, không suy đủ chỉ từ MIN/MAX ngày. Ba model OLAP hiện hữu phải rà lại filter và cách lấy source month/file lineage để tương thích Fact tối giản; không chỉ bỏ cờ disabled rồi coi là xong.
 - Dùng mapping T01 để giữ số bảng tổng hợp tối thiểu; cung cấp đường truy vấn cho ngày/tháng/năm, giờ/ngày tuần, vendor/borough, payment, passenger group/rate/distance/time, route và pickup/dropoff map.
 - Giữ Fact hoặc compatibility views cho drill-down; không tuyên bố ba aggregate hiện tại tự bao phủ mọi requirement khi chưa chứng minh.
 - Lưu additive sums và eligible counts; tính average từ sum/count. Tip/speed theo định nghĩa đã chốt, không average-of-averages.
-- Với daily grain theo pickup_date: xác định ngày bị tác động rồi aggregate toàn Fact của những ngày đó, kể cả row đến từ file khác. Không chỉ aggregate current file rồi overwrite cả ngày.
-- Capture affected grains của old và new trước replacement; delete/rebuild đúng grains, kể cả group không còn dòng. Với monthly source grain phải phân biệt tháng file và tháng phân tích thực tế.
-- Cập nhật OLAP sau retry không nhân đôi; kiểm count/revenue và numerator/denominator với Fact. Không CUBE mọi tổ hợp dimension.
+- Có trạng thái/job id/checkpoint reporting riêng, ghi phiên bản DDS hoặc tập file/version đã sử dụng; chặn publish/refresh cho tới khi build và parity PASS. Đối với nhiều bảng OLAP, giữ bộ dữ liệu đã công bố bằng schema/version riêng hoặc cơ chế publish tương đương; không để visual đọc hỗn hợp các bảng mới/cũ khi job lỗi.
+- Đối với lịch incremental sau này, chọn và đo một trong hai cách: rebuild toàn bộ aggregate nếu đủ nhẹ; hoặc cập nhật affected grains từ checkpoint bền vững. Không bắt buộc xây incremental OLAP phức tạp trước khi có evidence cần thiết.
+- Nếu chọn affected grains: lưu old/new grains trước replacement vào metadata bền vững, kể cả group biến mất; khi job reporting chạy phải aggregate toàn Fact của grain, không chỉ current file. Nếu thiếu old scope thì rebuild toàn bộ aggregate, không đoán từ workspace đã cleanup. Phân biệt tháng file với tháng pickup/dropoff.
+- Kiểm count/revenue, numerator/denominator với DDS; retry không nhân đôi. Mô phỏng lỗi OLAP: DDS SUCCESS/watermark không thay đổi, chỉ retry job reporting; không cần Mage. Ghi thời gian và dung lượng reporting riêng.
+- Bàn giao mapping bảng/cột/grain/measures và câu truy vấn mẫu cho người 3 trước khi chốt semantic model. Cập nhật sơ đồ, hướng dẫn chạy reporting và báo cáo trạng thái thực tế.
 
-**Không làm:** đổi ratio of sums sang mean row ratio hoặc ngược lại ngoài T01; xóa aggregate tháng khác; bỏ measure cần cho nâng cao để giảm bảng.
+**Không làm:** đưa OLAP trở lại gate monthly DDS; phụ thuộc staging tạm; đổi định nghĩa measure; tạo CUBE mọi tổ hợp; xóa Fact hoặc legacy; tuyên bố full 24-month parity chỉ từ fixture; làm hai trang dashboard bằng định nghĩa measure riêng lệch semantic model chung.
 
-**Nghiệm thu:** hai file chung ngày, trip lệch tháng, disappeared group, retry đều có aggregate đúng; đủ mapping yêu cầu.
+**Nghiệm thu:** chạy độc lập sau cleanup; mapping đủ năm trang/yêu cầu; parity DDS PASS; lỗi/retry/publish độc lập được kiểm chứng. Nếu dùng affected grains, kiểm hai file chung ngày, trip lệch tháng và disappeared group. Code/fixture PASS chỉ là CODE_READY; thiếu full DDS thì chưa được ghi DONE cho nghiệm thu dữ liệu thật.
 
 ## T08 — Runner skip, retry, publication và cleanup
 
@@ -267,15 +285,19 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 - Init reference/dimensions một lần khi cần; không seed và rebuild dimensions vô điều kiện mỗi file.
 - SUCCESS cùng checksum/version: skip trước dbt, giữ metadata quyết định skip. Pending cleanup phải được xử lý trước batch mới.
 - FAILED/STAGED retry: kiểm staging, batch/version và writer lock; dựng lại workspace từ input hợp lệ. SUCCESS replacement đã commit không được chạy lại downstream.
-- Trình tự: transform DDS → batch tests/reconciliation → OLAP → OLAP tests → commit success/watermark → cleanup. Mỗi phase lỗi có trạng thái retry rõ ràng.
+- Trình tự: Mage staging → transform DDS → batch tests/reconciliation → persist kết quả đối soát → commit DDS success/watermark → cleanup. Mỗi phase lỗi có trạng thái retry rõ ràng. Không gọi build/test OLAP trong đường chạy này.
+- Định nghĩa selector/model enablement cho DDS và reporting riêng; cả `dbt run` lẫn `dbt test` monthly phải loại OLAP và test phụ thuộc OLAP. Không dùng một `dbt test` toàn project sau khi bỏ build OLAP. Selector DDS vẫn bao gồm đầy đủ staging, classification, Fact/DQ, dimensions cần thiết và kiểm thử/reconciliation bắt buộc.
+- Kiểm `deployment/scripts/run_24_month_backfill.py`: bỏ lời gọi monthly `DBT_BUILD_OLAP`; sửa logic parent/backfill completion đang đòi `olap_bi_validation_status = 'SUCCESS'`. DDS completion phải xác nhận toàn bộ file được yêu cầu có DDS SUCCESS + reconciliation PASS; không chỉ đếm run đã kết thúc.
+- Kiểm `sql/control/003_control_functions.sql` và bảng/status liên quan: tách `DBT_BUILD_OLAP` khỏi required steps cho DDS commit; giữ DDS tests/reconciliation bắt buộc. Không gán giả OLAP SUCCESS để vượt gate. Thiết kế migration tương thích trạng thái legacy, tách DDS status và reporting status/checkpoint; không advance nhầm source watermark khi chỉ reporting thành công.
 - Không giả định toàn dbt build là một transaction. Trước SUCCESS có thể có DDS đã commit; giữ watermark và publication status, Power BI không refresh trong backfill/batch pending. Nêu rõ giới hạn consumer trực tiếp nếu không có atomic publication.
 - Cleanup chỉ truncate staging/workspace đúng current single-writer scope sau SUCCESS; không xóa Fact/DQ/control/file metadata. Cleanup thất bại không làm lại load thành công.
-- Log wall-clock phase, invocation, version/checksum và nguyên nhân FAIL. Copy manifest/run_results/logs ngay sau từng invocation seed/run/test/OLAP để tránh bị ghi đè.
+- Log wall-clock phase, invocation, version/checksum và nguyên nhân FAIL. Copy manifest/run_results/logs ngay sau từng invocation seed/run/test; reporting có thư mục/job id riêng, không ghi đè artifact DDS.
 - Loại flags/runtime expectations archive/candidate history không còn dùng; invalid legacy option phải báo rõ thay vì bị bỏ qua.
+- Cập nhật contract/implementation guide/README cũ còn yêu cầu OLAP trước watermark. Ghi rõ Mage DAG hiện không tự chứng minh đã có end-to-end schedule; cấu hình và kiểm trigger/schedule gọi orchestration DDS đúng, reporting lịch riêng hoặc trigger sau DDS, tránh hai writer đồng thời.
 
 **Không làm:** ép SUCCESS, advance watermark khi lỗi, cleanup trước tests, chọn model resume từ workspace chưa xác thực, chỉnh Mage processing đã ổn ngoài integration cần thiết.
 
-**Nghiệm thu:** test first-run/skip/retry/cleanup-retry và fault ở từng phase PASS; skip không gọi dbt; watermark không đổi khi FAIL.
+**Nghiệm thu:** first-run/skip/retry/cleanup-retry và fault từng phase PASS; skip không gọi dbt; lỗi trước DDS commit không advance watermark. Monthly chạy thành công dù chưa có bảng OLAP; artifacts chứng minh không chạy OLAP model/test. Lỗi reporting sau DDS commit không làm đổi watermark; parent DDS complete không đòi OLAP SUCCESS. Lỗi cleanup sau commit giữ DDS SUCCESS và có recovery riêng.
 
 ## T09 — Migration QA và end-to-end
 
@@ -284,12 +306,13 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 - Tạo schema migration tường minh: old/new columns, compatibility views, constraints/indexes, dependencies, estimated disk requirement và rollback. Không dùng model full-refresh làm migration Fact.
 - Ưu tiên database QA nhỏ dựng từ schema/fixture; không restore bản dump lớn nếu chưa có ngân sách disk. Với dữ liệu live chỉ chuẩn bị kế hoạch, không tự chạy migration.
 - Loại lifecycle/registry khỏi runtime mới đồng bộ với models/tests/control; bảo tồn legacy data. Ghi rõ giữ bảng cũ nghĩa là chưa thu hồi dung lượng cũ.
-- Chạy 2024 fixture rồi 2025 fixture; retry same file; replacement tường minh; fail giữa DDS/test/OLAP/commit/cleanup; kiểm idempotency, isolated scope và rollback/roll-forward.
+- Chạy 2024 fixture rồi 2025 fixture; retry same file; replacement tường minh; fail giữa DDS/test/reconciliation/commit/cleanup; kiểm idempotency, isolated scope và rollback/roll-forward. Chạy QA DDS khi OLAP chưa được dựng; kiểm scheduled incremental bằng file mới rồi chạy lại cùng input để chứng minh skip/idempotency, không chỉ chạy tay backfill.
+- Kiểm negative gate: DDS test/reconcile lỗi thì không commit; thiếu OLAP không chặn DDS commit hoặc parent completion; không có đường ép OLAP SUCCESS. Việc build/parity và lỗi job reporting đầy đủ thuộc T07.
 - Kiểm migration khi có old history table: code mới không bị guard archive cũ chặn. Không đổi fake trạng thái để vượt gate.
 
 **Không làm:** xóa history/registry live để đạt size benchmark, chạy payload full-month trong QA nhỏ hoặc tuyên bố atomic cả pipeline.
 
-**Nghiệm thu:** end-to-end evidence đủ counts/amounts/keys/metadata/OLAP và failure recovery; migration/rollback reviewable; live chưa thay đổi nếu chưa được giao.
+**Nghiệm thu:** end-to-end DDS evidence đủ counts/amounts/keys/metadata, schedule và recovery; độc lập với OLAP; migration/rollback reviewable; live chưa thay đổi nếu chưa được giao.
 
 ## T10 — Benchmark thực tế thời gian và dung lượng
 
@@ -299,15 +322,17 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 
 - So sánh baseline phù hợp (ít nhất feat/fix-dbt và bản tối giản) với cùng input/trạng thái DB/resources. Tách initial load, retry và skip; không so cold first load với warm rerun rồi kết luận.
 - Bắt đầu fixture/mẫu có giới hạn cho correctness; full-month để đánh giá thật; tháng tiếp theo kiểm tốc độ khi Fact tăng. Sample không thay thế benchmark tháng.
+- Mục tiêu nhóm: **Mage 2–4 phút, dbt DDS 3–6 phút, tổng Source → DDS ≤ 10 phút/tháng** trên máy chốt benchmark. Đây là mục tiêu cần đo, không phải số đo hiện có. dbt DDS tính cả build, tests và reconciliation; tổng tính cả điều phối, metadata commit và cleanup. Hai chỉ tiêu thành phần đạt chưa đủ nếu tổng vẫn quá 10 phút.
+- Chuẩn hóa ranh giới: benchmark chính dùng file nguồn đã sẵn có; ghi rõ checksum/I/O nguồn, thời gian Mage và dbt, overhead còn lại. Nếu đo cả download thì báo thêm tổng riêng, không giấu download; init reference/dimensions lần đầu ghi riêng và vẫn báo tổng lần đầu. Không trộn cached rerun với first load.
 - Ghi tổng dbt và từng phase/model/test, rows, throughput, largest relation/index, work table heap/TOAST và disk peak theo thời gian.
 - Đo permanent delta sau cleanup, WAL/temp activity, host free/allocated VHDX nếu có. pg_stat_database.temp_bytes là lượng ghi tích lũy, không phải peak temp. Không cộng DB và VHDX hai lần.
 - Dùng pg_stat_activity/waits/blockers và EXPLAIN (ANALYZE, BUFFERS) SELECT có giới hạn trong môi trường benchmark để xác định nút thắt; query ANALYZE thực sự chạy query.
 - Có ngưỡng dừng/timeouts/disk headroom theo máy thực, không sao chép ngưỡng cũ trong progress như số đo hôm nay. Theo dõi đủ thường xuyên để can thiệp được.
 - Forecast 24 tháng tách permanent growth với transient peak; tính chi phí legacy giữ lại riêng. Không nhân peak staging một tháng với 24 nếu cleanup tuần tự.
 
-**Không làm:** cam kết dưới 8 phút khi chưa đo; lấy tốc độ Mage làm tốc độ dbt; che failure hoặc dung lượng peak khi báo kết quả.
+**Không làm:** bỏ tests/OLAP requirement để báo nhanh; tính thời gian OLAP vào benchmark monthly DDS sau khi đã tách; che chi phí OLAP khỏi báo cáo toàn hệ thống. Báo riêng thời gian backfill DDS, full audit, OLAP và Power BI refresh. Không lấy tốc độ Mage làm tốc độ dbt hoặc che failure/dung lượng peak.
 
-**Nghiệm thu:** report có số đo và điều kiện tái lập, before/after rõ, correctness PASS; hoặc phần còn thiếu và nguyên nhân minh bạch.
+**Nghiệm thu:** report có số đo tái lập, before/after, correctness PASS và đạt/chưa đạt từng ngưỡng; ít nhất một tháng thật và tháng tiếp theo có lịch sử. Không DONE mục tiêu hiệu năng nếu chưa có full-month evidence. Chuyển T11 nếu chưa đạt; sau tích hợp Mage mới phải đo lại tổng, không cộng hai số đo ở hai máy khác nhau.
 
 ## T11 — Tuning theo evidence và chốt phiên bản
 
@@ -318,21 +343,29 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 - So threads 1/2/4 và session memory trên tài nguyên thực. Kiểm plan spill/hash loops; tính memory nhiều operation/worker, không gán work_mem theo tổng RAM một query.
 - Sau mỗi thay đổi đáng kể, chạy lại correctness và benchmark phần bị tác động. Ghi trade-off read/write/index/WAL.
 - Cập nhật design/contract nếu variant được chọn thay đổi kiến trúc; không đưa lại registry/archive vì thuận tiện cho test cũ.
+- Vòng lặp: đo T10 → tìm bottleneck → sửa có giới hạn → kiểm correctness → đo lại cùng điều kiện. Chỉ chốt khi đúng dữ liệu và đạt mục tiêu; nếu vẫn chưa đạt thì ghi nguyên nhân, phương án và chi phí, không tự hạ ngưỡng hoặc báo đạt bằng sample. Không dùng vô hạn thời gian để theo đuổi ngưỡng mà thiếu evidence tiến bộ.
 
 **Không làm:** tuning hàng loạt không kiểm chứng, tắt fsync/synchronous_commit trên dữ liệu cần giữ, thêm partitioning phức tạp khi chưa có evidence.
 
 **Nghiệm thu:** cấu hình cuối có rationale và evidence; không có regression correctness; xác định rõ bottleneck còn lại và chi phí lưu trữ.
 
-## T12 — Runbook, full audit và bàn giao
+## T12 — Hai mốc bàn giao: DDS trước, reporting sau
 
-**Cần làm:**
+### T12A — Bàn giao ETL cho người chạy 24 tháng (sau T11)
 
 - Viết lệnh init/load file/retry/skip/replacement/full audit/cleanup recovery kèm target/profile/scope và expected trạng thái. Không đưa secret vào ví dụ.
 - Cập nhật README, DAG, dictionary, requirements mapping và giới hạn duplicate policy. Đánh dấu tài liệu legacy được thay thế; không xóa evidence cũ.
-- Full 24 tháng chỉ chạy khi được giao rõ và môi trường đủ headroom. Trước đó task có thể CODE_READY; không đánh dấu toàn dự án hoàn tất.
-- Khi đã chạy: xác nhận đủ 24 file SUCCESS, full audit keys/FK/counts/fare/tip/total, OLAP parity và hai lượt end-to-end/skip/retry; dashboard/insight vẫn cần kiểm riêng.
+- Full 24 tháng chỉ chạy khi được giao rõ và môi trường đủ headroom. T12A được DONE khi đủ điều kiện bàn giao ETL/benchmark cho người chạy; ghi riêng backfill/full audit là PENDING cho tới khi có bằng chứng. Không đánh dấu toàn T12 hoặc toàn dự án hoàn tất trước T12B.
+- Trước bàn giao: có commit/config chốt, dependency/env không secret, lệnh và thứ tự chạy, benchmark một tháng/tháng kế tiếp, forecast disk, ngưỡng dừng và recovery đã QA. Không cần đợi T07/Power BI để bàn giao DDS.
+- Khi người phụ trách đã chạy: xác nhận đủ 24 file DDS SUCCESS, full audit keys/FK/counts/fare/tip/total và evidence end-to-end/skip/retry. Ghi mốc DDS nghiệm thu riêng; OLAP parity thuộc T07, chưa có OLAP không làm DDS thành FAILED.
 - Lập decommission proposal cho legacy registry/history sau khi bản mới PASS, backup/retention và rollback rõ. Chỉ xóa khi người dùng cho phép; ghi việc xóa row/table không tự làm VHDX nhỏ ngay.
 - Bàn giao số đo cuối, forecast, migration state, các legacy tables còn giữ và việc còn lại. Đừng lẫn “code bỏ tính năng” với “disk đã thu hồi”.
+
+### T12B — Chốt reporting và tài liệu cuối (sau T07)
+
+- Gắn evidence full audit DDS, OLAP parity/publish và refresh Power BI vào một runbook thống nhất; ghi thời gian/disk mỗi phần riêng. Không biến chúng thành monthly watermark gate.
+- Hoàn thiện mapping yêu cầu → bảng/measure/trang dashboard → test/ảnh/minh chứng; kiểm đủ năm trang, bộ lọc, drill-down/roll-up/slice/dice theo yêu cầu thực tế và phân tích nâng cao đã chọn.
+- Mỗi người viết phần mình, có người tích hợp báo cáo/slide/demo; phân biệt kết quả thực đo với mục tiêu hoặc CODE_READY. T12B không DONE khi mới có khung dashboard.
 
 **Không làm:** tuyên bố đủ điểm hoặc đáp ứng toàn đề chỉ vì dbt PASS; chạy lại toàn bộ 24 tháng chỉ để chứng minh skip nếu metadata đủ để kiểm có giới hạn.
 
@@ -365,9 +398,51 @@ không tuyên bố DONE dựa trên parse hoặc fixture khi task đòi benchmar
 | ------------------------------------------ | ------- | --------------------------------------------------------------------------------------------- |
 | **1. Chốt thiết kế và dữ liệu kiểm chứng** | T00–T02 | Inventory, contract tối giản, danh sách bỏ/giữ, fixtures và expected results                  |
 | **2. Sửa luồng nạp DDS**                   | T03–T05 | Classification gọn, dimensions dựng khi cần, Fact/DQ nạp theo file, bỏ lifecycle khỏi runtime |
-| **3. Hoàn thiện kiểm thử và điều phối**    | T06–T08 | Tests/reconciliation theo batch, OLAP đúng phạm vi, runner skip/retry/cleanup                 |
-| **4. Kiểm chứng và tối ưu thực tế**        | T09–T11 | Migration QA, end-to-end/recovery, benchmark thời gian/dung lượng và tuning                   |
-| **5. Chốt vận hành và bàn giao**           | T12     | Runbook, full audit, kết quả 24 tháng nếu được giao chạy và kế hoạch xử lý legacy             |
+| **3. Hoàn thiện ETL DDS độc lập** | T06, T08, T09 | Tests/reconciliation, runner/control tách OLAP, QA/recovery và schedule |
+| **4. Đo, tối ưu và bàn giao DDS** | T10, T11, T12A | Benchmark/tuning, tích hợp Mage mới, bàn giao bản chốt cho người chạy 24 tháng |
+| **5. Reporting và chốt final** | T07, T12B | Sau DDS được nghiệm thu: OLAP riêng, Power BI và evidence/tài liệu cuối |
+
+## 9. Phân công bốn người và quy tắc phối hợp
+
+Phân công theo yêu cầu ngày 2026-11-24. T07 chuyển cho người 4; không còn nằm trong phần tối ưu monthly của người 2. Mỗi chủ trang chịu trách nhiệm visuals, interaction, đối soát, insight và nội dung báo cáo của trang, sử dụng semantic model chung.
+
+| Người | Trước khi có DDS đầy đủ | Sau khi có DDS đầy đủ | Bàn giao |
+| --- | --- | --- | --- |
+| **1 — Bạn: Mage và tích hợp** | Tối ưu Mage **2–4 phút**; giữ staging/schema/lineage/DQ contract. Cùng người 2 đo integrated run, nhận bản T12A rồi chạy 24 tháng khi được giao và đủ disk budget | Full audit DDS cùng người 2; làm **trang 4: Không gian, tuyến và Top N**; tích hợp báo cáo/bản nộp từ đóng góp của cả nhóm | Commit/config Mage, phase timings, staging contract, log 24 file, disk và full audit |
+| **2 — Bạn phụ trách dbt DDS** | Đọc evidence T00–T05; hoàn thiện **T06/T08/T09/T10/T11/T12A**. Test với Mage hiện có, sau đó đo lại cùng Mage mới. Mục tiêu dbt DDS **3–6 phút**, chưa đạt thì đo/tối ưu lại | Hỗ trợ backfill/full audit; làm **trang 5: Phân tích nâng cao** | Code/runbook tái lập, correctness/retry/schedule, benchmark thật, disk forecast, known limitations. T07 không chặn bàn giao |
+| **3 — Bạn phụ trách nền tảng dashboard** | Dựng khung chung đủ năm trang; chốt kết nối, semantic model, measures và cách ghép trang với người 4. Làm sớm bằng fixture/sample có ghi nhãn | Tích hợp năm trang; làm **trang 2: Doanh thu và xu hướng**; kiểm navigation/filter/refresh toàn báo cáo | Template/theme/sidebar/header, model/measure dictionary, quy tắc phát triển trang, Power BI tích hợp |
+| **4 — Bạn phụ trách OLAP** | Chuẩn bị **T07**, mapping grain/measures cùng người 3, test reporting riêng bằng fixture; dựng hai trang từ template | Chạy/nghiệm thu OLAP sau full DDS; làm **trang 1: Tổng quan** và **trang 3: Thanh toán, hành khách và loại cước** | Job reporting riêng, parity/publish/retry evidence, hai trang đã đối soát và phần báo cáo OLAP |
+
+### 9.1. Hợp đồng và phạm vi sở hữu
+
+1. **Mage ↔ dbt:** chốt tên/schema/cột/type, batch/file_version_id/checksum, staging-ready và lỗi/retry trước khi tối ưu song song. Người 1 giữ Mage ingestion; người 2 giữ dbt models/tests và runner/control. Thay giao diện phải cập nhật contract và fixture chung trước khi gộp, không tự đổi schema đang dùng.
+2. **DDS ↔ OLAP ↔ BI:** người 2 bàn giao DDS dictionary/định nghĩa measure; người 4 giữ bảng/view reporting và grain; người 3 giữ semantic model/DAX chung. Chốt sớm bằng fixtures, không đợi 24 tháng mới làm BI. Người 4 không tự thay DDS grain; chủ trang không tự đổi doanh thu/tip/speed.
+3. **Tích hợp Power BI:** người 3 giữ bản chính. Ưu tiên PBIP với phạm vi file trang riêng nếu công cụ hỗ trợ; nếu PBIX thì mỗi người làm bản riêng từ cùng template và người 3 ghép từng đợt. Không đồng thời ghi đè một PBIX chung, không mặc định Git merge được PBIX. Thử ghép một trang sớm để xác nhận cách bàn giao khả thi.
+4. **Measure phát sinh:** chủ trang đề xuất công thức/grain/filter và truy vấn đối soát; người 3 tích hợp DAX, người 4 kiểm mapping OLAP. Không tạo bốn bộ measures trùng tên khác logic.
+5. **Báo cáo:** mỗi người viết phần mình, cung cấp ảnh/insight/tests/hạn chế; người 1 tích hợp bản cuối. Không dồn toàn bộ báo cáo cho người 4 vốn đã nhận OLAP và hai trang. Người 3 hỗ trợ chuẩn hóa ảnh dashboard.
+
+### 9.2. Phần chung và phạm vi năm trang
+
+Phần chung không chỉ là sidebar/header. Người 3 chuẩn bị theme/layout, navigation, connection mode/refresh, relationships và role-playing dimensions, measures/format tiền/đơn vị, slicers chung, tooltip/drill-through khi cần, cách xử lý blank/zero. Kiểm ambiguous relationships và double counting giữa Fact và aggregate. Chỉ thêm RLS khi yêu cầu/thực tế cần, không tự mở rộng phạm vi.
+
+| Trang / người | Nội dung tối thiểu và kiểm chứng |
+| --- | --- |
+| **1. Tổng quan / người 4** | KPI chuyến, hành khách, doanh thu; thời gian ngày/tháng/năm, vendor/borough; đối soát KPI với DDS/OLAP cùng filter |
+| **2. Doanh thu / người 3** | Xu hướng doanh thu/chuyến theo tháng, giờ/ngày tuần, vendor/borough; drill-down/roll-up, so sánh thời gian; phân biệt tháng file với ngày phân tích |
+| **3. Cơ cấu / người 4** | Payment, nhóm hành khách, RateCode; liên hệ distance/duration/amount và eligible counts; không cộng trung bình các nhóm |
+| **4. Không gian / người 1** | Pickup/dropoff role, map zone/borough dùng geometry, tuyến và Top N theo thời gian; kiểm LocationID cả hai đầu chuyến |
+| **5. Nâng cao / người 2** | Tip/speed, doanh thu/chuyến, MoM/YoY theo định nghĩa chung; so sánh giai đoạn/nhóm theo mapping yêu cầu; giải thích biến động nhiều chiều, có insight và hạn chế |
+
+Đây là phân bổ trang đề xuất, phải đối chiếu mapping T01/yêu cầu trước khi chốt visual. Mỗi trang có câu hỏi phân tích, thao tác OLAP phù hợp, SQL đối soát cùng filter và nhận xét có căn cứ. Năm trang không tự chứng minh đáp ứng toàn bộ đề; yêu cầu chưa được bao phủ phải bổ sung vào trang phù hợp. Không dùng số fixture để kết luận cho 24 tháng. AI chỉ bổ sung khi đã đối chiếu yêu cầu và mục tiêu, không thay thế phân tích nâng cao.
+
+### 9.3. Các cổng nghiệm thu
+
+- **A — Chuẩn bị song song:** người 1 tối ưu Mage, người 2 hoàn thiện DDS, người 3 dựng template/model, người 4 chuẩn bị OLAP. Chốt contract/fixture trước; không chờ ETL xong mới bắt đầu dashboard.
+- **B — Chốt ETL:** correctness/reconcile/retry PASS; Mage 2–4 phút, dbt DDS 3–6 phút, **tổng thực đo ≤10 phút/tháng** trên cùng máy/đầu vào, tính cả overhead/commit/cleanup. Kiểm thêm tháng tiếp theo có lịch sử. Chưa đạt thì T10 ↔ T11; không giảm tests hoặc chốt chỉ từ hai số đo riêng.
+- **C — Backfill:** người 1 nhận commit/config T12A đóng băng, chạy tuần tự 24 tháng có cleanup/disk monitoring; người 2 hỗ trợ lỗi. Full audit đủ 24 file PASS mới mở reporting thật. Sửa code giữa backfill phải ghi version và đánh giá ảnh hưởng dữ liệu đã nạp.
+- **D — Final:** người 4 nghiệm thu T07; người 3 refresh/tích hợp; bốn người hoàn thiện trang và đối soát chéo với DDS. Kiểm incremental/schedule/reporting retry, hoàn thiện báo cáo/slide/demo/gói nộp. DDS SUCCESS chưa phải final hoàn tất.
+
+**Cân đối khối lượng:** người 4 nhận OLAP và hai trang nên dùng hai trang tổng quan/cơ cấu với measures chung; không giao thêm toàn bộ semantic model hay toàn bộ báo cáo. Người 2 vẫn phải hỗ trợ lỗi backfill khi làm trang nâng cao; giữ bản ETL chốt và ghi ticket cụ thể để tránh sửa chéo.
 
 ## Kết quả Cụm 1 — 2026-11-19
 
@@ -375,4 +450,4 @@ T00–T02 hoàn tất phạm vi inventory/contract/fixtures. Đọc [contract](D
 
 ## Kết quả Cụm 2 — 2026-11-19
 
-T03–T05 DONE: [implementation guide](DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md), [T03](../../reports/dbt_minimal_refactor/T03.md), [T04](../../reports/dbt_minimal_refactor/T04.md), [T05](../../reports/dbt_minimal_refactor/T05.md). DDS tối giản bật bằng dbt_minimal_mode, mặc định false. Actual dbt/SQL QA PostgreSQL 18: 13 successful invocations, 12 expected negative failures và 6 selected legacy tests PASS. Không migrate live, không sửa runner, không benchmark tháng. T06–T12 vẫn TODO; Cụm 3 phải hoàn thiện tests/reconciliation, OLAP affected grains và runner trước publication.
+T03–T05 DONE: [implementation guide](DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md), [T03](../../reports/dbt_minimal_refactor/T03.md), [T04](../../reports/dbt_minimal_refactor/T04.md), [T05](../../reports/dbt_minimal_refactor/T05.md). DDS tối giản bật bằng dbt_minimal_mode, mặc định false. Actual dbt/SQL QA PostgreSQL 18: 13 successful invocations, 12 expected negative failures và 6 selected legacy tests PASS. Không migrate live, không sửa runner, không benchmark tháng. T06–T12 vẫn TODO. Cập nhật 2026-11-24: Cụm 3 hoàn thiện tests/reconciliation và runner/control DDS độc lập; OLAP chuyển sang T07 sau nghiệm thu DDS, không chặn watermark hoặc bàn giao ETL.
