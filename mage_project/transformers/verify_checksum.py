@@ -1,11 +1,14 @@
+from utils.profiling import profiled
 from pathlib import Path
 
 import pandas as pd
 
 from utils.database import execute, fetch_one
-from utils.decorators import transformer
 from utils.parquet_utils import calculate_file_sha256, inspect_parquet
 from utils.paths import resolve_data_path
+
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 def _resume_successful_validation(discovery_context, data_root=None):
     """Rebuild block output when Mage reruns an already-successful step."""
@@ -60,6 +63,7 @@ def _resume_successful_validation(discovery_context, data_root=None):
 
 
 @transformer
+@profiled
 def verify_checksum(discovery_context, *args, **kwargs):
     batch_id = int(discovery_context['batch_id'])
     registry = pd.read_csv(Path(kwargs.get(

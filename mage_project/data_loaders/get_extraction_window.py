@@ -1,8 +1,14 @@
+from utils.profiling import profiled
 from utils.database import fetch_one
-from utils.decorators import data_loader, test
+
+if 'data_loader' not in globals():
+    from utils.decorators import data_loader
+if 'test' not in globals():
+    from utils.decorators import test
 
 
 @data_loader
+@profiled
 def get_extraction_window(*args, **kwargs):
     run_type = kwargs.get('run_type', 'BACKFILL').upper()
     parent_batch_id = kwargs.get('parent_batch_id')
@@ -10,6 +16,21 @@ def get_extraction_window(*args, **kwargs):
         raise ValueError('Unsupported run_type: {}'.format(run_type))
     if run_type == 'RETRY' and parent_batch_id is None:
         raise ValueError('RETRY requires parent_batch_id')
+    storage=kwargs.get('stage_storage_mode','wide')
+    prepare=kwargs.get('prepare_mode','disk')
+    mode=kwargs.get('stage_load_mode','upsert')
+    if storage not in ('wide','slim') or prepare not in ('disk','streaming') or mode not in ('upsert','direct'):
+        raise ValueError('Invalid Mage preparation/storage/loading mode')
+    if (storage=='slim' or prepare=='streaming') and mode!='direct':
+        raise ValueError('Slim/streaming require direct mode before creating a batch')
+    marker=fetch_one("SELECT to_regclass('stage.stage_storage_contract') AS relation;")
+    if marker and marker['relation'] is not None:
+        installed=fetch_one('SELECT storage_mode FROM stage.stage_storage_contract;')
+        if (not installed or installed['storage_mode'] not in ('slim-v1','slim-v2')
+                or storage!='slim'):
+            raise RuntimeError('Installed staging contract requires matching slim mode; no batch was created')
+    elif storage=='slim':
+        raise RuntimeError('Slim staging migration is not installed; no batch was created')
     row = fetch_one(
         """
         SELECT batch_id, lset, cet

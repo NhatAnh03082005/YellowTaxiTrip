@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAGE_ROOT = ROOT / 'mage_project'
 DBT_ROOT = ROOT / 'dbt_project'
 DATA_ROOT = ROOT / 'data'
-WORK_ROOT = DATA_ROOT / 'work' / 'task_4_4'
+WORK_ROOT = Path(os.environ.get('MAGE_WORK_ROOT', str(DATA_ROOT / 'work' / 'task_4_4')))
 CATALOG = DATA_ROOT / 'catalog' / 'yellow_taxi_2024_2025.csv'
 SCHEMA_REGISTRY = DATA_ROOT / 'catalog' / 'yellow_taxi_schema_registry.csv'
 
@@ -351,6 +351,8 @@ def clean_transient_storage(batch_id: int) -> None:
     """Clean the single-writer staging scope, with a durable retry checkpoint."""
     if os.environ.get('ALLOW_STAGING_CLEANUP') != '1':
         raise RuntimeError('cleanup disabled: set ALLOW_STAGING_CLEANUP=1 only after gate approval')
+    storage_mode=os.environ.get('MAGE_STAGE_STORAGE','wide')
+    if storage_mode not in ('wide','slim'): raise RuntimeError('Invalid cleanup storage mode')
     try:
         with connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -366,10 +368,13 @@ def clean_transient_storage(batch_id: int) -> None:
                     raise RuntimeError('Refusing cleanup before batch SUCCESS')
                 if rows[0]['cleanup_status'] == 'SUCCESS':
                     return
-                execute_cursor(cursor, """
-                    LOCK TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
-                    IN ACCESS EXCLUSIVE MODE;
-                """)
+                if storage_mode=='slim':
+                    execute_cursor(cursor, "LOCK TABLE stage.yellow_taxi_raw_data,stage.yellow_taxi_canonical_data,stage.stage_file_batch IN ACCESS EXCLUSIVE MODE;")
+                else:
+                    execute_cursor(cursor, """
+                        LOCK TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
+                        IN ACCESS EXCLUSIVE MODE;
+                    """)
                 safety = execute_cursor(cursor, """
                     SELECT
                       (SELECT count(*) FROM stage.yellow_taxi_raw WHERE batch_id <> %(batch)s)
@@ -389,9 +394,11 @@ def clean_transient_storage(batch_id: int) -> None:
                     UPDATE control.etl_backfill_file
                     SET cleanup_status = 'RUNNING', cleanup_error = NULL
                     WHERE batch_id = %(batch)s;
-                    TRUNCATE TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
-                        RESTART IDENTITY;
                 """, {'batch': batch_id})
+                if storage_mode=='slim':
+                    execute_cursor(cursor, "TRUNCATE TABLE stage.yellow_taxi_raw_data,stage.yellow_taxi_canonical_data,stage.stage_file_batch RESTART IDENTITY;")
+                else:
+                    execute_cursor(cursor, "TRUNCATE TABLE stage.yellow_taxi_raw,stage.yellow_taxi_canonical RESTART IDENTITY;")
     except Exception as exception:
         execute("""
             UPDATE control.etl_backfill_file
@@ -519,7 +526,19 @@ def run_ingestion(month: str, replay_file_version_id=None,
     from data_exporters.load_stage import load_stage
     from transformers.verify_stage import verify_stage
 
-    context = get_extraction_window(run_type='BACKFILL', triggered_by='backfill_controller')
+    # Same bounded loading options as Mage UI; direct is explicit until rollout QA.
+    stage_load_mode = os.environ.get('MAGE_STAGE_LOAD_MODE', 'upsert')
+    prepare_mode = os.environ.get('MAGE_PREPARE_MODE', 'disk')
+    storage_mode = os.environ.get('MAGE_STAGE_STORAGE', 'wide')
+    if prepare_mode not in ('disk','streaming') or storage_mode not in ('wide','slim'):
+        raise ValueError('Invalid Mage preparation/storage mode')
+    if (prepare_mode=='streaming' or storage_mode=='slim') and stage_load_mode!='direct':
+        raise ValueError('Streaming/slim require direct loading')
+    mage_batch_size = int(os.environ.get('MAGE_BATCH_SIZE', '50000'))
+    if stage_load_mode not in ('upsert', 'direct') or mage_batch_size <= 0:
+        raise ValueError('Invalid Mage stage mode or batch size')
+    context = get_extraction_window(run_type='BACKFILL', triggered_by='backfill_controller',
+        prepare_mode=prepare_mode, stage_load_mode=stage_load_mode, stage_storage_mode=storage_mode)
     context = discover_source_files(
         context, catalog_path=str(CATALOG), source_year_month_from=month,
         source_year_month_to=month,
@@ -535,14 +554,15 @@ def run_ingestion(month: str, replay_file_version_id=None,
     require_safe_file_version(context)
     process_count = context['process_file_count']
     context = load_source_files(
-        context, work_root=str(WORK_ROOT), source_batch_size=50000,
+        context, work_root=str(WORK_ROOT), source_batch_size=mage_batch_size,
+        prepare_mode=prepare_mode, stage_load_mode=stage_load_mode,
     )
     context = canonicalize_schema(
-        context, work_root=str(WORK_ROOT), canonical_batch_size=50000,
+        context, work_root=str(WORK_ROOT), canonical_batch_size=mage_batch_size,
     )
     context = standardize_and_validate(context)
-    context = write_technical_quarantine(context)
-    context = load_stage(context)
+    context = write_technical_quarantine(context, stage_load_mode=stage_load_mode)
+    context = load_stage(context, stage_load_mode=stage_load_mode, stage_storage_mode=storage_mode)
     staged = verify_stage(context)
     return {**staged, 'process_file_count': process_count}
 

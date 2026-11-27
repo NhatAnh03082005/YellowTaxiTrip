@@ -1,3 +1,4 @@
+from utils.profiling import profiled
 from pathlib import Path
 import shutil
 
@@ -5,15 +6,26 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from utils.database import execute
-from utils.decorators import transformer
 from utils.parquet_utils import make_source_record_key
 
+if 'transformer' not in globals():
+    from utils.decorators import transformer
+
+
 @transformer
+@profiled
 def load_source_files(ingestion_context, *args, **kwargs):
-    work_root = Path(
-        kwargs.get('work_root', '/home/src/data/work/task_4_4')
-    ).resolve()
-    batch_root = (work_root / str(ingestion_context['batch_id']) / 'raw').resolve()
+    mode=kwargs.get('prepare_mode',ingestion_context.get('prepare_mode','disk'))
+    if mode not in ('disk','streaming'): raise ValueError('Unknown prepare_mode')
+    if mode=='streaming':
+        if kwargs.get('stage_load_mode','upsert')!='direct':
+            raise ValueError('Streaming requires explicit direct mode')
+        from utils.stream_parts import prepare_manifest
+        return prepare_manifest(ingestion_context,kwargs.get('source_batch_size',50000))
+    from utils.workspace import work_root as resolve_root,batch_directory,check_space,owned_child,check_budget
+    work_root=resolve_root(kwargs.get('work_root'))
+    check_space(work_root)
+    batch_root=owned_child(batch_directory(work_root,ingestion_context['batch_id']),'raw')
     # Guard the cleanup below so a bad runtime value can never remove anything
     # outside the configured work directory.
     batch_root.relative_to(work_root)
@@ -96,6 +108,7 @@ def load_source_files(ingestion_context, *args, **kwargs):
             row_offset += row_count
             part_number += 1
             if part_number % 10 == 0:
+                check_budget(work_root)
                 execute(
                     'SELECT control.touch_batch_heartbeat(%(batch_id)s);',
                     {'batch_id': int(ingestion_context['batch_id'])},
@@ -115,4 +128,5 @@ def load_source_files(ingestion_context, *args, **kwargs):
                 row_offset,
             )
         )
-    return {**ingestion_context, 'chunks': chunks}
+    check_budget(work_root)
+    return {**ingestion_context, 'prepare_mode':'disk', 'chunks': chunks}

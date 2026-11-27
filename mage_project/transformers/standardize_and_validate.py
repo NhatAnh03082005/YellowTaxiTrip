@@ -1,8 +1,13 @@
-from utils.decorators import transformer
+from utils.profiling import profiled
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 
 @transformer
+@profiled
 def standardize_and_validate(ingestion_context, *args, **kwargs):
+    if ingestion_context.get('prepare_mode')=='streaming':
+        return ingestion_context
     rows_raw = sum(item['row_count'] for item in ingestion_context['chunks'])
     rows_canonical = sum(item['canonical_rows'] for item in ingestion_context['chunks'])
     rows_rejected = sum(

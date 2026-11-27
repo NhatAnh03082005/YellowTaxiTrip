@@ -1,0 +1,27 @@
+test_acknowledging_committed_replacement_skips_all_writes (tests.test_backfill_safety_gates.BackfillSafetyGates.test_acknowledging_committed_replacement_skips_all_writes) ... ok
+test_cleanup_checkpoints_and_truncates_only_single_batch (tests.test_backfill_safety_gates.BackfillSafetyGates.test_cleanup_checkpoints_and_truncates_only_single_batch) ... ok
+test_cleanup_never_calls_database (tests.test_backfill_safety_gates.BackfillSafetyGates.test_cleanup_never_calls_database) ... ok
+test_cleanup_rejects_foreign_batch_and_records_failure (tests.test_backfill_safety_gates.BackfillSafetyGates.test_cleanup_rejects_foreign_batch_and_records_failure) ... ok
+test_cleanup_requires_environment_gate (tests.test_backfill_safety_gates.BackfillSafetyGates.test_cleanup_requires_environment_gate) ... ok
+test_cleanup_retry_does_not_run_downstream (tests.test_backfill_safety_gates.BackfillSafetyGates.test_cleanup_retry_does_not_run_downstream) ... ok
+test_commit_failure_exits_reconciliation_transaction_with_error (tests.test_backfill_safety_gates.BackfillSafetyGates.test_commit_failure_exits_reconciliation_transaction_with_error) ... ok
+test_disk_gate_preserves_25_percent_after_forecast (tests.test_backfill_safety_gates.BackfillSafetyGates.test_disk_gate_preserves_25_percent_after_forecast) ... ok
+test_failed_downstream_uses_database_resume_gate (tests.test_backfill_safety_gates.BackfillSafetyGates.test_failed_downstream_uses_database_resume_gate) ... ok
+Backfill parent 44 finalized after all gates
+test_finalize_cli_does_not_require_ingestion_flags (tests.test_backfill_safety_gates.BackfillSafetyGates.test_finalize_cli_does_not_require_ingestion_flags) ... ok
+test_full_backfill_requires_feature_gate_and_two_approved_owners (tests.test_backfill_safety_gates.BackfillSafetyGates.test_full_backfill_requires_feature_gate_and_two_approved_owners) ... ok
+test_multiple_files_rejected_before_backfill_created (tests.test_backfill_safety_gates.BackfillSafetyGates.test_multiple_files_rejected_before_backfill_created) ... ok
+test_olap_failure_never_persists_history (tests.test_backfill_safety_gates.BackfillSafetyGates.test_olap_failure_never_persists_history) ... ok
+test_parent_success_requires_global_24_file_gate (tests.test_backfill_safety_gates.BackfillSafetyGates.test_parent_success_requires_global_24_file_gate) ... ok
+test_parent_without_validated_child_cannot_finalize (tests.test_backfill_safety_gates.BackfillSafetyGates.test_parent_without_validated_child_cannot_finalize) ... ok
+{"disk_preflight": {}}
+test_pending_cleanup_blocks_new_parent (tests.test_backfill_safety_gates.BackfillSafetyGates.test_pending_cleanup_blocks_new_parent) ... ok
+test_replacement_is_blocked_before_staging_until_retirement_is_safe (tests.test_backfill_safety_gates.BackfillSafetyGates.test_replacement_is_blocked_before_staging_until_retirement_is_safe) ... ok
+test_replay_requires_verified_exact_file_version (tests.test_backfill_safety_gates.BackfillSafetyGates.test_replay_requires_verified_exact_file_version) ... ok
+test_running_resume_refuses_missing_staging_before_dbt (tests.test_backfill_safety_gates.BackfillSafetyGates.test_running_resume_refuses_missing_staging_before_dbt) ... ok
+test_skipped_file_never_commits_success (tests.test_backfill_safety_gates.BackfillSafetyGates.test_skipped_file_never_commits_success) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.281s
+
+OK

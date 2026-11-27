@@ -1,0 +1,169 @@
+diff --git a/mage_project/data_exporters/load_stage.py b/mage_project/data_exporters/load_stage.py
+index 7318b7b..681ebbc 100644
+--- a/mage_project/data_exporters/load_stage.py
++++ b/mage_project/data_exporters/load_stage.py
+@@ -4,7 +4,10 @@ import pandas as pd
+ 
+ from utils.database import execute, fetch_one, require_tables
+ import utils.stage_loader as stage_loader
+-from utils.decorators import data_exporter
++
++if 'data_exporter' not in globals():
++    from utils.decorators import data_exporter
++
+ 
+ @data_exporter
+ def load_stage(ingestion_context, *args, **kwargs):
+diff --git a/mage_project/data_exporters/write_technical_quarantine.py b/mage_project/data_exporters/write_technical_quarantine.py
+index b72095b..e26cc3b 100644
+--- a/mage_project/data_exporters/write_technical_quarantine.py
++++ b/mage_project/data_exporters/write_technical_quarantine.py
+@@ -2,7 +2,10 @@ import pandas as pd
+ 
+ from utils.database import require_tables
+ from utils.stage_loader import upsert_dataframe
+-from utils.decorators import data_exporter
++
++if 'data_exporter' not in globals():
++    from utils.decorators import data_exporter
++
+ 
+ @data_exporter
+ def write_technical_quarantine(ingestion_context, *args, **kwargs):
+diff --git a/mage_project/data_loaders/get_extraction_window.py b/mage_project/data_loaders/get_extraction_window.py
+index 4ff532b..d38ef30 100644
+--- a/mage_project/data_loaders/get_extraction_window.py
++++ b/mage_project/data_loaders/get_extraction_window.py
+@@ -1,5 +1,9 @@
+ from utils.database import fetch_one
+-from utils.decorators import data_loader, test
++
++if 'data_loader' not in globals():
++    from utils.decorators import data_loader
++if 'test' not in globals():
++    from utils.decorators import test
+ 
+ 
+ @data_loader
+diff --git a/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml b/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
+index 495fd8e..02e1676 100644
+--- a/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
++++ b/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
+@@ -10,7 +10,7 @@ blocks:
+   language: python
+   name: get_extraction_window
+   retry_config: null
+-  status: executed
++  status: failed
+   timeout: null
+   type: data_loader
+   upstream_blocks: []
+@@ -196,6 +196,6 @@ variables:
+   catalog_path: /home/src/data/catalog/yellow_taxi_selected_2_months.csv
+   run_type: BACKFILL
+   source_year_month_from: 2024-05
+-  source_year_month_to: 2025-05
++  source_year_month_to: 2024-05
+ variables_dir: /home/src/mage_data/nyc_taxi_bi
+ widgets: []
+diff --git a/mage_project/transformers/canonicalize_schema.py b/mage_project/transformers/canonicalize_schema.py
+index 104609a..769ef9e 100644
+--- a/mage_project/transformers/canonicalize_schema.py
++++ b/mage_project/transformers/canonicalize_schema.py
+@@ -6,7 +6,9 @@ import pyarrow.parquet as pq
+ 
+ from utils.canonical import canonicalize_dataframe, serialize_json_columns
+ from utils.database import execute
+-from utils.decorators import transformer
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
+ 
+ @transformer
+ def canonicalize_schema(ingestion_context, *args, **kwargs):
+diff --git a/mage_project/transformers/discover_source_files.py b/mage_project/transformers/discover_source_files.py
+index 63d2e42..873379d 100644
+--- a/mage_project/transformers/discover_source_files.py
++++ b/mage_project/transformers/discover_source_files.py
+@@ -3,7 +3,9 @@ from pathlib import Path
+ import pandas as pd
+ 
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
++
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
+diff --git a/mage_project/transformers/filter_incremental.py b/mage_project/transformers/filter_incremental.py
+index 6f4e7f2..3b80ee9 100644
+--- a/mage_project/transformers/filter_incremental.py
++++ b/mage_project/transformers/filter_incremental.py
+@@ -1,4 +1,5 @@
+-from utils.decorators import transformer
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
+diff --git a/mage_project/transformers/load_source_files.py b/mage_project/transformers/load_source_files.py
+index a4253e9..d9a5540 100644
+--- a/mage_project/transformers/load_source_files.py
++++ b/mage_project/transformers/load_source_files.py
+@@ -5,9 +5,12 @@ import pyarrow as pa
+ import pyarrow.parquet as pq
+ 
+ from utils.database import execute
+-from utils.decorators import transformer
+ from utils.parquet_utils import make_source_record_key
+ 
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
++
+ @transformer
+ def load_source_files(ingestion_context, *args, **kwargs):
+     work_root = Path(
+diff --git a/mage_project/transformers/standardize_and_validate.py b/mage_project/transformers/standardize_and_validate.py
+index 69114d8..a96d003 100644
+--- a/mage_project/transformers/standardize_and_validate.py
++++ b/mage_project/transformers/standardize_and_validate.py
+@@ -1,4 +1,5 @@
+-from utils.decorators import transformer
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
+diff --git a/mage_project/transformers/verify_checksum.py b/mage_project/transformers/verify_checksum.py
+index 78515e1..9c07f7f 100644
+--- a/mage_project/transformers/verify_checksum.py
++++ b/mage_project/transformers/verify_checksum.py
+@@ -3,10 +3,12 @@ from pathlib import Path
+ import pandas as pd
+ 
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
+ from utils.parquet_utils import calculate_file_sha256, inspect_parquet
+ from utils.paths import resolve_data_path
+ 
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
+ def _resume_successful_validation(discovery_context, data_root=None):
+     """Rebuild block output when Mage reruns an already-successful step."""
+     validated = []
+diff --git a/mage_project/transformers/verify_stage.py b/mage_project/transformers/verify_stage.py
+index c4d9d98..68899b7 100644
+--- a/mage_project/transformers/verify_stage.py
++++ b/mage_project/transformers/verify_stage.py
+@@ -1,5 +1,7 @@
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
++
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer

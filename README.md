@@ -8,8 +8,10 @@ theo ngày pickup.
 
 - Đã khảo sát dữ liệu, lập hợp đồng bàn giao và xây dựng phần dbt cho staging,
   chất lượng dữ liệu, DDS Fact/Dimensions và kiểm thử trên dữ liệu mẫu.
-- Docker/PostGIS và pipeline kiểm tra kết nối Mage đã có; pipeline nạp file taxi,
-  nạp đủ 24 file, OLAP và Power BI chưa được kiểm chứng hoàn chỉnh.
+- Docker/PostGIS và bốn pipeline Mage đã có. Yellow Taxi ingestion hiện dùng
+  `direct + streaming + slim-v2`; full-month 2024-05 và 2025-05 đã chạy thành
+  công đến `STAGED`. Luồng tự động Mage → dbt/DDS → reconciliation → watermark
+  → cleanup cho đủ 24 tháng, OLAP và Power BI chưa được kiểm chứng hoàn chỉnh.
 - Hướng dẫn và giới hạn cụ thể của dbt nằm trong [dbt_project/README.md](dbt_project/README.md).
 
 ## Thư mục chính
@@ -19,8 +21,8 @@ theo ngày pickup.
 - `data/`: dữ liệu tham chiếu, landing và quarantine; không commit dữ liệu trip dung lượng lớn.
 - `sql/`: nơi dự kiến đặt DDL cho control, audit, staging, DQ và DDS.
 - `docker/` và `docker-compose.yml`: cấu hình container Mage và PostgreSQL/PostGIS.
-- `mage_project/`: có pipeline kiểm tra kết nối; ingestion, backfill và incremental
-  vẫn là phần tiếp theo.
+- `mage_project/`: pipeline kiểm tra kết nối/control, nạp reference và ingestion
+  Yellow Taxi; pipeline ingestion dừng ở `STAGED`, không tự chạy dbt.
 - `dbt_project/`: staging, intermediate, Dimensions, Fact và tests.
 - `powerbi/` và `olap/`: nơi dự kiến đặt semantic model, report và truy vấn phân tích.
 - `tests/` và `evidence/`: test fixtures, reconciliation và bằng chứng chạy.

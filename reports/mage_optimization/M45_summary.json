@@ -1,0 +1,35 @@
+{
+  "scope": "M04-M05 isolated QA; no live migration or data changes",
+  "full_month": {
+    "month": "2024-05",
+    "rows": 3723833,
+    "wide_disk_seconds": 553.757700143,
+    "slim_streaming_seconds": 207.860419498,
+    "time_reduction_percent": 62.4637,
+    "wide_retained_bytes": 4727103488,
+    "slim_retained_bytes": 2853928960,
+    "retained_reduction_percent": 39.6263,
+    "wide_workspace_bytes": 701066890,
+    "slim_workspace_bytes": 0,
+    "wide_peak_rss_kib": 1163536,
+    "slim_peak_rss_kib": 897360,
+    "slim_index_build_seconds": 16.097,
+    "slim_validation_seconds": 15.767,
+    "slim_copy_seconds": 114.888
+  },
+  "fixture_parity": {
+    "2024-05": true,
+    "2025-05": true,
+    "dbt_seed_run_test_exit_zero": true
+  },
+  "tests": {
+    "mage": 54,
+    "runner": 20
+  },
+  "limitations": [
+    "one full-month run per compared variant, not M07 repeated benchmark",
+    "execute_sync excludes scheduler wait, DDS and reference initialization",
+    "slim peak disk monitor is a lower bound because access-exclusive DDL blocks catalog sampling",
+    "candidate is opt-in and has not been migrated or enabled live"
+  ]
+}

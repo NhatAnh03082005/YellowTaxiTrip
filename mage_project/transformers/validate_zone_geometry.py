@@ -1,3 +1,4 @@
+from utils.profiling import profiled
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import MultiPolygon, Polygon
@@ -13,6 +14,7 @@ def _to_multipolygon(geometry):
 
 
 @transformer
+@profiled
 def validate_zone_geometry(zone_lookup, zone_geometry, *args, **kwargs):
     lookup = zone_lookup.copy()
     if isinstance(zone_geometry, gpd.GeoDataFrame):

@@ -1,0 +1,40 @@
+[0m16:22:48  Running with dbt=1.8.7
+[0m16:22:49  Registered adapter: postgres=1.8.2
+[0m16:22:49  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m16:22:49  
+[0m16:22:49  Concurrency: 1 threads (target='qa')
+[0m16:22:49  
+[0m16:22:49  1 of 14 START sql minimal_reference model dds.dim_date ......................... [RUN]
+[0m16:22:49  1 of 14 OK created sql minimal_reference model dds.dim_date .................... [[32mINSERT 0 9133[0m in 0.21s]
+[0m16:22:49  2 of 14 START sql minimal_reference model dds.dim_payment_type ................. [RUN]
+[0m16:22:50  2 of 14 OK created sql minimal_reference model dds.dim_payment_type ............ [[32mINSERT 0 9[0m in 0.08s]
+[0m16:22:50  3 of 14 START sql minimal_reference model dds.dim_rate_code .................... [RUN]
+[0m16:22:50  3 of 14 OK created sql minimal_reference model dds.dim_rate_code ............... [[32mINSERT 0 9[0m in 0.12s]
+[0m16:22:50  4 of 14 START sql minimal_reference model dds.dim_time ......................... [RUN]
+[0m16:22:50  4 of 14 OK created sql minimal_reference model dds.dim_time .................... [[32mINSERT 0 1442[0m in 0.12s]
+[0m16:22:50  5 of 14 START sql minimal_reference model dds.dim_vendor ....................... [RUN]
+[0m16:22:50  5 of 14 OK created sql minimal_reference model dds.dim_vendor .................. [[32mINSERT 0 6[0m in 0.09s]
+[0m16:22:50  6 of 14 START sql view model dds.stg_taxi_zone ................................. [RUN]
+[0m16:22:50  6 of 14 OK created sql view model dds.stg_taxi_zone ............................ [[32mCREATE VIEW[0m in 0.09s]
+[0m16:22:50  7 of 14 START sql view model dds.stg_yellow_taxi ............................... [RUN]
+[0m16:22:50  7 of 14 OK created sql view model dds.stg_yellow_taxi .......................... [[32mCREATE VIEW[0m in 0.05s]
+[0m16:22:50  8 of 14 START sql minimal_reference model dds.dim_zone ......................... [RUN]
+[0m16:22:50  8 of 14 OK created sql minimal_reference model dds.dim_zone .................... [[32mINSERT 0 267[0m in 0.10s]
+[0m16:22:50  9 of 14 START sql view model dds.int_taxi_trip_enriched ........................ [RUN]
+[0m16:22:50  9 of 14 OK created sql view model dds.int_taxi_trip_enriched ................... [[32mCREATE VIEW[0m in 0.05s]
+[0m16:22:50  10 of 14 START sql table model dds.int_taxi_trip_classified .................... [RUN]
+[0m16:22:51  10 of 14 OK created sql table model dds.int_taxi_trip_classified ............... [[32mSELECT 1000[0m in 1.26s]
+[0m16:22:51  11 of 14 START sql minimal_file_replace model dq.business_quarantine ........... [RUN]
+[0m16:22:52  11 of 14 OK created sql minimal_file_replace model dq.business_quarantine ...... [[32mINSERT 0 36[0m in 0.10s]
+[0m16:22:52  12 of 14 START sql minimal_file_replace model dq.duplicate_quarantine .......... [RUN]
+[0m16:22:52  12 of 14 OK created sql minimal_file_replace model dq.duplicate_quarantine ..... [[32mINSERT 0 0[0m in 0.08s]
+[0m16:22:52  13 of 14 START sql view model dds.int_taxi_trip_accepted ....................... [RUN]
+[0m16:22:52  13 of 14 OK created sql view model dds.int_taxi_trip_accepted .................. [[32mCREATE VIEW[0m in 0.04s]
+[0m16:22:52  14 of 14 START sql minimal_fact model dds.fact_taxi_trip ....................... [RUN]
+[0m16:22:52  14 of 14 OK created sql minimal_fact model dds.fact_taxi_trip .................. [[32mINSERT 0 964[0m in 0.32s]
+[0m16:22:52  
+[0m16:22:52  Finished running 6 minimal reference models, 4 view models, 1 table model, 2 minimal file replace models, 1 minimal fact model in 0 hours 0 minutes and 2.94 seconds (2.94s).
+[0m16:22:52  
+[0m16:22:52  [32mCompleted successfully[0m
+[0m16:22:52  
+[0m16:22:52  Done. PASS=14 WARN=0 ERROR=0 SKIP=0 TOTAL=14

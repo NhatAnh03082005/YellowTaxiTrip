@@ -1,0 +1,19 @@
+{
+  "runtime": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.36",
+  "python": "3.10.16 (main, Mar 18 2025, 03:28:26) [GCC 12.2.0]",
+  "versions": {
+    "mage-ai": "0.9.76",
+    "pandas": "1.5.3",
+    "pyarrow": "19.0.1",
+    "psycopg2-binary": "2.9.3",
+    "SQLAlchemy": "1.4.54"
+  },
+  "cpu_visible": 16,
+  "source_bytes": 62553128,
+  "source_rows": 3723833,
+  "source_sha256": "1974230be2b5a3ea92e47b5eb77f32dbf1de896d81ad8df4ab6faba52749ad23",
+  "work_bytes": 698424093,
+  "batch": 1,
+  "date_client": "2026-11-26",
+  "docker_memory_bytes": 8182718464
+}

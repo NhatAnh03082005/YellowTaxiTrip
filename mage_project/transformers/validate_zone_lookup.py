@@ -1,8 +1,10 @@
+from utils.profiling import profiled
 import pandas as pd
 from utils.decorators import test, transformer
 
 
 @transformer
+@profiled
 def validate_zone_lookup(dataframe, *args, **kwargs):
     required = {'LocationID', 'Borough', 'Zone', 'service_zone'}
     missing = required - set(dataframe.columns)

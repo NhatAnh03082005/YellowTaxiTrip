@@ -1,0 +1,10 @@
+# Optional: docker compose -f docker-compose.yml -f deployment/docker-compose.mage-work.yml ...
+# Does not reset or change the PostgreSQL volume. Keep source files on their original mount.
+services:
+  mage:
+    environment:
+      MAGE_WORK_ROOT: /var/lib/mage-work
+    volumes:
+      - mage_work:/var/lib/mage-work
+volumes:
+  mage_work:

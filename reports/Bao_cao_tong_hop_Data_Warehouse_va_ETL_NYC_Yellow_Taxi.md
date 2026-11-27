@@ -403,7 +403,7 @@ So sánh baseline và bản tối giản cần cùng immutable input, trạng th
 
 Permanent footprint gồm Fact/DQ/dimensions/metadata/OLAP/index; peak còn gồm staging, classification, temp relations/spill, WAL và file/work/backup cùng tồn tại. Database size không bao quát toàn WAL hoặc allocated VHDX; không cộng database lần nữa vào VHDX đã chứa nó. `temp_bytes` là counter lượng ghi tích lũy, không phải peak temp đang chiếm disk.
 
-Không nhân transient peak một tháng với 24 nếu cleanup tuần tự. Ngược lại, không ngoại suy chỉ từ kích thước Parquet nén. Cần ít nhất một tháng hoàn chỉnh, một lần retry và tháng kế tiếp để quan sát phần lịch sử tăng. Chưa có bộ log benchmark Mage và dbt cùng điều kiện trong hồ sơ này; vì vậy không suy thời gian dbt hoặc tổng pipeline từ thời gian quan sát riêng của bước trích xuất.
+Không nhân transient peak một tháng với 24 nếu cleanup tuần tự. Ngược lại, không ngoại suy chỉ từ kích thước Parquet nén. Mage slim-v2 đã có full-month QA riêng: `load_stage` 107,110 giây cho 2024-05 và 125,800 giây cho 2025-05; người dùng cũng đã chạy thành công hai tháng trên UI. Chưa có benchmark Mage + dbt/DDS cùng điều kiện, vì vậy không suy thời gian Source → DDS từ số đo Source → STAGED.
 
 ### 9.4. Ma trận dữ liệu hiệu năng cần bổ sung
 
@@ -424,7 +424,7 @@ Hồ sơ task 4.3 ghi control validation PASS trên PostgreSQL 16.9/PostGIS 3.5:
 
 Hồ sơ task 4.5 xác nhận năm staging/DQ relations, canonical schema 33 cột tại checkpoint ban đầu, constraints và 15 secondary indexes theo bộ yêu cầu lúc đó. Chạy DDL hai lần cho thấy idempotency; smoke upsert cùng một source row hai lần vẫn giữ một dòng. Migrations tối ưu về sau có thể thay index set, nên không dùng số 15 như hiện trạng live không đổi.
 
-Mage task 4.4 có checkpoint 11 tests, sau các sửa reference/preview lên 13 tests theo tài liệu cập nhật. Reference integration xác nhận 265 lookup rows, 263 geometries, SRID 2263. Các kết quả trên không tự chứng minh full-month trip ingestion và dbt đã hoàn tất.
+Mage task 4.4 có checkpoint 11 tests, sau các sửa reference/preview lên 13 tests theo tài liệu cập nhật. Reference integration xác nhận 265 lookup rows, 263 geometries, SRID 2263. Full-month ingestion 2024-05/2025-05 đến STAGED đã được kiểm chứng; kết quả này vẫn không tự chứng minh dbt/DDS end-to-end, watermark và cleanup đã hoàn tất.
 
 ### 10.2. Kết quả fixture end-to-end legacy
 
@@ -486,7 +486,7 @@ SCD Type 1 phù hợp snapshot hiện tại nhưng không bảo toàn lịch s�
 
 ### 11.2. Giới hạn tích hợp và vận hành
 
-Mode tối giản mặc định tắt; runner vẫn luồng legacy và các OLAP models legacy bị gate khi bật mode mới. Chưa có migration/cutover live được xác nhận cho schema slim. PostgreSQL 18 QA không thay PostgreSQL 16/PostGIS target; typed Parquet/Mage integration và schedule publication phải được kiểm riêng.
+Mode dbt tối giản vẫn là phạm vi riêng và các OLAP models legacy được tách khỏi đường DDS. Mage staging đã cutover live sang `slim-v2` trên PostgreSQL 16/PostGIS bằng migration 008–010; typed Parquet/full-month integration đã PASS đến STAGED. Schedule publication end-to-end và dbt/DDS vẫn phải được kiểm riêng.
 
 Thành công transaction Fact không đồng nghĩa thành công toàn DAG. Consumer đọc trực tiếp bảng có thể thấy trạng thái trung gian trước watermark; cơ chế BI refresh gate phải được triển khai và kiểm. Legacy tables và backups còn tồn tại làm dung lượng thực khác schema mới tạo từ đầu. Chưa có số đo peak và forecast dung lượng tin cậy cho toàn hai năm.
 
