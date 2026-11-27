@@ -50,9 +50,15 @@
     {% if existing.type != 'table' %}{{ exceptions.raise_compiler_error('Minimal Fact target must be a table') }}{% endif %}
     {% do minimal_require_model_columns(relation, sql) %}
   {% endif %}
-  {% do run_query('create temporary table minimal_fact_source on commit drop as ' ~ sql) %}
-  {% do run_query('create unique index on minimal_fact_source(source_record_key)') %}
-  {% do run_query('analyze minimal_fact_source') %}
+  {% if existing is none %}
+    {# Initial target: stream the model into Fact once. Target UNIQUE/PK are
+       still built before post-hooks/commit, so duplicate input rolls back. #}
+    {% do run_query('create temporary view minimal_fact_source as ' ~ sql) %}
+  {% else %}
+    {% do run_query('create temporary table minimal_fact_source on commit drop as ' ~ sql) %}
+    {% do run_query('create unique index on minimal_fact_source(source_record_key)') %}
+    {% do run_query('analyze minimal_fact_source') %}
+  {% endif %}
   {% do run_query("do $$ begin if exists(select 1 from minimal_fact_source where pickup_date_key=0 or dropoff_date_key=0) then raise exception 'Valid source date outside calendar; extend minimal_calendar range before Fact load'; end if; end $$") %}
   {% if existing is none %}
     {% do run_query('create table ' ~ relation ~ ' as select * from minimal_fact_source with no data') %}
@@ -66,9 +72,11 @@
       {% do run_query('alter table ' ~ relation ~ ' alter column ' ~ name ~ ' set not null') %}
     {% endfor %}
   {% endif %}
-  {% set collisions=run_query('select 1 from ' ~ relation ~ ' f join minimal_fact_source s using(source_record_key) where f.file_version_id <> s.file_version_id limit 1') %}
-  {% if collisions.rows | length %}
-    {{ exceptions.raise_compiler_error('Source identity collision across file versions; refusing to overwrite unrelated Fact') }}
+  {% if existing is not none %}
+    {% set collisions=run_query('select 1 from ' ~ relation ~ ' f join minimal_fact_source s using(source_record_key) where f.file_version_id <> s.file_version_id limit 1') %}
+    {% if collisions.rows | length %}
+      {{ exceptions.raise_compiler_error('Source identity collision across file versions; refusing to overwrite unrelated Fact') }}
+    {% endif %}
   {% endif %}
   {# Retain old+new affected grains across a failed downstream retry. No Fact image/archive. #}
   {% do run_query('create table if not exists ' ~ adapter.quote(this.schema) ~
@@ -119,6 +127,9 @@
   {% endif %}
   {% do run_query('analyze ' ~ relation) %}
   {{ run_hooks(post_hooks, inside_transaction=True) }}
+  {% if existing is none %}
+    {% do run_query('drop view pg_temp.minimal_fact_source') %}
+  {% endif %}
   {% do adapter.commit() %}
   {{ run_hooks(post_hooks, inside_transaction=False) }}
   {{ return({'relations':[relation]}) }}

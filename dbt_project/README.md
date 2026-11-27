@@ -75,6 +75,8 @@ Với slim-v2, ANALYZE nhắm bảng unified và metadata thật thay vì view. 
 
 ## Kiểm chứng và giới hạn
 
+Fact initial load mới tránh một lượt ghi nguồn tạm bằng TEMP VIEW trong writer transaction; target hiện hữu vẫn dùng temp table + upsert. PK/unique/date checks và rollback giữ nguyên. Đã kiểm fault/recovery, replay giữ trip_key, full-month strict row parity và16models/15tests/full audit. Lượt DDS-only mới nhất376.829s (~6m17s), chưa đạt360s; khác với số đo clean Source→DDS bên dưới. Chi tiết so sánh và ảnh hưởng cache/host tại report T11.
+
 Regression tests bảo vệ contracts/runner được giữ ở `tests/`; công cụ benchmark/QA tạm và wrapper T09–T11 đã được dọn. Có thể chạy các kiểm tra không ghi database:
 
 ```powershell
