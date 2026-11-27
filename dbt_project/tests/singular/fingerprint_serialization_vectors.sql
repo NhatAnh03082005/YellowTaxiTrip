@@ -1,3 +1,4 @@
+{{ config(tags=['minimal_batch']) }}
 -- Serialization must preserve null/empty, ordinal, type, numeric precision,
 -- timestamp microseconds, and schema identity before SHA-256 is applied.
 with vectors as (

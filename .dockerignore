@@ -4,9 +4,12 @@
 .env.*
 !.env.example
 .venv
+.venv-*
 **/__pycache__
 *.pyc
 data/yellow_taxi
+data/work
+dbt_project/data/work
 dbt_project/target
 dbt_project/logs
 evidence

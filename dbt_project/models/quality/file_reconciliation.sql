@@ -1,3 +1,131 @@
+{% if var('dbt_minimal_mode', false) %}
+{{ config(materialized='incremental', incremental_strategy='delete+insert',
+    unique_key='file_version_id', tags=['minimal_dds', 'reconciliation', 'persistent']) }}
+
+{# Raw supports typed source columns and lossless payload fixtures. Resolve the
+   available columns once at compile time, preserving text/null fallback order. #}
+{% set fields = ['fare', 'tip', 'total'] %}
+{% set raw_relation = source('stage', 'yellow_taxi_raw') %}
+{% set technical_relation = source('mage_dq', 'technical_quarantine') %}
+with scope as (
+    select f.batch_id, v.file_version_id, v.source_file_sha256, v.source_file
+    from {{ source('control', 'etl_file') }} f
+    join {{ source('control', 'source_file_version') }} v using (file_version_id)
+    where f.batch_id = {{ minimal_batch_id() }}
+      and f.file_version_id = {{ minimal_version_id() }}
+      and f.file_status = 'STAGED'
+      and f.source_file = v.source_file
+      and f.source_file_sha256 = v.source_file_sha256
+), raw_input as (
+    select
+    {% for field in fields %}
+      {{ minimal_amount_text(raw_relation, 'r', field) }} as {{ field }}_text{{ ',' if not loop.last }}
+    {% endfor %}
+    from {{ source('stage', 'yellow_taxi_raw') }} r
+    where r.batch_id = {{ minimal_batch_id() }} and r.file_version_id = {{ minimal_version_id() }}
+), technical_input as (
+    select
+    {% for field in fields %}
+      {{ minimal_amount_text(technical_relation, 'q', field, technical=true) }} as {{ field }}_text{{ ',' if not loop.last }}
+    {% endfor %}
+    from {{ source('mage_dq', 'technical_quarantine') }} q
+    where q.batch_id = {{ minimal_batch_id() }} and q.file_version_id = {{ minimal_version_id() }}
+), raw_values as (
+    select
+    {% for field in fields %}
+      case when pg_input_is_valid({{ field }}_text, 'numeric(12,2)')
+           then {{ field }}_text::numeric(12,2) end as {{ field }}_amount{{ ',' if not loop.last }}
+    {% endfor %}
+    from raw_input
+), technical_values as (
+    select
+    {% for field in fields %}
+      case when pg_input_is_valid({{ field }}_text, 'numeric(12,2)')
+           then {{ field }}_text::numeric(12,2) end as {{ field }}_amount{{ ',' if not loop.last }}
+    {% endfor %}
+    from technical_input
+), branch_rows as (
+    select 'raw'::text as branch, fare_amount, tip_amount, total_amount,
+           null::numeric(12,2) as revenue_amount,
+           false as revenue_ok, false as tip_ok, false as speed_ok,
+           false as duration_ok, false as passenger_ok
+    from raw_values
+    union all
+    select 'canonical', fare_amount, tip_amount, total_amount,
+           null::numeric(12,2), false, false, false, false, false
+    from {{ source('stage', 'yellow_taxi_canonical') }}
+    where batch_id={{ minimal_batch_id() }} and file_version_id={{ minimal_version_id() }}
+    union all
+    select 'technical', fare_amount, tip_amount, total_amount,
+           null::numeric(12,2), false, false, false, false, false
+    from technical_values
+    union all
+    select 'fact', fare_amount, tip_amount, total_amount, revenue_amount,
+           is_revenue_kpi_eligible, is_tip_kpi_eligible, is_speed_kpi_eligible,
+           is_duration_kpi_eligible, is_passenger_kpi_eligible
+    from {{ ref('fact_taxi_trip') }}
+    where file_version_id={{ minimal_version_id() }}
+    union all
+    select 'business', fare_amount, tip_amount, total_amount,
+           null::numeric(12,2), false, false, false, false, false
+    from {{ ref('business_quarantine') }}
+    where file_version_id={{ minimal_version_id() }}
+    union all
+    select 'duplicate', fare_amount, tip_amount, total_amount,
+           null::numeric(12,2), false, false, false, false, false
+    from {{ ref('duplicate_quarantine') }}
+    where file_version_id={{ minimal_version_id() }}
+), branch_agg as (
+    select branch, count(*) as rows,
+    {% for field in fields %}
+      count({{ field }}_amount) as {{ field }}_eligible_rows,
+      coalesce(sum({{ field }}_amount),0)::numeric as {{ field }}_amount,
+    {% endfor %}
+      count(revenue_amount) as revenue_amount_rows,
+      coalesce(sum(revenue_amount),0)::numeric as revenue_amount,
+      count(*) filter(where revenue_ok) as kpi_revenue_eligible_rows,
+      count(*) filter(where tip_ok) as kpi_tip_eligible_rows,
+      count(*) filter(where speed_ok) as kpi_speed_eligible_rows,
+      count(*) filter(where duration_ok) as kpi_duration_eligible_rows,
+      count(*) filter(where passenger_ok) as kpi_passenger_eligible_rows
+    from branch_rows group by branch
+), totals as (
+    select
+    {% set branches = ['raw','canonical','technical','fact','business','duplicate'] %}
+    {% for branch in branches %}
+      coalesce(max(rows) filter(where branch='{{ branch }}'),0) as {{ branch }}_rows,
+      {% for field in fields %}
+      coalesce(max({{ field }}_eligible_rows) filter(where branch='{{ branch }}'),0) as {{ branch }}_{{ field }}_eligible_rows,
+      coalesce(max({{ field }}_amount) filter(where branch='{{ branch }}'),0) as {{ branch }}_{{ field }}_amount,
+      {% endfor %}
+    {% endfor %}
+      coalesce(max(revenue_amount_rows) filter(where branch='fact'),0) as revenue_amount_rows,
+      coalesce(max(revenue_amount) filter(where branch='fact'),0) as revenue_amount,
+      coalesce(max(kpi_revenue_eligible_rows) filter(where branch='fact'),0) as revenue_eligible_rows,
+      coalesce(max(kpi_tip_eligible_rows) filter(where branch='fact'),0) as tip_eligible_rows,
+      coalesce(max(kpi_speed_eligible_rows) filter(where branch='fact'),0) as speed_eligible_rows,
+      coalesce(max(kpi_duration_eligible_rows) filter(where branch='fact'),0) as duration_eligible_rows,
+      coalesce(max(kpi_passenger_eligible_rows) filter(where branch='fact'),0) as passenger_eligible_rows
+    from branch_agg
+)
+select s.*, t.*, 0::bigint as excluded_rows,
+       t.raw_rows-t.canonical_rows-t.technical_rows as source_row_delta,
+       t.canonical_rows-t.fact_rows-t.business_rows-t.duplicate_rows as trusted_row_delta,
+       {% for field in fields %}
+       t.raw_{{ field }}_eligible_rows-t.canonical_{{ field }}_eligible_rows
+         -t.technical_{{ field }}_eligible_rows as source_{{ field }}_eligible_delta,
+       t.canonical_{{ field }}_eligible_rows-t.fact_{{ field }}_eligible_rows
+         -t.business_{{ field }}_eligible_rows-t.duplicate_{{ field }}_eligible_rows
+         as trusted_{{ field }}_eligible_delta,
+       t.raw_{{ field }}_amount-t.canonical_{{ field }}_amount
+         -t.technical_{{ field }}_amount as source_{{ field }}_delta,
+       t.canonical_{{ field }}_amount-t.fact_{{ field }}_amount
+         -t.business_{{ field }}_amount-t.duplicate_{{ field }}_amount
+         as trusted_{{ field }}_delta,
+       {% endfor %}
+       clock_timestamp() as reconciled_at
+from scope s cross join totals t
+{% else %}
 {{ config(
     materialized='incremental',
     incremental_strategy='delete+insert',
@@ -129,4 +257,5 @@ select
         as trusted_amount_delta,
     clock_timestamp() as reconciled_at
 from amounts a
+{% endif %}
 

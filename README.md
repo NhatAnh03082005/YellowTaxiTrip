@@ -1,31 +1,44 @@
-# NYC Yellow Taxi BI Project
+# NYC Yellow Taxi BI
 
-Đây là repository thống nhất cho đồ án NYC Yellow Taxi BI. Team chọn các file
-nguồn năm 2024–2025; đây là phạm vi nạp file, không phải điều kiện loại chuyến
-theo ngày pickup.
+Repository đồ án NYC Yellow Taxi. Team chọn các file nguồn 2024–2025; đây là phạm vi nạp file, không phải điều kiện loại chuyến theo ngày pickup.
 
-## Trạng thái hiện tại
+## Luồng dữ liệu hiện tại
 
-- Đã khảo sát dữ liệu, lập hợp đồng bàn giao và xây dựng phần dbt cho staging,
-  chất lượng dữ liệu, DDS Fact/Dimensions và kiểm thử trên dữ liệu mẫu.
-- Docker/PostGIS và pipeline kiểm tra kết nối Mage đã có; pipeline nạp file taxi,
-  nạp đủ 24 file, OLAP và Power BI chưa được kiểm chứng hoàn chỉnh.
-- Hướng dẫn và giới hạn cụ thể của dbt nằm trong [dbt_project/README.md](dbt_project/README.md).
+```text
+Parquet + catalog/checksum + schema registry
+  → Mage: raw / canonical / technical quarantine
+  → dbt: chuẩn hóa, enrichment, fingerprint, classification
+  → DDS Fact + 6 Dimensions + business/duplicate quarantine
+  → batch tests + đối soát
+  → commit SUCCESS/watermark
+  → cleanup staging/workspace
 
-## Thư mục chính
+DDS được nghiệm thu → job reporting/OLAP riêng → Power BI
+```
 
-- `profiling/`: scripts và kết quả khảo sát dữ liệu đã hoàn thành ở giai đoạn 1.
-- `docs/`: yêu cầu, data modeling, ETL design, decision log và checkpoint.
-- `data/`: dữ liệu tham chiếu, landing và quarantine; không commit dữ liệu trip dung lượng lớn.
-- `sql/`: nơi dự kiến đặt DDL cho control, audit, staging, DQ và DDS.
-- `docker/` và `docker-compose.yml`: cấu hình container Mage và PostgreSQL/PostGIS.
-- `mage_project/`: có pipeline kiểm tra kết nối; ingestion, backfill và incremental
-  vẫn là phần tiếp theo.
-- `dbt_project/`: staging, intermediate, Dimensions, Fact và tests.
-- `powerbi/` và `olap/`: nơi dự kiến đặt semantic model, report và truy vấn phân tích.
-- `tests/` và `evidence/`: test fixtures, reconciliation và bằng chứng chạy.
-- `deployment/`: cấu hình, schedule, runbook và recovery.
-- `reports/`: báo cáo theo các checkpoint.
-- `submission/`: snapshot đóng gói để nộp, không phải source project độc lập.
+Điểm điều phối Source → DDS: [run_24_month_backfill.py](deployment/scripts/run_24_month_backfill.py). Script gọi các hàm block Mage và điều phối dbt; không phải master DAG/scheduler Mage đã được nghiệm thu live. Entry point incremental: [run_dds_incremental.py](deployment/scripts/run_dds_incremental.py).
 
-Xem phân công, thứ tự triển khai và checklist chi tiết tại `KE_HOACH_DU_AN.md`.
+Hướng dẫn cấu hình, chạy một tháng, retry/skip và full audit: [dbt_project/README.md](dbt_project/README.md). Không dùng `dbt build` toàn project thay runner cho nạp dữ liệu tối giản.
+
+## Trạng thái bàn giao
+
+- DDS minimal, batch tests, reconciliation, skip/retry/cleanup và migration QA đã được kiểm chứng. Chưa migrate live.
+- Lượt May thật mới nhất: 16 models/15 tests/đối soát/commit/cleanup PASS; DDS **411,906 giây**, chưa đạt mục tiêu360giây. [Kết quả đo](reports/dbt_minimal_refactor/T10.md), [tối ưu DDS](reports/dbt_minimal_refactor/T11.md).
+- OLAP/reporting tách khỏi lượt nạp DDS; T07 chưa nghiệm thu. Chưa xác nhận hoàn tất toàn bộ24 file hoặc refresh Power BI.
+- Công cụ benchmark/QA T09–T11, lịch QA tạm và bản task plan trùng đã được dọn khỏi source. Log/snapshot/dữ liệu QA cục bộ ở `data/work` được Git bỏ qua; database và file nguồn giữ nguyên.
+
+## Cấu trúc
+
+| Thư mục | Vai trò |
+| --- | --- |
+| `mage_project/` | Ingestion, checksum/schema, chuẩn hóa kiểu và staging |
+| `dbt_project/` | DDS models, rules/seeds, tests và báo cáo chi tiết test |
+| `sql/` | Control/staging DDL, functions, migrations và rollback |
+| `deployment/scripts/` | Controller backfill và entrypoint incremental |
+| `docs/` | Contract, thiết kế, mapping, kế hoạch và migration guide |
+| `tests/` | Regression tests, fixture/oracle và SQL checks được giữ để bảo vệ luồng chính |
+| `data/catalog/` | Catalog và schema registry đầu vào |
+| `reports/` | Kết quả khảo sát và trạng thái bàn giao |
+| `olap/`, `powerbi/` | Phần reporting/phân tích, triển khai riêng |
+
+Kế hoạch chính: [DBT_MINIMAL_REFACTOR_TASK_PLAN.md](docs/etl_design/DBT_MINIMAL_REFACTOR_TASK_PLAN.md). Phân công đồ án: [KE_HOACH_DU_AN.md](KE_HOACH_DU_AN.md).

@@ -1,0 +1,22 @@
+selectors:
+  - name: minimal_dds_run
+    description: DDS models and their ancestors for one verified file version; OLAP is not a dependency.
+    definition:
+      method: tag
+      value: minimal_dds
+      parents: true
+  - name: minimal_dds_batch_tests
+    description: Scoped DDS checks after Fact, quarantine and file reconciliation are built.
+    definition:
+      method: tag
+      value: minimal_batch
+  - name: minimal_dds_full_audit
+    description: Explicit persistent DDS audit after the approved file catalog is loaded.
+    definition:
+      method: tag
+      value: minimal_full_audit
+  - name: reporting_models
+    description: Reporting models for a separate job after DDS acceptance.
+    definition:
+      method: tag
+      value: olap

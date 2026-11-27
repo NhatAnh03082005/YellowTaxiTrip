@@ -1,3 +1,4 @@
+{{ config(tags=['minimal_batch']) }}
 with violations as (
     select 'vendor_expected_codes_repeated' as issue where
         (select count(distinct code) from unnest(array[{{ var('expected_vendor_codes') | join(', ') }}]::smallint[]) as codes(code))

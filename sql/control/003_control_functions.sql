@@ -136,8 +136,7 @@ BEGIN
         ('STAGING'),
         ('DBT_BUILD_DDS'),
         ('DBT_TEST'),
-        ('RECONCILIATION'),
-        ('DBT_BUILD_OLAP')
+        ('RECONCILIATION')
     ) AS required_steps(step_name);
 
     PERFORM control.log_event(

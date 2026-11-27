@@ -56,9 +56,8 @@
   {% do run_query("do $$ begin if exists(select 1 from minimal_fact_source where pickup_date_key=0 or dropoff_date_key=0) then raise exception 'Valid source date outside calendar; extend minimal_calendar range before Fact load'; end if; end $$") %}
   {% if existing is none %}
     {% do run_query('create table ' ~ relation ~ ' as select * from minimal_fact_source with no data') %}
-    {% do run_query('alter table ' ~ relation ~ ' add column trip_key bigint generated always as identity primary key') %}
+    {% do run_query('alter table ' ~ relation ~ ' add column trip_key bigint generated always as identity') %}
     {% do run_query('alter table ' ~ relation ~ ' alter column source_record_key set not null') %}
-    {% do run_query('alter table ' ~ relation ~ ' add constraint fact_taxi_trip_source_record_key_key unique(source_record_key)') %}
     {% for name in ['file_version_id','source_row_number','batch_id','trip_count',
        'pickup_date_key','dropoff_date_key','pickup_time_key','dropoff_time_key',
        'pickup_zone_key','dropoff_zone_key','vendor_key','payment_type_key','rate_code_key',
@@ -66,7 +65,6 @@
        'is_duration_kpi_eligible','is_passenger_kpi_eligible'] %}
       {% do run_query('alter table ' ~ relation ~ ' alter column ' ~ name ~ ' set not null') %}
     {% endfor %}
-    {% do run_query('create index on ' ~ relation ~ '(file_version_id)') %}
   {% endif %}
   {% set collisions=run_query('select 1 from ' ~ relation ~ ' f join minimal_fact_source s using(source_record_key) where f.file_version_id <> s.file_version_id limit 1') %}
   {% if collisions.rows | length %}
@@ -107,9 +105,18 @@
   {% call statement('main') %}
     insert into {{ relation }} as f ({{ names | join(',') }})
     select {{ names | join(',') }} from minimal_fact_source where true
+    {% if existing is not none %}
     on conflict(source_record_key) do update set {{ assignments | join(',') }}
     where row({{ current | join(',') }}) is distinct from row({{ incoming | join(',') }})
+    {% endif %}
   {% endcall %}
+  {% if existing is none %}
+    {# New target only: build indexes in bulk, still inside the same writer lock
+       and transaction. Existing targets retain their constraints and upsert. #}
+    {% do run_query('alter table ' ~ relation ~ ' add primary key(trip_key)') %}
+    {% do run_query('alter table ' ~ relation ~ ' add constraint fact_taxi_trip_source_record_key_key unique(source_record_key)') %}
+    {% do run_query('create index on ' ~ relation ~ '(file_version_id)') %}
+  {% endif %}
   {% do run_query('analyze ' ~ relation) %}
   {{ run_hooks(post_hooks, inside_transaction=True) }}
   {% do adapter.commit() %}

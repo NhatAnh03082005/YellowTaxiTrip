@@ -1,3 +1,4 @@
+{{ config(tags=['minimal_batch']) }}
 select rule_id
 from {{ ref('dq_rule_policy') }}
 where (severity = 'INFO' and (severity_rank <> 1 or disposition_action <> 'INFO'))

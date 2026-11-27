@@ -1,8 +1,8 @@
 """Run the storage-optimized Yellow Taxi pipeline one immutable file at a time.
 
 This is the master controller missing from the Phase 2 Mage-only ingestion DAG.
-It reuses the Mage block functions, runs dbt DDS/DQ/tests/OLAP, persists
-reconciliation, commits the watermark, and only then cleans transient Staging.
+It reuses the Mage block functions, validates DDS, commits the watermark, then
+cleans the single-writer staging workspace. Reporting runs separately.
 """
 
 from __future__ import annotations
@@ -10,12 +10,15 @@ from __future__ import annotations
 import argparse
 from contextlib import closing, contextmanager
 import csv
+from decimal import Decimal
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -67,17 +70,18 @@ def validate_v2_approval(path_value: str) -> Path:
 
 
 def load_dotenv() -> None:
+    controller_host = os.environ.get('POSTGRES_HOST', 'localhost')
     for line in (ROOT / '.env').read_text(encoding='utf-8').splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith('#') or '=' not in stripped:
             continue
         key, value = stripped.split('=', 1)
         os.environ.setdefault(key, value)
-    os.environ['POSTGRES_HOST'] = 'localhost'
-    os.environ['POSTGRES_PORT'] = os.environ.get('POSTGRES_HOST_PORT', '5433')
-    os.environ['DBT_HOST'] = 'localhost'
+    os.environ['POSTGRES_HOST'] = controller_host
+    os.environ['POSTGRES_PORT'] = os.environ.get('POSTGRES_HOST_PORT', os.environ.get('POSTGRES_PORT', '5433'))
+    os.environ['DBT_HOST'] = os.environ['POSTGRES_HOST']
     os.environ['DBT_PORT'] = os.environ['POSTGRES_PORT']
-    os.environ['DBT_PROFILES_DIR'] = str(ROOT / '.dbt')
+    os.environ.setdefault('DBT_PROFILES_DIR', str(ROOT / '.dbt'))
 
 
 def connection():
@@ -86,7 +90,7 @@ def connection():
         port=int(os.environ['POSTGRES_PORT']),
         dbname=os.environ['POSTGRES_DB'],
         user=os.environ['POSTGRES_USER'],
-        password=os.environ['POSTGRES_PASSWORD'],
+        password=os.environ.get('POSTGRES_PASSWORD', ''),
     )
 
 
@@ -103,46 +107,77 @@ def execute_cursor(cursor, sql, params=None, fetch=False):
     return None
 
 
-def docker_psql(sql_path: Path) -> None:
-    text = '\n'.join(
-        line for line in sql_path.read_text(encoding='utf-8').splitlines()
-        if not line.lstrip().startswith('\\')
-    ) + '\n'
-    command = [
-        'docker', 'compose', 'exec', '-T', 'postgres', 'psql',
-        '-v', 'ON_ERROR_STOP=1', '-U', os.environ['POSTGRES_USER'],
-        '-d', os.environ['POSTGRES_DB'],
-    ]
-    print('Applying {}'.format(sql_path.relative_to(ROOT)), flush=True)
-    subprocess.run(command, cwd=ROOT, input=text, text=True, check=True)
-
-
-def apply_migration() -> None:
-    docker_psql(ROOT / 'sql' / 'migrations' / '005_storage_optimization_v2.sql')
-    docker_psql(ROOT / 'sql' / 'migrations' / '006_backfill_recovery_and_cleanup.sql')
-    docker_psql(ROOT / 'sql' / 'migrations' / '007_replacement_recovery.sql')
-    docker_psql(ROOT / 'sql' / 'control' / '003_control_functions.sql')
-    docker_psql(ROOT / 'sql' / 'control' / '002_control_indexes.sql')
-    docker_psql(ROOT / 'sql' / 'stage' / '002_stage_indexes.sql')
-
-
 def dbt_executable() -> str:
-    candidate = ROOT / '.venv-dbt' / 'Scripts' / 'dbt.exe'
-    return str(candidate) if candidate.is_file() else 'dbt'
+    for name in ('.venv-dbt-312', '.venv-dbt'):
+        candidate = ROOT / name / 'Scripts' / 'dbt.exe'
+        if candidate.is_file():
+            return str(candidate)
+    return 'dbt'
 
 
 def run_dbt(arguments: list[str], batch_id: int, extra_vars=None) -> None:
+    if extra_vars and any(key in extra_vars for key in (
+        'fact_lifecycle_mode', 'enable_fingerprint_history_candidate',
+        'use_fingerprint_history_candidate',
+    )):
+        raise ValueError('Legacy archive/candidate-history variables are unsupported by the DDS runner')
     variables = json.dumps({
         'load_batch_id': batch_id,
-        'fact_lifecycle_mode': 'archive',
+        'dbt_minimal_mode': True,
+        'fact_lifecycle_mode': 'guard',
         **(extra_vars or {}),
     })
+    invocation = '{}-{}-{}'.format(batch_id, datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'), arguments[0])
+    artifact_root = WORK_ROOT / 'dbt_artifacts' / invocation
+    target_path = artifact_root / 'target'
+    log_path = artifact_root / 'logs'
     command = [
-        dbt_executable(), *arguments, '--project-dir', str(DBT_ROOT),
-        '--profiles-dir', str(ROOT / '.dbt'), '--vars', variables,
+        dbt_executable(), '--log-path', str(log_path), *arguments,
+        '--target-path', str(target_path), '--project-dir', str(DBT_ROOT),
+        '--profiles-dir', os.environ.get('DBT_PROFILES_DIR', str(ROOT / '.dbt')),
+        '--vars', variables,
     ]
-    print('Running: dbt {}'.format(' '.join(arguments)), flush=True)
-    subprocess.run(command, cwd=ROOT, env=os.environ.copy(), check=True)
+    print(json.dumps({'phase': 'dbt', 'invocation': invocation, 'arguments': arguments,
+                      'batch_id': batch_id, 'file_version_id': (extra_vars or {}).get('load_file_version_id'),
+                      'sha256': (extra_vars or {}).get('source_file_sha256'),
+                      'artifact_root': str(artifact_root)}), flush=True)
+    started = time.monotonic()
+    try:
+        subprocess.run(command, cwd=ROOT, env=os.environ.copy(), check=True)
+    finally:
+        if arguments[0] == 'test':
+            subprocess.run([sys.executable, str(DBT_ROOT / 'scripts' / 'build_with_detailed_tests.py'),
+                            '--report-only', '--target-path', str(target_path)],
+                           cwd=ROOT, env=os.environ.copy(), check=False)
+        print(json.dumps({'phase': 'dbt', 'invocation': invocation,
+                          'elapsed_seconds': round(time.monotonic() - started, 3),
+                          'artifact_root': str(artifact_root)}), flush=True)
+
+
+@contextmanager
+def timed_phase(name: str, batch_id: int | None, **context):
+    started = time.monotonic()
+    try:
+        yield
+    except Exception as exception:
+        print(json.dumps({'phase': name, 'batch_id': batch_id, 'status': 'FAILED',
+                          **context, 'error': str(exception), 'elapsed_seconds': round(time.monotonic()-started, 3)}), flush=True)
+        raise
+    else:
+        print(json.dumps({'phase': name, 'batch_id': batch_id, 'status': 'SUCCESS',
+                          **context, 'elapsed_seconds': round(time.monotonic()-started, 3)}), flush=True)
+
+
+def ensure_reference_initialized(batch_id: int, version_id: int, source_sha256=None) -> None:
+    missing = execute('''SELECT to_regclass('dds.vendor_codes') IS NULL
+        OR to_regclass('dds.payment_type_codes') IS NULL
+        OR to_regclass('dds.rate_codes') IS NULL
+        OR to_regclass('dds.zone_key_map') IS NULL
+        OR to_regclass('dds.dq_rule_policy') IS NULL AS missing;''', fetch=True)
+    if missing[0]['missing']:
+        with timed_phase('REFERENCE_SEEDS', batch_id):
+            run_dbt(['seed'], batch_id, {'load_file_version_id': version_id,
+                                         'source_file_sha256': source_sha256})
 
 
 def control_step(batch_id: int, step: str, action: str, message=None) -> None:
@@ -165,12 +200,6 @@ def control_step(batch_id: int, step: str, action: str, message=None) -> None:
         )
 
 
-def mark_skipped_downstream_success(batch_id: int) -> None:
-    raise RuntimeError(
-        'Batch {} contains no processable file; refusing to fabricate downstream success'.format(batch_id)
-    )
-
-
 def validate_reconciliation(batch_id: int, query=None) -> list:
     query = execute if query is None else query
     rows = query(
@@ -179,18 +208,21 @@ def validate_reconciliation(batch_id: int, query=None) -> list:
     )
     if not rows:
         raise RuntimeError('No reconciliation rows produced for batch {}'.format(batch_id))
+    tolerance = Decimal(os.environ.get('AMOUNT_RECONCILIATION_TOLERANCE', '0.01'))
+    if tolerance < 0:
+        raise RuntimeError('AMOUNT_RECONCILIATION_TOLERANCE must be nonnegative')
     for row in rows:
         if row['source_row_delta'] != 0 or row['trusted_row_delta'] != 0:
             raise RuntimeError('Row reconciliation failed for file version {}'.format(
                 row['file_version_id']
             ))
-        if (row['source_amount_eligible_row_delta'] != 0
-                or row['trusted_amount_eligible_row_delta'] != 0
-                or abs(row['source_amount_delta']) > 0.01
-                or abs(row['trusted_amount_delta']) > 0.01):
-            raise RuntimeError('Amount reconciliation failed for file version {}'.format(
-                row['file_version_id']
-            ))
+        for field in ('fare', 'tip', 'total'):
+            if (row['source_{}_eligible_delta'.format(field)] != 0
+                    or row['trusted_{}_eligible_delta'.format(field)] != 0
+                    or abs(Decimal(row['source_{}_delta'.format(field)])) > tolerance
+                    or abs(Decimal(row['trusted_{}_delta'.format(field)])) > tolerance):
+                raise RuntimeError('{} reconciliation failed for file version {}'.format(
+                    field, row['file_version_id']))
     return rows
 
 
@@ -209,7 +241,7 @@ def persist_reconciliation(batch_id: int, query) -> dict:
                 source_amount, canonical_amount, technical_amount,
                 fact_amount, business_amount, duplicate_amount,
                 source_row_delta, trusted_row_delta,
-                source_amount_delta, trusted_amount_delta, recorded_at
+                source_amount_delta, trusted_amount_delta, measure_details, recorded_at
             ) VALUES (
                 %(file_version_id)s, %(batch_id)s,
                 %(raw_rows)s, %(canonical_rows)s, %(technical_rows)s,
@@ -220,7 +252,8 @@ def persist_reconciliation(batch_id: int, query) -> dict:
                 %(raw_amount)s, %(canonical_amount)s, %(technical_amount)s,
                 %(fact_amount)s, %(business_amount)s, %(duplicate_amount)s,
                 %(source_row_delta)s, %(trusted_row_delta)s,
-                %(source_amount_delta)s, %(trusted_amount_delta)s, clock_timestamp()
+                %(source_amount_delta)s, %(trusted_amount_delta)s,
+                %(measure_details)s::jsonb, clock_timestamp()
             )
             ON CONFLICT (file_version_id) DO UPDATE SET
                 successful_batch_id = EXCLUDED.successful_batch_id,
@@ -246,15 +279,36 @@ def persist_reconciliation(batch_id: int, query) -> dict:
                 trusted_row_delta = EXCLUDED.trusted_row_delta,
                 source_amount_delta = EXCLUDED.source_amount_delta,
                 trusted_amount_delta = EXCLUDED.trusted_amount_delta,
+                measure_details = EXCLUDED.measure_details,
                 recorded_at = EXCLUDED.recorded_at;
             """,
-            {**row, 'batch_id': batch_id},
+            {
+                **row, 'batch_id': batch_id,
+                'measure_details': json.dumps(dict(row), default=str),
+                'raw_amount_eligible_rows': row['raw_total_eligible_rows'],
+                'canonical_amount_eligible_rows': row['canonical_total_eligible_rows'],
+                'technical_amount_eligible_rows': row['technical_total_eligible_rows'],
+                'fact_amount_eligible_rows': row['fact_total_eligible_rows'],
+                'business_amount_eligible_rows': row['business_total_eligible_rows'],
+                'duplicate_amount_eligible_rows': row['duplicate_total_eligible_rows'],
+                'raw_amount': row['raw_total_amount'],
+                'canonical_amount': row['canonical_total_amount'],
+                'technical_amount': row['technical_total_amount'],
+                'fact_amount': row['fact_total_amount'],
+                'business_amount': row['business_total_amount'],
+                'duplicate_amount': row['duplicate_total_amount'],
+                'source_amount_delta': row['source_total_delta'],
+                'trusted_amount_delta': row['trusted_total_delta'],
+            },
         )
+        query('''UPDATE control.etl_step_run SET details = %(details)s::jsonb
+                 WHERE batch_id = %(batch)s AND step_name = 'RECONCILIATION';''',
+              {'batch': batch_id, 'details': json.dumps(dict(row), default=str)})
     totals = {
         key: sum(int(row[key]) for row in rows)
         for key in ('raw_rows', 'canonical_rows', 'technical_rows',
                     'fact_rows', 'business_rows', 'duplicate_rows',
-                    'raw_amount_eligible_rows')
+                    'raw_total_eligible_rows')
     }
     query(
         """
@@ -267,22 +321,25 @@ def persist_reconciliation(batch_id: int, query) -> dict:
          'canonical': totals['canonical_rows'], 'technical': totals['technical_rows'],
          'business': totals['business_rows'], 'duplicate': totals['duplicate_rows'],
          'fact': totals['fact_rows'],
-         'amount_eligible': totals['raw_amount_eligible_rows']},
+         'amount_eligible': totals['raw_total_eligible_rows']},
     )
     return {'rows': rows, 'totals': totals}
 
 
 def run_downstream(batch_id: int) -> dict:
     state = execute(
-        '''SELECT b.status, r.batch_id IS NOT NULL AS replacement
-           FROM control.etl_batch b LEFT JOIN control.etl_replacement r USING (batch_id)
+        '''SELECT b.status, r.batch_id IS NOT NULL AS replacement,
+                  f.file_version_id, f.source_file_sha256
+           FROM control.etl_batch b
+           LEFT JOIN control.etl_replacement r USING (batch_id)
+           LEFT JOIN control.etl_file f USING (batch_id)
            WHERE b.batch_id = %(batch)s;''',
         {'batch': batch_id}, fetch=True,
     )
     if not state:
         raise RuntimeError('Batch {} does not exist'.format(batch_id))
     replacement = state[0].get('replacement', False)
-    if replacement and state[0]['status'] == 'SUCCESS':
+    if state[0]['status'] == 'SUCCESS':
         return {'batch_id': batch_id, 'already_committed': True}
     if state[0]['status'] not in ('FAILED', 'STAGED', 'DBT_RUNNING', 'RECONCILING'):
         raise RuntimeError(
@@ -290,33 +347,38 @@ def run_downstream(batch_id: int) -> dict:
                 batch_id, state[0]['status']
             )
         )
+    version_id = state[0].get('file_version_id')
+    if version_id is None:
+        raise RuntimeError('Batch {} has no immutable file version'.format(batch_id))
     execute('SELECT control.resume_failed_downstream(%(batch)s);', {'batch': batch_id})
     def dbt(args):
+        variables = {'load_file_version_id': int(version_id),
+                     'source_file_sha256': state[0].get('source_file_sha256'),
+                     'amount_reconciliation_tolerance': float(os.environ.get('AMOUNT_RECONCILIATION_TOLERANCE', '0.01'))}
         if replacement:
-            run_dbt(args, batch_id, {'apply_approved_fact_replacement': True})
+            run_dbt(args, batch_id, {**variables, 'apply_approved_fact_replacement': True})
         else:
-            run_dbt(args, batch_id)
+            run_dbt(args, batch_id, variables)
 
     try:
-        control_step(batch_id, 'DBT_BUILD_DDS', 'start')
-        dbt(['seed'])
-        dbt(['run', '--exclude', 'tag:olap'])
-        control_step(batch_id, 'DBT_BUILD_DDS', 'success')
+        with timed_phase('DBT_BUILD_DDS', batch_id):
+            control_step(batch_id, 'DBT_BUILD_DDS', 'start')
+            ensure_reference_initialized(batch_id, int(version_id), state[0].get('source_file_sha256'))
+            dbt(['run', '--selector', 'minimal_dds_run'])
+            control_step(batch_id, 'DBT_BUILD_DDS', 'success')
 
-        control_step(batch_id, 'DBT_TEST', 'start')
-        dbt(['test'])
-        control_step(batch_id, 'DBT_TEST', 'success')
+        with timed_phase('DBT_TEST', batch_id):
+            control_step(batch_id, 'DBT_TEST', 'start')
+            dbt(['test', '--selector', 'minimal_dds_batch_tests'])
+            control_step(batch_id, 'DBT_TEST', 'success')
 
-        execute("SELECT control.transition_batch(%(batch)s, 'RECONCILING');", {'batch': batch_id})
-        control_step(batch_id, 'RECONCILIATION', 'start')
-        validate_reconciliation(batch_id)
-        control_step(batch_id, 'RECONCILIATION', 'success')
+        with timed_phase('RECONCILIATION', batch_id):
+            execute("SELECT control.transition_batch(%(batch)s, 'RECONCILING');", {'batch': batch_id})
+            control_step(batch_id, 'RECONCILIATION', 'start')
+            validate_reconciliation(batch_id)
+            control_step(batch_id, 'RECONCILIATION', 'success')
 
-        control_step(batch_id, 'DBT_BUILD_OLAP', 'start')
-        dbt(['run', '--select', 'tag:olap'])
-        control_step(batch_id, 'DBT_BUILD_OLAP', 'success')
-
-        with connection() as conn:
+        with timed_phase('DDS_COMMIT', batch_id), connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 def query(sql, params=None, fetch=False):
                     return execute_cursor(cursor, sql, params, fetch)
@@ -356,7 +418,7 @@ def clean_transient_storage(batch_id: int) -> None:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 execute_cursor(cursor, "SELECT pg_advisory_xact_lock(hashtext('yellow_taxi_staging_writer'))")
                 rows = execute_cursor(cursor, """
-                    SELECT b.status, f.cleanup_status
+                    SELECT b.status, f.cleanup_status, f.file_version_id
                     FROM control.etl_batch b
                     JOIN control.etl_backfill_file f ON f.batch_id = b.batch_id
                     WHERE b.batch_id = %(batch)s
@@ -367,29 +429,45 @@ def clean_transient_storage(batch_id: int) -> None:
                 if rows[0]['cleanup_status'] == 'SUCCESS':
                     return
                 execute_cursor(cursor, """
-                    LOCK TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
-                    IN ACCESS EXCLUSIVE MODE;
+                    LOCK TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical,
+                        dds.int_taxi_trip_classified IN ACCESS EXCLUSIVE MODE;
+                    LOCK TABLE dds.dbt_minimal_workspace_state IN ACCESS EXCLUSIVE MODE;
                 """)
                 safety = execute_cursor(cursor, """
                     SELECT
-                      (SELECT count(*) FROM stage.yellow_taxi_raw WHERE batch_id <> %(batch)s)
-                      + (SELECT count(*) FROM stage.yellow_taxi_canonical WHERE batch_id <> %(batch)s)
+                      (SELECT count(*) FROM stage.yellow_taxi_raw
+                       WHERE batch_id <> %(batch)s OR file_version_id <> %(version)s)
+                      + (SELECT count(*) FROM stage.yellow_taxi_canonical
+                         WHERE batch_id <> %(batch)s OR file_version_id <> %(version)s)
+                      + (SELECT count(*) FROM dds.int_taxi_trip_classified
+                         WHERE batch_id <> %(batch)s OR file_version_id <> %(version)s)
                       AS foreign_rows,
                       (SELECT count(*) FROM control.etl_batch
                        WHERE batch_id <> %(batch)s
                          AND pipeline_name = 'pl_taxi_master'
                          AND status NOT IN ('SUCCESS', 'FAILED', 'CANCELLED'))
                       AS active_batches;
-                """, {'batch': batch_id}, fetch=True)[0]
+                """, {'batch': batch_id, 'version': rows[0]['file_version_id']}, fetch=True)[0]
                 if safety['foreign_rows']:
                     raise RuntimeError('Refusing cleanup: Staging contains another batch')
                 if safety['active_batches']:
                     raise RuntimeError('Refusing cleanup: another production batch is active')
+                workspace = execute_cursor(cursor, '''
+                    SELECT batch_id, file_version_id, valid
+                    FROM dds.dbt_minimal_workspace_state
+                    WHERE model_name = 'int_taxi_trip_classified';
+                ''', fetch=True)
+                if (len(workspace) != 1 or workspace[0]['batch_id'] != batch_id
+                        or workspace[0]['file_version_id'] != rows[0]['file_version_id']):
+                    raise RuntimeError('Refusing cleanup: classification workspace scope differs')
                 execute_cursor(cursor, """
                     UPDATE control.etl_backfill_file
                     SET cleanup_status = 'RUNNING', cleanup_error = NULL
                     WHERE batch_id = %(batch)s;
-                    TRUNCATE TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical
+                    UPDATE dds.dbt_minimal_workspace_state SET valid = false
+                    WHERE model_name = 'int_taxi_trip_classified';
+                    TRUNCATE TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical,
+                        dds.int_taxi_trip_classified
                         RESTART IDENTITY;
                 """, {'batch': batch_id})
     except Exception as exception:
@@ -485,7 +563,8 @@ def authorize_replay(context: dict, file_version_id: int,
 def require_safe_file_version(context: dict) -> None:
     for item in context['files']:
         previous = execute("""
-            SELECT 1 FROM control.etl_file current_attempt
+            SELECT prior.file_version_id, prior.source_file_sha256
+            FROM control.etl_file current_attempt
             JOIN control.etl_batch current_batch ON current_batch.batch_id = current_attempt.batch_id
             JOIN control.etl_file prior ON prior.source_file = current_attempt.source_file
             JOIN control.etl_batch prior_batch ON prior_batch.batch_id = prior.batch_id
@@ -493,11 +572,29 @@ def require_safe_file_version(context: dict) -> None:
               AND prior.file_status = 'STAGED' AND prior_batch.status = 'SUCCESS'
               AND prior_batch.pipeline_name = current_batch.pipeline_name
               AND prior_batch.source_name = current_batch.source_name
+              AND prior.source_year_month = current_attempt.source_year_month
               AND prior.file_version_id <> current_attempt.file_version_id
+            ORDER BY prior_batch.ended_at DESC NULLS LAST, prior_batch.batch_id DESC
             LIMIT 1;
         """, {'file': item['etl_file_id']}, fetch=True)
         if previous:
-            message = 'Replacement blocked until prior Fact retirement and historical lineage are verified'
+            approvals = execute("""
+                SELECT a.etl_file_id FROM control.etl_file a
+                WHERE a.source_file = %(file)s
+                  AND a.source_file_sha256 = %(sha)s
+                  AND a.file_version_id = %(version)s
+                  AND a.previous_sha256 = %(previous_sha)s
+                  AND a.file_status = 'APPROVED_SOURCE_VERSION'
+                  AND a.approval_status = 'APPROVED'
+                  AND a.approved_by IS NOT NULL AND a.approved_at IS NOT NULL
+                ORDER BY a.etl_file_id DESC LIMIT 1;
+            """, {'file': item['file_name'], 'sha': item['source_file_sha256'],
+                  'version': item['file_version_id'],
+                  'previous_sha': previous[0]['source_file_sha256']}, fetch=True)
+            if approvals:
+                context['replacement_approval_file_id'] = approvals[0]['etl_file_id']
+                continue
+            message = 'Replacement blocked until an explicit matching source-version approval exists'
             execute("""
                 SELECT control.fail_batch(%(batch)s, 'SOURCE_VERSION_REPLACEMENT_BLOCKED', %(message)s);
             """, {'batch': context['batch_id'], 'message': message})
@@ -505,7 +602,8 @@ def require_safe_file_version(context: dict) -> None:
 
 
 def run_ingestion(month: str, replay_file_version_id=None,
-                  replay_requested_by=None, replay_reason=None) -> dict:
+                  replay_requested_by=None, replay_reason=None,
+                  run_type='BACKFILL') -> dict:
     if str(MAGE_ROOT) not in sys.path:
         sys.path.insert(0, str(MAGE_ROOT))
     from data_loaders.get_extraction_window import get_extraction_window
@@ -519,11 +617,44 @@ def run_ingestion(month: str, replay_file_version_id=None,
     from data_exporters.load_stage import load_stage
     from transformers.verify_stage import verify_stage
 
-    context = get_extraction_window(run_type='BACKFILL', triggered_by='backfill_controller')
+    context = get_extraction_window(
+        run_type=run_type,
+        triggered_by='scheduled_dds_runner' if run_type == 'INCREMENTAL' else 'backfill_controller',
+    )
     context = discover_source_files(
         context, catalog_path=str(CATALOG), source_year_month_from=month,
         source_year_month_to=month,
     )
+    if run_type == 'INCREMENTAL' and context['files_selected'] == 0:
+        try:
+            from utils.parquet_utils import calculate_file_sha256
+            from utils.paths import resolve_data_path
+            with CATALOG.open(newline='', encoding='utf-8') as stream:
+                rows = [row for row in csv.DictReader(stream)
+                        if row['source_year_month'] == month]
+            if len(rows) != 1:
+                raise RuntimeError('Incremental skip requires exactly one catalog file')
+            row = rows[0]
+            path = resolve_data_path(row['local_path'], data_root=str(DATA_ROOT))
+            actual_sha = calculate_file_sha256(path)
+            if actual_sha != row['sha256'].lower():
+                raise RuntimeError('Incremental skip checksum mismatch for {}'.format(row['file_name']))
+            versions = execute('''SELECT f.file_version_id FROM control.etl_file f
+                JOIN control.etl_batch b USING(batch_id)
+                WHERE f.source_file = %(file)s AND f.source_year_month = %(month)s
+                  AND f.source_file_sha256 = %(sha)s AND f.file_status = 'STAGED'
+                  AND b.status = 'SUCCESS' ORDER BY b.batch_id DESC LIMIT 1''',
+                {'file': row['file_name'], 'month': month, 'sha': actual_sha}, fetch=True)
+            if not versions:
+                raise RuntimeError('Incremental skip has no successful matching file version')
+            return {'batch_id': context['batch_id'], 'process_file_count': 0,
+                    'skipped_file': {'file_name': row['file_name'],
+                                     'source_file_sha256': actual_sha,
+                                     'file_version_id': versions[0]['file_version_id']}}
+        except Exception as exception:
+            execute("SELECT control.fail_batch(%(batch)s, 'INCREMENTAL_SKIP_FAILED', %(error)s)",
+                    {'batch': context['batch_id'], 'error': str(exception)[:2000]})
+            raise
     context = verify_checksum(
         context, schema_registry_path=str(SCHEMA_REGISTRY), data_root=str(DATA_ROOT),
     )
@@ -531,7 +662,13 @@ def run_ingestion(month: str, replay_file_version_id=None,
         context = authorize_replay(
             context, replay_file_version_id, replay_requested_by, replay_reason,
         )
+    verified_files = context['files']
     context = filter_incremental(context)
+    if context['process_file_count'] == 0:
+        if len(verified_files) != 1 or verified_files[0]['action'] != 'SKIP_ALREADY_PROCESSED':
+            raise RuntimeError('Skip requires exactly one verified successful file version')
+        return {'batch_id': context['batch_id'], 'process_file_count': 0,
+                'skipped_file': verified_files[0]}
     require_safe_file_version(context)
     process_count = context['process_file_count']
     context = load_source_files(
@@ -544,7 +681,62 @@ def run_ingestion(month: str, replay_file_version_id=None,
     context = write_technical_quarantine(context)
     context = load_stage(context)
     staged = verify_stage(context)
+    if context.get('replacement_approval_file_id') is not None:
+        execute('SELECT control.bind_approved_replacement(%(batch)s,%(approval)s);',
+                {'batch': context['batch_id'],
+                 'approval': context['replacement_approval_file_id']})
     return {**staged, 'process_file_count': process_count}
+
+
+def record_verified_skip(run_id: int, month: str, ingestion: dict) -> None:
+    item = ingestion['skipped_file']
+    batch_id = int(ingestion['batch_id'])
+    with connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            prior = execute_cursor(cursor, '''
+                SELECT b.batch_id, f.file_version_id
+                FROM control.etl_file f
+                JOIN control.etl_batch b USING (batch_id)
+                JOIN control.file_reconciliation_history h
+                  ON h.file_version_id = f.file_version_id AND h.successful_batch_id = b.batch_id
+                JOIN control.etl_backfill_file bf ON bf.batch_id = b.batch_id
+                WHERE f.source_file = %(file)s AND f.source_year_month = %(month)s
+                  AND f.source_file_sha256 = %(sha)s
+                  AND f.file_version_id = %(version)s AND f.file_status = 'STAGED'
+                  AND b.status = 'SUCCESS' AND bf.cleanup_status = 'SUCCESS'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM control.etl_file newer
+                    JOIN control.etl_batch newer_batch USING (batch_id)
+                    WHERE newer.source_file = f.source_file
+                      AND newer.file_version_id <> f.file_version_id
+                      AND newer_batch.status = 'SUCCESS'
+                      AND newer_batch.batch_id > b.batch_id
+                  )
+                ORDER BY b.batch_id DESC LIMIT 1 FOR UPDATE OF b;
+            ''', {'file': item['file_name'], 'month': month, 'sha': item['source_file_sha256'],
+                  'version': item['file_version_id']}, fetch=True)
+            if not prior:
+                raise RuntimeError('Skip has no cleaned DDS SUCCESS with matching checksum/version')
+            execute_cursor(cursor, '''
+                UPDATE control.etl_batch SET status = 'CANCELLED', ended_at = clock_timestamp(),
+                    error_code = 'ALREADY_PROCESSED', error_message = 'Verified immutable file version already committed'
+                WHERE batch_id = %(batch)s AND status = 'RUNNING';
+                UPDATE control.etl_backfill_file
+                SET status = 'SUCCESS', batch_id = %(prior)s, file_version_id = %(version)s,
+                    cleanup_status = 'SUCCESS', cleaned_at = clock_timestamp(),
+                    completed_at = clock_timestamp(), error_message = NULL
+                WHERE backfill_run_id = %(run)s AND source_year_month = %(month)s;
+                UPDATE control.etl_backfill_run r SET completed_file_count = (
+                    SELECT count(*) FROM control.etl_backfill_file f
+                    WHERE f.backfill_run_id = r.backfill_run_id AND f.status = 'SUCCESS'
+                ) WHERE backfill_run_id = %(run)s;
+                SELECT control.log_event('pl_taxi_master', 'INFO',
+                    'Verified checksum/version already committed; DDS skipped', %(batch)s,
+                    p_event_code => 'DDS_VERIFIED_SKIP',
+                    p_details => jsonb_build_object('prior_batch_id', %(prior)s,
+                        'file_version_id', %(version)s, 'sha256', %(sha)s));
+            ''', {'batch': batch_id, 'prior': prior[0]['batch_id'], 'version': item['file_version_id'],
+                  'run': run_id, 'month': month, 'sha': item['source_file_sha256']})
 
 
 def month_rows(month_from: str, month_to: str) -> list[str]:
@@ -616,19 +808,16 @@ def finalize_backfill(run_id: int, success: bool, message=None) -> None:
         SET status = %(status)s, ended_at = clock_timestamp(), error_message = %(message)s
         WHERE backfill_run_id = %(run)s
           AND (%(status)s = 'FAILED' OR (
-              expected_file_count = 24 AND completed_file_count = expected_file_count
-              AND source_month_from = '2024-01' AND source_month_to = '2025-12'
+              expected_file_count > 0 AND completed_file_count = expected_file_count
               AND dds_validation_status = 'SUCCESS'
-              AND olap_bi_validation_status = 'SUCCESS'
               AND EXISTS (
                   SELECT 1 FROM control.v_backfill_global_reconciliation g
                   WHERE g.backfill_run_id = %(run)s
-                    AND g.validated_file_count = 24
-                    AND g.successful_child_count = 24
-                    AND g.cleanup_success_count = 24
+                    AND g.validated_file_count = expected_file_count
+                    AND g.successful_child_count = expected_file_count
+                    AND g.cleanup_success_count = expected_file_count
                     AND g.required_step_failure_count = 0
                     AND g.is_balanced
-                    AND g.source_rows = 89892322
               )
           ))
         RETURNING backfill_run_id;
@@ -644,13 +833,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--from-month', default='2024-01')
     parser.add_argument('--to-month', default='2025-12')
+    parser.add_argument('--run-type', choices=('BACKFILL', 'INCREMENTAL'), default='BACKFILL')
     recovery = parser.add_mutually_exclusive_group()
     recovery.add_argument('--resume-batch', type=int)
     recovery.add_argument('--retry-cleanup', type=int)
     recovery.add_argument('--continue-run', type=int)
     recovery.add_argument('--finalize-run', type=int)
-    parser.add_argument('--apply-migration', action='store_true')
-    parser.add_argument('--migration-only', action='store_true')
     parser.add_argument('--no-cleanup', action='store_true', help='Retain staging (required until cleanup gates pass)')
     parser.add_argument('--enable-cleanup', action='store_true', help='Use gated single-writer cleanup')
     parser.add_argument('--replay-file-version', type=int)
@@ -660,10 +848,6 @@ def main() -> int:
     parser.add_argument('--v2-approval-file')
     args = parser.parse_args()
     load_dotenv()
-    if args.apply_migration:
-        apply_migration()
-    if args.migration_only:
-        return 0
     if args.finalize_run:
         finalize_backfill(args.finalize_run, True)
         print('Backfill parent {} finalized after all gates'.format(args.finalize_run), flush=True)
@@ -736,19 +920,28 @@ def run_files(args, months):
         try:
             print('[{}/{}] Processing {}'.format(position, len(months), month), flush=True)
             update_backfill_file(run_id, month, 'RUNNING')
-            ingestion = run_ingestion(
-                month, args.replay_file_version,
-                args.replay_requested_by, args.replay_reason,
-            )
+            with timed_phase('MAGE_INGESTION', None, source_year_month=month):
+                ingestion = run_ingestion(
+                    month, args.replay_file_version,
+                    args.replay_requested_by, args.replay_reason,
+                    run_type=getattr(args, 'run_type', 'BACKFILL'),
+                )
             batch_id = int(ingestion['batch_id'])
             update_backfill_file(run_id, month, 'RUNNING', batch_id=batch_id)
             if ingestion['process_file_count'] == 0:
-                mark_skipped_downstream_success(batch_id)
+                record_verified_skip(run_id, month, ingestion)
             else:
                 run_downstream(batch_id)
-            if not args.no_cleanup:
-                clean_transient_storage(batch_id)
+            if ingestion['process_file_count'] and not args.no_cleanup:
+                with timed_phase('CLEANUP', batch_id):
+                    clean_transient_storage(batch_id)
         except Exception as exception:
+            if batch_id is not None:
+                execute('''SELECT control.fail_batch(%(batch)s, 'DDS_RUN_FAILED', %(error)s)
+                    WHERE EXISTS (SELECT 1 FROM control.etl_batch
+                                  WHERE batch_id = %(batch)s
+                                    AND status IN ('RUNNING','STAGED','DBT_RUNNING','RECONCILING'))''',
+                    {'batch': batch_id, 'error': str(exception)[:2000]})
             execute("""
                 UPDATE control.etl_backfill_file SET status = 'FAILED', error_message = %(error)s,
                     completed_at = clock_timestamp()
@@ -756,8 +949,17 @@ def run_files(args, months):
                   AND status <> 'SUCCESS';
             """, {'run': run_id, 'month': month, 'error': str(exception)[:2000]})
             raise
-    print('Backfill run {} completed {} child file(s); parent success remains gated'.format(
-        run_id, len(months)), flush=True)
+    if getattr(args, 'run_type', 'BACKFILL') == 'INCREMENTAL':
+        execute("""SELECT control.record_backfill_validation(
+            %(run)s, 'DDS', 'SUCCESS', 'scheduled_dds_runner',
+            jsonb_build_object('mode','INCREMENTAL','file_count',%(count)s,
+                               'gate','batch_test_and_reconciliation'));
+        """, {'run': run_id, 'count': len(months)})
+        finalize_backfill(run_id, True)
+        print('Incremental DDS run {} finalized after batch gates'.format(run_id), flush=True)
+    else:
+        print('Backfill run {} completed {} child file(s); parent success remains gated'.format(
+            run_id, len(months)), flush=True)
 
 
 if __name__ == '__main__':

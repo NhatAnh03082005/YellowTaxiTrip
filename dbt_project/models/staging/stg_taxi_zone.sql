@@ -1,4 +1,8 @@
 -- CSV names are documented; jsonb projection tolerates quoted or lowercase loader names.
+{% if var('dbt_minimal_mode', false) %}
+select {{ minimal_zone_projection(source('stage','taxi_zone_raw'), 'z') }}
+from {{ source('stage','taxi_zone_raw') }} z
+{% else %}
 with source_rows as (
     select to_jsonb(z) as raw_zone
     from {{ source('stage', 'taxi_zone_raw') }} z
@@ -9,3 +13,4 @@ select
     coalesce(raw_zone ->> 'Zone', raw_zone ->> 'zone', raw_zone ->> 'zone_name') as zone_name,
     coalesce(raw_zone ->> 'service_zone', raw_zone ->> 'ServiceZone') as service_zone
 from source_rows
+{% endif %}

@@ -1,3 +1,4 @@
+{{ config(tags=['minimal_batch']) }}
 select 1
 where not exists (
     select 1

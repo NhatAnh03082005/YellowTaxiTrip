@@ -119,9 +119,9 @@ Mọi average có sums/counts và null/zero denominator xử lý đúng. Không 
 
 - Source rows = canonical rows + technical rows. Canonical = Fact + business quarantine + duplicate quarantine + intentionally excluded; excluded mặc định 0, nếu phát sinh phải có reason/count, không biến mất.
 - Cân fare/tip/total theo từng field với eligible numeric count + sum; technical nonnumeric không được coi zero hợp lệ. Revenue cân với positive trusted totals, không ép source total = revenue khi có rejects.
-- Batch tests: scope, schema, source identity, uniqueness/grain, FK, rules/disposition, membership, duplicate survivor/candidate summary, counts/amount và affected OLAP parity. Không sampling thay kiểm đầy đủ.
-- Full audit checkpoint/cuối backfill: 24-file completeness, global unique/FK, total row/amount/OLAP; không archive/history scan.
-- Trình tự runner: scope/skip → workspace/DDS → batch tests/reconciliation → OLAP → OLAP tests → atomic metadata SUCCESS + watermark → cleanup. Lỗi trước commit không đổi watermark; cleanup failure chỉ retry cleanup.
+- Batch tests: scope, schema, source identity, uniqueness/grain, FK, rules/disposition, membership, duplicate survivor/candidate summary, counts/amount. OLAP parity chạy trong job reporting riêng. Không sampling thay kiểm đầy đủ.
+- Full audit checkpoint/cuối backfill: 24-file completeness, global unique/FK, total row/amount; OLAP audit ở checkpoint reporting. Không archive/history scan.
+- Trình tự runner DDS: scope/skip → workspace/DDS → batch tests/reconciliation → lưu đối soát → atomic metadata DDS SUCCESS + watermark → cleanup. Lỗi trước commit không đổi watermark; cleanup failure chỉ retry cleanup. Sau nghiệm thu DDS, job reporting riêng build/test OLAP rồi mới cho refresh Power BI. Reporting failure không rollback watermark DDS.
 - SUCCESS publication tối thiểu: BI không refresh khi batch/backfill pending; query trực tiếp persistent table có thể thấy trạng thái trung gian. Không hứa atomic publication nếu chưa có layer riêng.
 - Registry/archive flags legacy không được âm thầm chấp nhận mà bỏ qua: adapter báo unsupported hoặc migration guide rõ. Ref/source/tests liên quan phải được sửa cùng code.
 
@@ -130,14 +130,19 @@ Mọi average có sums/counts và null/zero denominator xử lý đúng. Không 
 - Persistent: Fact, gọn DQ, dimensions/geometry, control metadata, aggregate và summaries validation. Immutable source file checksum-verified phải còn truy được để tái tạo; không tự xóa Parquet sau cleanup.
 - Transient: raw/canonical/classification, chỉ cleanup khi SUCCESS và writer scope đúng. Không cleanup technical rejects cần audit.
 - Chỉ index baseline cần: Fact PK trip_key, unique source key, file_version_id; DQ source key/version; workspace source key unique và version/disposition nếu plan cần; reference natural/role keys. ANALYZE sau bulk build. Index bổ sung phải có evidence.
+- T11: với Fact chưa tồn tại, insert vào target mới rồi bulk-build đúng PK/unique/version index trong cùng transaction dưới writer lock, trước post-hooks/commit. Target hiện hữu giữ nguyên constraints và upsert. Đây là thay đổi thứ tự xây index cho initial load, không thay grain, identity, schema hoặc quy tắc retry/replacement.
 - Không migration live ở Cụm 1. T09 tạo migration/rollback explicit, kiểm dependency trước bỏ columns. Giữ bảng history/registry cũ read-only trong giai đoạn chuyển đổi; runtime mới không phụ thuộc chúng, cũng không auto-drop chúng.
 - Không sửa historical control metadata để giả run mới. Decommission legacy và thu hồi VHDX là scope riêng.
 
 ## 9. Parity được phép và không được phép
 
+T11 tối ưu vật lý lookup/window (27/11/2026): nhánh minimal của zone staging đọc các scalar JSON theo metadata cột, giữ nguyên thứ tự tên quoted/lowercase và null fallback. `minimal_validate_scope` đã xác minh duy nhất batch/version/source SHA và source row identity trước classification; vì vậy duplicate window chỉ cần partition theo exact fingerprint trong nhánh minimal. Hai window dùng cùng ROWS frame, giữ survivor theo source_row_number đã kiểm chứng duy nhất. Không đổi hash, rule, threshold, disposition hoặc schema workspace; nhánh legacy giữ nguyên partition/source projection. Phải có strict row parity và kiểm tháng thật trước nghiệm thu hiệu năng.
+
 Cho phép: không còn historical DUP-002/has_cross_file_match, registry events/archive rows; chỉ-source-cross-file warning có thể từ WARNING thành ACCEPTED nhưng counts/measures/eligibility phải không đổi. Candidate in-file summary mới có thể tăng diagnostic counts, không đổi disposition. Physical columns normalize/derive khác, output analysis tương đương. trip_key tái cấp sau reject→reaccept được nêu ở mục 2, không yêu cầu recover từ history.
 
 Không cho phép: thay source identity/exact hash; gộp precision-different raws; mất trip out-of-file month; đổi DQ thresholds, fees/monetary rounding, business key mappings, eligibility, revenue/tip/speed formula, bỏ technical reject hoặc làm mất old OLAP grains. Mọi difference ngoài allowlist là lỗi hoặc phải quay lại sửa contract tường minh trước implement.
+
+T11 sửa planning/raw projection sau R17 (27/11/2026): minimal staging dùng trực tiếp version của canonical đã được scope gate xác minh, bỏ join registry dư theo filename/checksum. Classification lấy writer lock và ANALYZE raw/canonical cùng seed lookups trước validation/planning; ANALYZE workspace sau build. Role vận hành cần quyền ANALYZE trên các relation tương ứng (PostgreSQL16: ownership/role chủ sở hữu phù hợp). Không thay cấu hình memory/threads/durability. Serializer chiếu raw scalar một lần, giữ riêng cờ JSON hiện diện và kiểm cấu trúc; chỉ key/hash/contract boolean đi qua join canonical, không thêm bảng persistent. Giữ nguyên ordinal/type, schema v001/v002, airport fallback và mọi scope checks. Sample parity không thay acceptance toàn tháng.
 
 ## 10. Handoff
 

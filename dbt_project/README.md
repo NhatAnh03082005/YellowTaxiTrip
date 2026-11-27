@@ -1,99 +1,77 @@
-# dbt — NYC Yellow Taxi
+# dbt DDS — NYC Yellow Taxi
 
-> Cập nhật 2026-11-19: Cụm 2 đã có DDS tối giản **opt-in**; xem [implementation guide](../docs/etl_design/DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md). Mặc định vẫn legacy. Chưa chuyển live; runner/tests/reconciliation/OLAP mới thuộc Cụm 3. Các phần lifecycle/archive dưới đây mô tả luồng legacy, không phải yêu cầu của mode tối giản.
+dbt nhận dữ liệu đã chuyển kiểu từ Mage, chuẩn hóa giá trị, tính các trường phân tích và phân loại chuyến vào Fact hoặc quarantine. Runner bật `dbt_minimal_mode: true`; mặc định của lời gọi dbt thủ công vẫn là `false` cho đường legacy. Không trộn hai mode trên cùng database đang có dữ liệu.
 
-Dự án dbt biến dữ liệu taxi đã được kiểm tra kiểu dữ liệu thành các bảng chất lượng (`dq`) và mô hình phân tích (`dds`). Phạm vi file team chọn là 2024–2025; dbt **không loại chuyến chỉ vì ngày pickup nằm ngoài hai năm đó**. Quy tắc hiện hành được đối chiếu với [hợp đồng bàn giao](../docs/mapping/DBT_HANDOVER_CONTRACT.md).
-
-## Trạng thái hiện tại
-
-- Đã xây dựng và chạy thử trên dữ liệu mẫu: staging, tính toán trung gian, phân loại chất lượng, sáu dimensions, Fact, lịch sử Fact, đối soát theo file và dbt tests.
-- Chưa tích hợp pipeline Mage thật, DDL PostgreSQL/PostGIS thật hoặc kiểm thử đủ 24 file. Chưa có ba model OLAP; chúng thuộc bước tiếp theo.
-- Kết quả chạy thử và các giới hạn được ghi trong [báo cáo đối chiếu](docs/DBT_AUDIT_AND_REFACTOR_REPORT.md) và [báo cáo Fact lifecycle](docs/FACT_LIFECYCLE_RUNTIME_VALIDATION.md). Database mẫu của các lần kiểm chứng đã được xóa.
-
-## Luồng dữ liệu và trách nhiệm
+## Luồng chính
 
 ```text
-Mage (dự kiến): file nguồn → stage.yellow_taxi_raw
-                        → stage.yellow_taxi_canonical
-                        → technical quarantine (dòng lỗi chuyển kiểu)
-
-dbt: canonical + raw → staging → enriched → fingerprinted → classified
-                                              ├→ business quarantine
-                                              ├→ duplicate quarantine
-                                              └→ accepted/warning → 6 dimensions + fact_taxi_trip
-     raw + canonical + technical + Fact + quarantine → file_reconciliation
+Catalog/checksum/schema registry
+  → Mage: yellow_taxi_raw + yellow_taxi_canonical + technical quarantine
+  → staging → enriched → fingerprinted → classified
+  → 6 Dimensions + Fact + business/duplicate quarantine
+  → file_reconciliation + 15 batch tests
+  → commit SUCCESS/watermark
+  → cleanup raw/canonical/classification
 ```
 
-Mage sở hữu bảng nguồn vật lý, tải file, checksum, technical rejects và watermark. dbt không tạo các bảng `stage` hoặc bảng điều khiển của Mage. Các source dbt đang cần được khai báo trong [taxi_sources.yml](models/sources/taxi_sources.yml), gồm `stage.yellow_taxi_raw`, `stage.yellow_taxi_canonical`, `stage.taxi_zone_raw`, `stage.taxi_zone_geometry`, `control.etl_batch` và giao diện technical quarantine. Giao diện technical tạm mặc định là `dq.technical_quarantine`; có thể đổi schema/tên bảng trong `dbt_project.yml`.
+[run_24_month_backfill.py](../deployment/scripts/run_24_month_backfill.py) điều phối toàn bộ lượt nạp, gọi trực tiếp các hàm block Mage rồi dbt. Cùng checksum/version đã SUCCESS sẽ skip trước dbt; cleanup pending được xử lý riêng. Reporting/OLAP không là gate commit DDS, chạy bằng job riêng sau nghiệm thu DDS. T07 và lịch live chưa được nghiệm thu.
 
-Raw phải giữ đủ giá trị nguồn và độ chính xác để tính fingerprint. `source_record_key` xác định dòng nguồn; hai fingerprint chỉ dùng để phát hiện trùng, không làm khóa duy nhất của Fact. Với lỗi kỹ thuật, dòng vẫn phải nằm trong Raw và technical quarantine, nhưng không nằm trong canonical.
+## Chuẩn bị
 
-## Cấu hình
+1. Chọn database đích đã có PostgreSQL/PostGIS, control/staging DDL và migration phù hợp. Database hiện hữu cần [migration guide](../docs/etl_design/DBT_MINIMAL_T09_MIGRATION.md); không dùng full-refresh Fact để migrate.
+2. Có Parquet và catalog đã VALIDATED: `data/catalog/yellow_taxi_2024_2025.csv`, schema registry `yellow_taxi_schema_registry.csv`. Zone lookup/geometry phải được nạp bằng luồng reference Mage trước khi nạp trips. Source contract tại [taxi_sources.yml](models/sources/taxi_sources.yml).
+3. Cấu hình `.env` theo `.env.example` và profile từ [profiles.yml.example](profiles.yml.example). Đặt `POSTGRES_HOST`, `POSTGRES_HOST_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DBT_PROFILES_DIR` đúng target. Controller chạy trên host dùng địa chỉ/port host, không lấy hostname nội bộ Docker làm địa chỉ host.
+4. Role dbt cần quyền tạo/ghi DDS/DQ và `ANALYZE` raw/canonical/seed/workspace. PostgreSQL16 yêu cầu ownership/role chủ sở hữu phù hợp; kiểm warning thiếu quyền ANALYZE.
+5. Có dự báo peak disk dương qua `--expected-peak-bytes`; controller chính giữ kiểm dự phòng25% filesystem của repo. Ngoại lệ disk25GiB/cap32GiB của benchmark QA cũ không áp dụng vào runner chính. Phải kiểm thêm ổ chứa PostgreSQL/Docker nếu khác ổ repo.
 
-- [dbt_project.yml](dbt_project.yml): ngưỡng DQ, ngày hiệu lực CBD, danh sách mã kỳ vọng, Zone, các nhóm phân tích, biến batch và chế độ Fact.
-- [dq_rule_policy.csv](seeds/dq_rule_policy.csv): mức độ và nhánh xử lý cho từng mã quy tắc. Các seed còn lại ánh xạ Vendor, Payment, Rate và Zone. Đổi một surrogate Zone đã dùng cần migration có kiểm soát để giữ đúng khóa trong Fact.
-- `fixture_mode: false` là mặc định. Chỉ bật `fixture_mode: true` khi đã nạp fixture mẫu; chế độ này bật seed và test kỳ vọng của chín dòng nghiệp vụ.
-- `load_batch_id` là tùy chọn. Khi đặt biến này, Fact xử lý batch được chọn và xét lại dòng cũ có fingerprint khớp batch; các model phân loại và đối soát vẫn nhìn dữ liệu canonical đã nạp.
+## Chạy một tháng qua luồng chính
 
-Các ngưỡng có thể sửa ở cấu hình và hành động của rule có thể sửa ở seed. Khi thay chính sách, chạy lại seed, các model bị ảnh hưởng và tests. Điều kiện SQL của một loại rule mới vẫn cần chỉnh model và bổ sung kiểm chứng.
-
-## Chuẩn bị trước khi chạy
-
-1. Có PostgreSQL và các bảng nguồn đúng contract. Hiện repository chưa có pipeline Mage/DDL thật để tự nạp chúng; muốn chạy mẫu phải nạp fixture vào một database riêng trước.
-2. Cài `dbt-core` và `dbt-postgres` tương thích. Các lượt kiểm chứng mẫu dùng phiên bản 1.8.7 và 1.8.2; đây chưa phải bộ phiên bản đã chốt cho môi trường chung.
-3. Đặt `profiles.yml` trong một thư mục cấu hình riêng dựa trên [profiles.yml.example](profiles.yml.example). Profile dùng `DBT_HOST`, `DBT_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`; không ghi mật khẩu vào repository.
-4. Từ thư mục `dbt_project`, kiểm tra kết nối rồi build. `dbt build` chạy seeds, models và tests theo dependency.
+Chạy từ root repo sau khi cấu hình đúng target, có nguồn/reference và peak forecast thực tế. Ví dụ dùng một tháng cố định để kiểm tra; đổi tháng theo catalog.
 
 ```powershell
-cd dbt_project
-$env:DBT_HOST = '127.0.0.1'
-$env:DBT_PORT = '5432'
-$env:POSTGRES_USER = '<user>'
-$env:POSTGRES_PASSWORD = '<password>'
-$env:POSTGRES_DB = '<database đã nạp nguồn>'
-dbt debug --profiles-dir '<thư mục chứa profiles.yml>'
-dbt deps --profiles-dir '<thư mục chứa profiles.yml>'
-dbt parse --profiles-dir '<thư mục chứa profiles.yml>'
-dbt build --profiles-dir '<thư mục chứa profiles.yml>'
+# Gán từ dự báo peak bytes của database/máy đích, không dùng một số mẫu để vượt gate.
+if (!$env:DDS_EXPECTED_PEAK_BYTES) { throw 'Thiếu dự báo DDS_EXPECTED_PEAK_BYTES' }
+$env:ALLOW_STAGING_CLEANUP = '1'
+
+& ./.venv-dbt-312/Scripts/python.exe deployment/scripts/run_24_month_backfill.py `
+    --run-type INCREMENTAL `
+    --from-month 2024-05 `
+    --to-month 2024-05 `
+    --enable-cleanup `
+    --expected-peak-bytes $env:DDS_EXPECTED_PEAK_BYTES
 ```
 
-`dbt deps` hiện không cần tải package bên ngoài. Với database mẫu **đã nạp fixture**, chạy `dbt build --profiles-dir '<thư mục chứa profiles.yml>' --vars '{fixture_mode: true, fact_lifecycle_mode: archive}'` để kiểm tra cả lịch sử Fact. Không chạy `--full-refresh` cho `fact_taxi_trip`, vì việc tạo lại bảng sẽ cấp lại `trip_key`.
+Lượt `INCREMENTAL` hoàn tất parent sau batch gates. Nếu file cùng checksum đã SUCCESS, lệnh trên kiểm chứng skip, không phải phép đo nạp mới. Để đo initial load, dùng database QA mới đã chuẩn bị đúng contract; không xóa trạng thái SUCCESS/watermark hoặc ép replay để gọi đó là initial load.
 
-## Fact và chuyển trạng thái
+`run_dds_incremental.py` chọn tháng VALIDATED mới nhất từ catalog cho scheduler, dùng `DDS_EXPECTED_PEAK_BYTES` và tùy chọn `DDS_CATALOG_PATH`. Chỉ dùng một scheduler/writer. Cấu hình scheduler live là bước triển khai riêng.
 
-Fact chỉ giữ các dòng hiện thuộc `ACCEPTED` hoặc `WARNING`. `trip_key` là PostgreSQL identity; `source_record_key` duy nhất là khóa upsert. Chạy lại cùng nguồn không tạo thêm chuyến. Sáu dimensions là Date, Time, Zone, Vendor, Payment Type và Rate Code; khóa kỹ thuật `0` là Unknown, `-1` là Not Applicable.
+`--run-type BACKFILL` dùng cho danh sách nhiều file và cần cleanup theo file. Parent backfill chờ full audit/validation; không gọi finalize để bỏ qua gate. Nạp đủ24 file còn cần approval riêng của controller.
 
-`fact_lifecycle_mode` có hai giá trị:
+## dbt selectors và cấu hình
 
-| Mode | Cách hoạt động |
-|---|---|
-| `guard` (mặc định) | Dừng nếu một dòng đang ở Fact không còn accepted/warning. Dùng trước khi quyết định migration lịch sử. |
-| `archive` | Ghi thay đổi vào `dq.fact_taxi_trip_history`, loại dòng hết hợp lệ khỏi Fact và khôi phục `trip_key` cũ nếu dòng được chấp nhận lại. Bật bằng `--vars '{fact_lifecycle_mode: archive}'`. |
+Runner gọi lần lượt seed khi thiếu → `dbt run --selector minimal_dds_run` → `dbt test --selector minimal_dds_batch_tests` → reconciliation → commit. Hai biến scope bắt buộc: `load_batch_id`, `load_file_version_id` đúng attempt writable. Không gọi lại materialization với batch SUCCESS hoặc dùng `dbt build` toàn project thay luồng này.
 
-Lần đầu bật `archive` trên Fact đã có dữ liệu sẽ ghi sự kiện `MIGRATE` cho các khóa cũ. Khi bảng lịch sử đã tồn tại, các lần build Fact sau phải tiếp tục dùng `archive`; `guard` sẽ từ chối để tránh cập nhật không được ghi lịch sử. Cần kiểm tra schema và sao lưu database thật trước migration. Fact và lịch sử được cập nhật trong một PostgreSQL transaction, nhưng **toàn bộ `dbt build` không phải một transaction**. Chỉ công bố KPI hoặc tăng watermark sau khi build và tests đều đạt.
+- [dbt_project.yml](dbt_project.yml): ngưỡng DQ, bands, mapping/schema, relation technical quarantine. Không lọc pickup chỉ vì nằm ngoài năm team chọn.
+- [dq_rule_policy.csv](seeds/dq_rule_policy.csv): severity/disposition của rule; seeds còn lại giữ mapping codes/zone keys.
+- [selectors.yml](selectors.yml): monthly DDS, batch tests và full audit riêng. Full audit cần `minimal_full_audit_enabled: true`, danh sách filename và expected count đúng catalog đã nạp; không chạy historical audit mỗi tháng.
+- [build_with_detailed_tests.py](scripts/build_with_detailed_tests.py): in tên test, status và mô tả/kết quả chi tiết từ `run_results.json`; runner gọi sau mỗi lượt test.
 
-## Đối soát và xem kết quả test
+Classification chỉ xử lý một batch/version dưới writer lock, cập nhật thống kê đầu vào và phân loại duplicate trong file. Hash serialization, DQ, KPI và lineage giữ nguyên. JSON nguồn chỉ dùng tạm để tính hash; không lưu workspace rộng thứ hai hoặc registry/lifecycle trong minimal runtime.
 
-`dq.file_reconciliation` kiểm theo từng file:
+## Retry, lỗi và log
 
-```text
-Raw = Canonical + Technical quarantine
-Canonical = Fact + Business quarantine + Duplicate quarantine
-```
+- Lỗi trước commit: batch không SUCCESS/watermark không tiến. `--resume-batch <id> --enable-cleanup` kiểm staging và dựng lại DDS của đúng version; chỉ dùng khi nguồn còn đầy đủ.
+- Cleanup lỗi sau commit: dùng `--retry-cleanup <id>`, không nạp lại file đã thành công.
+- Replacement checksum/version cần approval tường minh; không tự xóa dữ liệu cũ vì checksum đổi.
+- Invocation artifacts/log và thời gian phase ở `data/work/task_4_4/dbt_artifacts/`; không commit chúng. Commit/cleanup/reporting có trạng thái riêng.
 
-Số dòng phải khớp chính xác. Tổng tiền chỉ so trên dòng chuyển được sang `numeric(12,2)` và cho phép chênh lệch tối đa `amount_reconciliation_tolerance` (mặc định 0,01 USD/file). `WARNING` đã nằm trong Fact nên không cộng thêm một nhánh. Đối soát replay/skipped và theo batch cần metadata Mage thật.
+## Kiểm chứng và giới hạn
 
-`dbt build` in trạng thái từng test. Muốn xem thông tin chi tiết và tối đa năm dòng lỗi đã lưu, dùng script từ thư mục `dbt_project` (script chạy `dbt build --store-failures` và giữ nguyên exit code):
+Regression tests bảo vệ contracts/runner được giữ ở `tests/`; công cụ benchmark/QA tạm và wrapper T09–T11 đã được dọn. Có thể chạy các kiểm tra không ghi database:
 
 ```powershell
-python scripts/build_with_detailed_tests.py --profiles-dir '<thư mục chứa profiles.yml>' --vars '{fixture_mode: true, fact_lifecycle_mode: archive}'
+./.venv-dbt-312/Scripts/python.exe -m unittest tests.test_backfill_safety_gates
+./.venv-dbt-312/Scripts/python.exe tests/test_dbt_minimal_contract.py
 ```
 
-`--store-failures` tạo bảng lỗi trong schema `dbt_test__audit`. Có thể đổi số dòng hiển thị bằng `--max-failure-rows N`. Chỉ bật `fixture_mode` khi nguồn mẫu đã được nạp.
-
-## Giới hạn trước tích hợp thật
-
-- DDL Mage cho Raw, technical quarantine, registry schema fingerprint và geometry chưa được cung cấp để xác nhận độ chính xác Raw, phiên bản schema, SRID và trường reason/batch/replay. SRID kỳ vọng theo thiết kế là 2263 nhưng chưa có test cột geometry thật.
-- Việc nhận biết CBD thiếu theo cấu trúc hiện dựa trên tháng file; cần đối chiếu với registry schema version của Mage khi tích hợp.
-- Chưa có bảng theo dõi P99 hoặc model OLAP. Các KPI tổng hợp như tip rate và speed cần tính bằng tỷ số của các tổng trên tập dòng đủ điều kiện, không lấy trung bình các tỷ số từng chuyến.
-- Các kết quả PASS hiện có chỉ áp dụng cho fixture trong database cô lập. Không suy ra hiệu năng hoặc tính đúng đắn của lượt nạp đủ 24 file và dữ liệu thật.
+Kết quả tháng thật mới nhất: build330.500s +tests81.344s +recon0.062s = **411.906s**, vượt mục tiêu DDS360s. Dữ liệu16models/15tests/đối soát/commit/cleanup PASS. Chưa migrate live, chưa nghiệm thu đủ24 file, OLAP hoặc Power BI. [T10](../reports/dbt_minimal_refactor/T10.md), [T11](../reports/dbt_minimal_refactor/T11.md), [contract](../docs/etl_design/DBT_MINIMAL_CONTRACT.md).

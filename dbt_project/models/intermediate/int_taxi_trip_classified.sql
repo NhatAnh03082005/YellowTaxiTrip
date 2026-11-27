@@ -1,8 +1,9 @@
 {% if var('dbt_minimal_mode', false) %}
 {{ config(materialized='table', tags=['minimal_dds'],
     pre_hook=[{'sql': '{{ minimal_invalidate_workspace() }}', 'transaction': False},
+              '{{ minimal_input_statistics() }}',
               '{{ minimal_validate_scope() }}'],
-    post_hook="{{ minimal_record_workspace() }}",
+    post_hook=['{{ minimal_record_workspace() }}', 'analyze {{ this }}'],
     indexes=[{'columns':['source_record_key'],'unique':True},
              {'columns':['file_version_id','primary_disposition']}]) }}
 {% endif %}
@@ -18,12 +19,15 @@ with fingerprinted as (
     select
         f.*,
         row_number() over (
-            partition by source_file_sha256, raw_exact_fingerprint
+            {# minimal_validate_scope proves a single immutable source SHA. #}
+            partition by {% if not var('dbt_minimal_mode', false) %}source_file_sha256, {% endif %}raw_exact_fingerprint
             order by source_row_number
+            {% if var('dbt_minimal_mode', false) %}rows between unbounded preceding and current row{% endif %}
         ) as duplicate_occurrence_number,
         first_value(source_record_key) over (
-            partition by source_file_sha256, raw_exact_fingerprint
+            partition by {% if not var('dbt_minimal_mode', false) %}source_file_sha256, {% endif %}raw_exact_fingerprint
             order by source_row_number
+            {% if var('dbt_minimal_mode', false) %}rows between unbounded preceding and current row{% endif %}
         ) as duplicate_survivor_source_record_key
     from fingerprinted f
 {% if not var('dbt_minimal_mode', false) %}

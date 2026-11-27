@@ -28,9 +28,14 @@ def main():
     parser.add_argument('--port',type=int,required=True)
     parser.add_argument('--database',required=True)
     parser.add_argument('--user',required=True)
+    parser.add_argument('--t06-checks',action='store_true')
+    parser.add_argument('--first-scope-only',action='store_true',help='Stop after the first positive fixture scope')
+    parser.add_argument('--qa-artifact-dir',type=Path)
+    parser.add_argument('--qa-profile-dir',type=Path)
     args=parser.parse_args()
     if (args.port,args.database,args.user)!=(15438,'dbt_minimal_cluster2','dbt_minimal_qa'):
         parser.error('Only dedicated local QA port/database/user is supported; never target live')
+    project=ROOT/'dbt_project'
     conn=psycopg2.connect(host='127.0.0.1',port=args.port,dbname=args.database,user=args.user)
     conn.autocommit=True
     def query(sql,params=None):
@@ -41,14 +46,16 @@ def main():
     fixtures=json.loads((ROOT/'tests/fixtures/dbt_minimal/input.json').read_text())
     expected=json.loads((ROOT/'tests/expected_results/dbt_minimal_rows.json').read_text())
     summaries=json.loads((ROOT/'tests/expected_results/dbt_minimal_summaries.json').read_text())
-    out=ROOT/'reports/dbt_minimal_refactor/cluster2';out.mkdir(parents=True,exist_ok=True)
-    work=ROOT/'tmp/dbt_minimal_cluster2_qa';work.mkdir(parents=True,exist_ok=True)
-    profile=ROOT/'tmp/dbt_minimal_cluster2_profile'
+    out=args.qa_artifact_dir.resolve() if args.qa_artifact_dir else ROOT/'data/work/dbt_minimal_cluster2_qa/artifacts'
+    out.mkdir(parents=True,exist_ok=True)
+    work=out/'dbt_work'
+    work.mkdir(parents=True,exist_ok=True)
+    profile=args.qa_profile_dir.resolve() if args.qa_profile_dir else ROOT/'data/work/dbt_minimal_cluster2_qa/profile'
     events=[]
     def dbt(command,version=101,batch=None,extra=None,ok=True,expected_error=None):
         vars={'dbt_minimal_mode':True,'load_batch_id':batch or version,'load_file_version_id':version}
         vars.update(extra or {})
-        cmd=[str(ROOT/'.venv-dbt/Scripts/dbt.exe'),*command,'--project-dir',str(ROOT/'dbt_project'),
+        cmd=[str(ROOT/'.venv-dbt-312/Scripts/dbt.exe'),*command,'--project-dir',str(project),
              '--profiles-dir',str(profile),'--target-path',str(work/'target'),
              '--log-path',str(work/'logs'),'--no-send-anonymous-usage-stats','--vars',json.dumps(vars)]
         r=subprocess.run(cmd,cwd=ROOT,capture_output=True,text=True,encoding='utf-8',errors='replace')
@@ -102,6 +109,8 @@ def main():
     query('create table if not exists audit.trip_fingerprint_history(untouched text)')
     for rel in ('dq.fact_taxi_trip_history','audit.trip_fingerprint_history'):
         query(f"insert into {rel} select 'legacy sentinel' where not exists(select 1 from {rel})")
+    if args.t06_checks:
+        query("update control.etl_batch set status='FAILED' where batch_id in (102,103,104)")
     for rel in ('dds.fact_taxi_trip','dq.business_quarantine','dq.duplicate_quarantine',
                 'dds.dbt_minimal_affected_grains','dds.dbt_minimal_candidate_summary'):
         if query('select to_regclass(%s) r',(rel,))[0]['r']:
@@ -182,12 +191,56 @@ def main():
             ('pickup_zone_key','dim_zone','zone_key'),('dropoff_zone_key','dim_zone','zone_key'),
             ('vendor_key','dim_vendor','vendor_key'),('payment_type_key','dim_payment_type','payment_type_key'),('rate_code_key','dim_rate_code','rate_code_key')]:
             assert query(f'select count(*) n from dds.fact_taxi_trip f where file_version_id=%s and (f.{key} is null or not exists(select 1 from dds.{dimension} d where d.{target_key}=f.{key}))',(version,))[0]['n']==0
+        if args.t06_checks:
+            reconciliation=query('select * from dq.file_reconciliation where file_version_id=%s',(version,))
+            assert len(reconciliation)==1,(scope,reconciliation)
+            rec=reconciliation[0]
+            for column,wanted in [('raw_rows',s['raw_rows']),('canonical_rows',s['canonical_rows']),
+                                  ('technical_rows',s['technical_rows']),('fact_rows',s['fact_rows']),
+                                  ('business_rows',s['business_rows']),('duplicate_rows',s['duplicate_rows'])]:
+                assert rec[column]==wanted,(scope,column,rec[column],wanted)
+            for field in ('fare','tip','total'):
+                for branch,literal in [('raw','ALL'),('technical','TECHNICAL_REJECT'),
+                                       ('fact','TRUSTED'),('business','BUSINESS_QUARANTINE'),
+                                       ('duplicate','DUPLICATE')]:
+                    wanted=s['measures'][field][literal]
+                    assert rec[f'{branch}_{field}_eligible_rows']==wanted['eligible_count'],(scope,branch,field)
+                    assert rec[f'{branch}_{field}_amount']==Decimal(wanted['sum']),(scope,branch,field)
+                canonical_count=sum(s['measures'][field][b]['eligible_count'] for b in
+                                    ('TRUSTED','BUSINESS_QUARANTINE','DUPLICATE'))
+                canonical_sum=sum((Decimal(s['measures'][field][b]['sum']) for b in
+                                   ('TRUSTED','BUSINESS_QUARANTINE','DUPLICATE')),Decimal(0))
+                assert rec[f'canonical_{field}_eligible_rows']==canonical_count,(scope,field)
+                assert rec[f'canonical_{field}_amount']==canonical_sum,(scope,field)
+            assert rec['revenue_amount']==Decimal(s['kpi']['revenue']),(scope,'revenue')
+            dbt(['test','--selector','minimal_dds_batch_tests'],version)
         return totals
     load('A_2024')
     dbt(['parse'])
     dbt(['seed','--exclude','business_fixture_expectations'])
     dbt(['run','--select','+tag:minimal_dds'])
     verify('A_2024')
+    if args.first_scope_only:
+        conn.close()
+        print('First fixture scope PASS',flush=True)
+        return
+    if args.t06_checks:
+        # Each deliberate corruption is confined to this disposable QA database.
+        query("update dq.duplicate_quarantine set duplicate_occurrence_number=1 where file_version_id=101")
+        dbt(['test','--select','minimal_batch_duplicate'],101,ok=False,
+            expected_error='Failure in test minimal_batch_duplicate')
+        query("update dq.duplicate_quarantine set duplicate_occurrence_number=2 where file_version_id=101")
+        query("update dds.fact_taxi_trip set revenue_amount=revenue_amount+1 where source_record_key=%s",
+              (expected['A01_CONTROL']['source_record_key'],))
+        dbt(['test','--select','minimal_batch_fact'],101,ok=False,
+            expected_error='Failure in test minimal_batch_fact')
+        query("update dds.fact_taxi_trip set revenue_amount=revenue_amount-1 where source_record_key=%s",
+              (expected['A01_CONTROL']['source_record_key'],))
+        query("update dq.file_reconciliation set trusted_fare_delta=1 where file_version_id=101")
+        dbt(['test','--select','file_reconciliation_balances'],101,ok=False,
+            expected_error='Failure in test file_reconciliation_balances')
+        query("update dq.file_reconciliation set trusted_fare_delta=0 where file_version_id=101")
+        dbt(['test','--selector','minimal_dds_batch_tests'],101)
     assert query('select zone_name from dds.dim_zone where location_id=132')[0]['zone_name']=='Fixture'
     keys=query('select source_record_key,trip_key,xmin::text version from dds.fact_taxi_trip order by source_record_key')
     references=query('select * from dds.dbt_minimal_reference_state order by model_name')
@@ -231,6 +284,19 @@ def main():
     assert query('select count(*) n from dq.business_quarantine where file_version_id=101')[0]['n']==0
     assert query('select count(*) n from dq.duplicate_quarantine where file_version_id=101')[0]['n']==0
     assert {r['pickup_date_key'] for r in query('select pickup_date_key from dds.dbt_minimal_affected_grains where batch_id=104')}=={20240501,20240502}
+    if args.t06_checks:
+        query("update control.etl_batch set status='SUCCESS' where batch_id in (102,103,104)")
+        audit_files=[f['source_file'] for f in fixtures['files'] if f['id'] in
+                     ('A_REPLACEMENT','B_2025','C_CROSS_FILE')]
+        audit_vars={'minimal_full_audit_enabled':True,'full_audit_file_names':audit_files,
+                    'full_audit_expected_file_count':len(audit_files),
+                    'zone_lookup_expected_count':len(fixtures['known_zones']),
+                    'zone_geometry_expected_count':0}
+        dbt(['test','--selector','minimal_dds_full_audit'],104,extra=audit_vars)
+        dbt(['test','--selector','minimal_dds_full_audit'],104,
+            extra={**audit_vars,'full_audit_file_names':audit_files+['missing.parquet']},
+            ok=False,expected_error='Failure in test minimal_full_audit')
+        query("update control.etl_batch set status='DBT_RUNNING' where batch_id=104")
     # Existing registry/history rows must not be required or mutated.
     for rel in ('dq.fact_taxi_trip_history','audit.trip_fingerprint_history'):
         assert query(f'select * from {rel}')==[{'untouched':'legacy sentinel'}]
@@ -295,7 +361,7 @@ def main():
     result={'status':'PASS','postgres':query('select version() version')[0]['version'],
       'fixture_scope_totals':summaries,'dbt_invocations':events,
       'legacy_selected_tests':legacy_result.testsRun,
-      'limitations':['PostgreSQL 18 local QA, not production 16/PostGIS','Technical fixture routing supplied by literal spec; Mage not executed','Runner/OLAP/final tests selectors belong to T06-T09']}
+      'limitations':['Synthetic QA references include geometry stub; not real-source full-month validation','Technical fixture routing supplied by literal spec; Mage not executed','Runner and OLAP remain T08/T07; full 24-file audit was not run']}
     (out/'results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,default=str)+'\n',encoding='utf-8')
     conn.close()
     print('Actual dbt cluster2 QA PASS',flush=True)

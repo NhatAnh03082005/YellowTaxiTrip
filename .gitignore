@@ -1,5 +1,6 @@
 # Local environments and caches
 .venv/
+.venv-*/
 **/.venv/
 __pycache__/
 **/__pycache__/
@@ -17,6 +18,7 @@ mage_project/metadata.db
 # Large/re-downloadable trip files
 data/yellow_taxi/by_year_month/**
 data/work/**
+dbt_project/data/work/**
 *.tmp
 
 # Generated tool artifacts

@@ -23,7 +23,9 @@ class BackfillRecoverySQL(unittest.TestCase):
                       'cleanup_success_count', 'required_step_failure_count',
                       'is_balanced'):
             self.assertIn(token, self.sql)
-        self.assertIn("count(*) FILTER (WHERE step.is_required) <> 7", self.sql)
+        # DDS owns six required steps; OLAP has a separate reporting checkpoint.
+        self.assertIn("count(*) FILTER (WHERE step.is_required AND step.step_name IN\n"
+                      "          ('DISCOVERY', 'FILE_VALIDATION', 'STAGING', 'DBT_BUILD_DDS', 'DBT_TEST', 'RECONCILIATION')) <> 6", self.sql)
 
     def test_manual_final_validation_requires_evidence(self):
         self.assertIn('record_backfill_validation', self.sql)

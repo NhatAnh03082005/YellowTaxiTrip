@@ -73,7 +73,11 @@ BEGIN
     SET status = 'PENDING', started_at = NULL, ended_at = NULL, exit_code = NULL,
         details = '{}'::jsonb, error_message = NULL
     WHERE batch_id = p_batch_id
-      AND step_name IN ('DBT_BUILD_DDS', 'DBT_TEST', 'RECONCILIATION', 'DBT_BUILD_OLAP');
+      AND step_name IN ('DBT_BUILD_DDS', 'DBT_TEST', 'RECONCILIATION');
+    -- An in-flight legacy batch may still have an OLAP step. The DDS runner
+    -- never writes a fake OLAP SUCCESS and does not use it as a DDS gate.
+    UPDATE control.etl_step_run SET is_required = false
+    WHERE batch_id = p_batch_id AND step_name = 'DBT_BUILD_OLAP';
     UPDATE control.etl_batch
     SET status = 'DBT_RUNNING', ended_at = NULL, heartbeat_at = clock_timestamp(),
         error_code = NULL, error_message = NULL
@@ -152,7 +156,8 @@ LEFT JOIN control.file_reconciliation_history h
   ON h.file_version_id = f.file_version_id AND h.successful_batch_id = f.batch_id
 LEFT JOIN LATERAL (
     SELECT
-      count(*) FILTER (WHERE step.is_required) <> 7
+      count(*) FILTER (WHERE step.is_required AND step.step_name IN
+          ('DISCOVERY', 'FILE_VALIDATION', 'STAGING', 'DBT_BUILD_DDS', 'DBT_TEST', 'RECONCILIATION')) <> 6
       OR coalesce(bool_or(step.is_required AND step.status <> 'SUCCESS'), false)
       AS required_failed
     FROM control.etl_step_run step WHERE step.batch_id = f.batch_id
@@ -183,9 +188,9 @@ BEGIN
                 'recorded_at', clock_timestamp(), 'evidence', p_evidence
             )
         )
-    WHERE backfill_run_id = p_backfill_run_id AND expected_file_count = 24;
+    WHERE backfill_run_id = p_backfill_run_id AND expected_file_count > 0;
     IF NOT FOUND THEN
-        RAISE EXCEPTION '24-file backfill run % does not exist', p_backfill_run_id;
+        RAISE EXCEPTION 'Backfill run % does not exist', p_backfill_run_id;
     END IF;
 END
 $$;

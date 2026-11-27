@@ -4,7 +4,7 @@ Ngày: 2026-11-19. Đọc cùng `DBT_MINIMAL_CONTRACT.md` và reports T03/T04/T0
 
 ## Bật đúng phạm vi
 
-`dbt_minimal_mode` mặc định **false**, giữ luồng legacy để runner hiện tại không vô tình chạy slim schema. Không trộn hai mode trong cùng target database đang chứa dữ liệu thật. T09 phải chuẩn bị migration/rollback trước khi chuyển target hiện hữu.
+`dbt_minimal_mode` mặc định **false**, giữ luồng legacy cho lời gọi dbt thủ công. Runner T08 truyền `true` tường minh và cần database đã chuẩn bị đúng schema. Không trộn hai mode trong cùng target database đang chứa dữ liệu thật. T09 phải chuẩn bị migration/rollback trước khi chuyển target hiện hữu.
 
 Các biến bắt buộc khi bật mode:
 
@@ -14,7 +14,7 @@ load_batch_id: <positive integer, đúng batch STAGED/DBT_RUNNING/RECONCILING>
 load_file_version_id: <positive integer, đúng immutable version>
 ```
 
-Không truyền `fact_lifecycle_mode: archive`, history candidate flags hoặc `--full-refresh` cho Fact/DQ. Archive/registry cũ có thể còn tồn tại; mode mới không đọc/ghi hoặc tự xóa chúng. Runner cũ hardcode archive nên **không bật mode mới vào runner cũ**; T08 thay orchestration.
+Không truyền `fact_lifecycle_mode: archive`, history candidate flags hoặc `--full-refresh` cho Fact/DQ. Archive/registry cũ có thể còn tồn tại; mode mới không đọc/ghi hoặc tự xóa chúng. Runner T08 từ chối các biến legacy này; chưa chạy trên live.
 
 Chỉ chạy trên QA/target mới đã chuẩn bị đúng sources/seeds/reference. Ví dụ sau chỉ mô tả selection, không phải lệnh migrate live:
 
@@ -24,12 +24,13 @@ dbt seed --project-dir dbt_project --profiles-dir <QA_PROFILE> --vars '<SCOPE_JS
 dbt run --project-dir dbt_project --profiles-dir <QA_PROFILE> --select +tag:minimal_dds --vars '<SCOPE_JSON>'
 ```
 
-Seed lần init/reference-change; không seed lại từng file trong runner đích. Selector có `+` sẽ gọi dimensions, nhưng cache tránh ghi lại reference không đổi. T08 còn phải bỏ invocation init không cần thiết. Nạp staging/mapping/source registry do Mage/control sở hữu, không do ví dụ dbt trên tự tạo.
+Seed khi thiếu bảng reference trong target; không seed lại từng file. Selector `minimal_dds_run` gọi dimensions, materialization cache tránh ghi lại reference không đổi. Khi thay đổi nội dung seed, cần chạy init reference có kiểm soát trước batch mới. Nạp staging/mapping/source registry do Mage/control sở hữu, không do ví dụ dbt trên tự tạo.
 
 ## T03: classification dùng chung
 
 - Staging view lọc batch+version; preflight kiểm toàn staging raw/canonical không trộn scope, metadata/schema/checksum/source key khớp registry, đúng một STAGED attempt.
 - Fingerprint SQL được `ephemeral` khi minimal; không có physical fingerprint table/view mới. Chỉ classification là table làm việc nặng, có unique source key, index version/disposition và ANALYZE.
+- T11: kiểm sự có mặt của `raw_payload`/CBD khi compile để tránh chuyển cả hàng sang JSON chỉ để kiểm hai key; JSON đầu vào hash vẫn giữ nguyên, không đổi serializer hoặc tạo thêm workspace.
 - Giữ raw-exact serialization 19/20 field và candidate 8 field, window survivor nhỏ nhất trong file; bỏ historical cross-file queries. Candidate chỉ diagnostic, không tự đổi disposition.
 - Classification output không có JSON/raw payload, file text/checksum/schema lặp lại, bands hoặc toàn bộ rule boolean. Có transient hashes, survivor/occurrence, raw_contract_valid/has_unmapped_rule để enforce contract.
 - Post-build CHECK chặn thiếu raw hash input/null hash hoặc DQ rule không có mapping. Summary lưu candidate rows/groups một dòng/batch/version.
@@ -59,12 +60,12 @@ Seed lần init/reference-change; không seed lại từng file trong runner đ�
 - Column names và physical types của target hiện hữu phải khớp model; nếu khác thì fail, không auto-drop/migrate. T09 phải thêm schema/constraint migration cho target legacy.
 - `v_fact_taxi_trip_analysis` là view join file metadata và derive passenger/distance/time bands, row tip rate, lineage alias để không lưu text/diagnostics lặp trên mọi Fact row.
 
-## Ranh giới Cụm 3 — không được coi DDS PASS là publish PASS
+## Ranh giới Cụm 3 — DDS và reporting độc lập
 
 - OLAP legacy disabled trong minimal mode cho đến T07: nó còn dùng physical source_year_month trên Fact và current-file-only daily refresh. Không chạy câu SQL đó trên slim Fact.
 - Các singular tests đòi cột đã bỏ hoặc lifecycle/cross-file bị gate chỉ trong minimal mode. T06 thay bằng scoped batch tests/full audit phù hợp. Config/rule consistency/mapping, partition và core generic FK/identity tests phù hợp vẫn giữ.
 - `file_reconciliation` legacy chưa bổ sung fare/tip/eligible sums mới; T06 làm. QA Cụm 2 dùng các assertions độc lập đầy đủ fare/tip/total counts/sums và KPI để kiểm DDS, không tuyên bố reconciliation runner đã hoàn chỉnh.
-- Runner skip/retry/cleanup/artifacts/publication chưa sửa. Không dùng `--resume-dbt-select` để bỏ upstream nếu không xác nhận workspace valid.
+- T08 đã chuẩn bị runner skip/retry/cleanup và artifact riêng từng invocation. Database QA end-to-end, migration và lịch tự động cần T09 kiểm chứng. Không dùng `--resume-dbt-select` để bỏ upstream nếu không xác nhận workspace valid.
 - Không cleanup staging/workspace, advance watermark, backfill 24 tháng hoặc xóa legacy trong Cụm 2.
 
 ## QA thực tế và tái chạy

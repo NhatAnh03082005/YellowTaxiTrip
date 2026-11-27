@@ -2,11 +2,19 @@
 with canonical as (
     select
         s.*,
+        {% if var('dbt_minimal_mode', false) %}
+        {# The scope gate checks non-null version and all registry metadata.
+           Minimal staging is a thin canonical projection; no redundant join. #}
+        s.file_version_id as effective_file_version_id
+        {% else %}
         coalesce(s.file_version_id, v.file_version_id) as effective_file_version_id
+        {% endif %}
     from {{ source('stage', 'yellow_taxi_canonical') }} s
+    {% if not var('dbt_minimal_mode', false) %}
     join {{ source('control', 'source_file_version') }} v
       on v.source_file = s.source_file
      and v.source_file_sha256 = s.source_file_sha256
+    {% endif %}
 )
 select
     stage_row_id,

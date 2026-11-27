@@ -1,7 +1,7 @@
 """Run dbt build and print a readable result for every test.
 
-Failed rows are read from dbt's --store-failures tables when PostgreSQL
-connection variables are available. The dbt exit code is preserved.
+Failure tables are opt-in for the small, aggregate DDS test selectors only.
+The dbt exit code is preserved.
 """
 
 import argparse
@@ -106,7 +106,9 @@ def main():
     parser.add_argument("--dbt-executable", default=shutil.which("dbt"))
     parser.add_argument("--project-dir", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--target-path", type=Path)
-    parser.add_argument("--max-failure-rows", type=int, default=5)
+    parser.add_argument("--max-failure-rows", type=int, default=30)
+    parser.add_argument("--store-failures", action="store_true",
+                        help="Store only aggregate DDS selector failures for detailed rule output")
     parser.add_argument("--report-only", action="store_true")
     options, dbt_args = parser.parse_known_args()
     if options.max_failure_rows < 1:
@@ -118,9 +120,16 @@ def main():
         return 0
     if not options.dbt_executable:
         parser.error("dbt executable not found; use --dbt-executable")
+    if options.store_failures:
+        selected = [dbt_args[i + 1] for i, value in enumerate(dbt_args[:-1])
+                    if value == "--selector"]
+        if (selected not in (["minimal_dds_batch_tests"], ["minimal_dds_full_audit"])
+                or any(value in dbt_args for value in ("--select", "-s", "--exclude"))):
+            parser.error("--store-failures requires --selector minimal_dds_batch_tests or minimal_dds_full_audit")
 
-    command = [options.dbt_executable, "build", "--store-failures",
+    command = [options.dbt_executable, "build",
                "--project-dir", str(project_dir), "--target-path", str(target_path),
+               *(["--store-failures"] if options.store_failures else []),
                *dbt_args]
     started_at = time.time()
     completed = subprocess.run(command, check=False)

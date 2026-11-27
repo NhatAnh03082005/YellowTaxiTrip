@@ -1,3 +1,4 @@
+{{ config(tags=['minimal_batch']) }}
 -- Configuration is changeable but must remain internally consistent.
 select 1
 where not (

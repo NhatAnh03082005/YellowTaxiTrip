@@ -13,6 +13,9 @@ clean-targets: ['target', 'dbt_packages']
 # Approved defaults. Override with --vars only after business approval.
 vars:
   dbt_minimal_mode: false
+  minimal_full_audit_enabled: false
+  full_audit_expected_file_count: null
+  full_audit_file_names: []
   load_file_version_id: null
   minimal_calendar_start: '2002-01-01'
   minimal_calendar_end: '2026-12-31'

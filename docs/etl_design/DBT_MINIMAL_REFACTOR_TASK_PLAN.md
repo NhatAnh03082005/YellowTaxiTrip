@@ -2,7 +2,7 @@
 
 Ngày lập: 2026-11-19. Trạng thái: **Cụm 1–2 (T00–T05) DONE theo phạm vi; DDS opt-in đã kiểm QA, chưa chuyển live**.
 
-Cập nhật kế hoạch: **2026-11-24 — tách OLAP khỏi lượt nạp Source → DDS; phân công bốn người tại mục 9.** Đây là thay đổi kế hoạch, chưa phải xác nhận runner/control đã được sửa. T06–T12 vẫn cần triển khai và kiểm chứng; giữ nguyên bằng chứng T00–T05.
+Cập nhật kế hoạch: **2026-11-24 — tách OLAP khỏi lượt nạp Source → DDS; phân công bốn người tại mục 9.** Đây là thay đổi kế hoạch, chưa phải xác nhận runner/control đã được sửa. T06 đã hoàn thành trong phạm vi code và QA fixture; T07–T12 vẫn cần triển khai và kiểm chứng. Giữ nguyên bằng chứng T00–T05.
 
 “Tách OLAP khỏi dbt” trong yêu cầu này được triển khai theo nghĩa **không build/test OLAP trong lệnh dbt và runner nạp từng tháng**. Có thể tiếp tục dùng dbt để build OLAP bằng lệnh/job reporting riêng sau khi DDS được nghiệm thu. Không xóa OLAP, không bỏ yêu cầu phân tích, không chuyển việc tổng hợp toàn bộ Fact sang từng visual Power BI.
 
@@ -127,12 +127,12 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 | T03  | Classification workspace gọn, duplicate theo file | T02       | DONE       |
 | T04  | Dimensions tĩnh, lookup keys                      | T01, T02  | DONE       |
 | T05  | Fact/DQ nạp theo file, bỏ lifecycle runtime       | T03, T04  | DONE       |
-| T06  | Tests theo batch và reconciliation                | T05       | TODO       |
+| T06  | Tests theo batch và reconciliation                | T05       | DONE       |
 | T07  | Job OLAP riêng và nghiệm thu reporting           | T12A + DDS được nghiệm thu | TODO |
-| T08  | Runner DDS, skip/retry/cleanup, tách gate OLAP     | T06       | TODO       |
-| T09  | Migration QA và end-to-end fault/retry            | T08       | TODO       |
-| T10  | Benchmark thời gian và dung lượng                 | T09       | TODO       |
-| T11  | Tuning theo evidence, chốt phiên bản              | T10       | TODO       |
+| T08  | Runner DDS, skip/retry/cleanup, tách gate OLAP     | T06       | CODE_READY |
+| T09  | Migration QA và end-to-end fault/retry            | T08       | DONE       |
+| T10  | Benchmark thời gian và dung lượng                 | T09       | IN_PROGRESS — r15 May DDS365.546s NOT MET, June bị ngắt trong ingestion; baseline/tổng tích hợp còn thiếu; r17 đang đo lại cho T11 DDS |
+| T11  | Tuning theo evidence, chốt phiên bản              | T10       | IN_PROGRESS — bản sửa CODE_READY/QA PASS; R20 May-only16models/15tests/recon/commit/cleanup PASS, DDS411.906s chưa đạt360s; không chạy June theo yêu cầu mới |
 | T12  | T12A bàn giao DDS; T12B chốt reporting            | A: T11; B: T07 | TODO   |
 
 Thứ tự thực hiện ETL: **T06 → T08 → T09 → T10 ↔ T11 → T12A → người phụ trách chạy 24 tháng và full audit DDS → T07 → T12B**. T07 có thể chuẩn bị code/fixture/mapping sớm, nhưng nghiệm thu reporting thật sau DDS. T12A là mốc bàn giao bản ETL đã benchmark, không đòi phải chạy đủ 24 tháng trước khi bàn giao; T12B không chặn bàn giao ETL. Không đổi số hiệu T00–T12 để giữ liên kết evidence cũ.
@@ -336,6 +336,8 @@ Thứ tự thực hiện ETL: **T06 → T08 → T09 → T10 ↔ T11 → T12A →
 
 ## T11 — Tuning theo evidence và chốt phiên bản
 
+**Phạm vi được người dùng chốt ngày27/11/2026:** chỉ tối ưu và nghiệm thu DDS; Mage có người khác phụ trách. T11 DDS cần build+tests+reconciliation ≤360s cho tháng đầu và tháng kế tiếp có lịch sử, cùng full correctness/strict parity và retry/skip. Mục tiêu Mage≤240s và tổng Source→DDS≤600s vẫn giữ trong T10/nghiệm thu tích hợp; không dùng kết quả Mage để chặn hoặc giả PASS riêng DDS. Không sửa code Mage trong task này. Original baseline bị timeout vẫn phải báo tại T10; parity trước/sau T11 dùng pre-T11 minimal đã chạy thành công, ghi đúng nhãn.
+
 **Cần làm:**
 
 - Chỉ tối ưu các node T10 chứng minh tốn thời gian/disk: projection, join plan, index cần thiết, ANALYZE, tránh scan lặp.
@@ -450,4 +452,22 @@ T00–T02 hoàn tất phạm vi inventory/contract/fixtures. Đọc [contract](D
 
 ## Kết quả Cụm 2 — 2026-11-19
 
-T03–T05 DONE: [implementation guide](DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md), [T03](../../reports/dbt_minimal_refactor/T03.md), [T04](../../reports/dbt_minimal_refactor/T04.md), [T05](../../reports/dbt_minimal_refactor/T05.md). DDS tối giản bật bằng dbt_minimal_mode, mặc định false. Actual dbt/SQL QA PostgreSQL 18: 13 successful invocations, 12 expected negative failures và 6 selected legacy tests PASS. Không migrate live, không sửa runner, không benchmark tháng. T06–T12 vẫn TODO. Cập nhật 2026-11-24: Cụm 3 hoàn thiện tests/reconciliation và runner/control DDS độc lập; OLAP chuyển sang T07 sau nghiệm thu DDS, không chặn watermark hoặc bàn giao ETL.
+T03–T05 DONE: [implementation guide](DBT_MINIMAL_CLUSTER2_IMPLEMENTATION.md), [T03](../../reports/dbt_minimal_refactor/T03.md), [T04](../../reports/dbt_minimal_refactor/T04.md), [T05](../../reports/dbt_minimal_refactor/T05.md). DDS tối giản bật bằng dbt_minimal_mode, mặc định false. Actual dbt/SQL QA PostgreSQL 18: 13 successful invocations, 12 expected negative failures và 6 selected legacy tests PASS. Không migrate live, không sửa runner, không benchmark tháng. Tại mốc Cụm 2, T06–T12 còn TODO. Cập nhật 2026-11-24: Cụm 3 hoàn thiện tests/reconciliation và runner/control DDS độc lập; OLAP chuyển sang T07 sau nghiệm thu DDS, không chặn watermark hoặc bàn giao ETL.
+
+## Kết quả T06 — 2026-11-24
+
+T06 DONE trong phạm vi code và QA fixture: [report](../../reports/dbt_minimal_refactor/T06.md). Batch selector 15 test kiểm scope, DQ, Fact, khóa và đối soát fare/tip/total; full audit selector độc lập nhận danh sách file từ catalog. QA có positive/negative PASS và đối chiếu literal oracle T02. Chưa chạy dữ liệu thật/24 file hoặc nối runner vào selector; việc chặn watermark bằng exit code test thuộc T08. Không suy kết quả fixture thành benchmark tháng.
+
+## Kết quả T08 — 2026-11-24
+
+T08 **CODE_READY**: [report](../../reports/dbt_minimal_refactor/T08.md). Runner DDS đã dùng selector run/test T06, bỏ OLAP gate và parent OLAP dependency, kiểm skip/retry/cleanup, lưu reconciliation và artifact riêng từng dbt invocation. Safety tests 26 PASS; dbt thực trên fixture QA qua runner PASS 16 model/15 test, negative test exit 1 và reconciliation âm tính báo lỗi đúng. Chưa chạy toàn orchestration trên PostgreSQL/PostGIS QA với control schema/migration và chưa xác nhận schedule/trigger. Không migrate live, không chạy T09, không ghi DONE từ fixture/mock.
+
+## Trạng thái mới nhất T10/T11 và dọn source — 2026-11-27
+
+T10/T11 giữ **IN_PROGRESS**, bản sửa DDS **CODE_READY**. Lượt một tháng May thật mới nhất nạp3,723,833raw, Fact3,661,046/business62,787/duplicate0;16models/15tests/đối soát/commit/cleanup PASS. DDS411.906s chưa đạt360s; Mage595.328s. Chỉ chạy May theo yêu cầu mới, không nạp June. Original baseline chưa có full native parity; không thay bằng sample hoặc recovery. Xem [T10](../../reports/dbt_minimal_refactor/T10.md), [T11](../../reports/dbt_minimal_refactor/T11.md).
+
+Đã dọn bộ công cụ benchmark/QA tạm và bản plan root trùng theo yêu cầu người dùng. Giữ source Source→DDS, migration/rollback, contract và regression tests. Dùng [dbt README](../../dbt_project/README.md) cho entrypoint chính; các lệnh campaign QA cũ không còn được giữ trong source. Snapshot/log cục bộ ở `data/work`, không commit. Sau dọn:45offline tests PASS, dbt parse minimal/legacy PASS;89SQL/YAML/CSV dbt giữ nguyên so bản đã kiểm. Không migrate live, xóa database hoặc thực hiện T12/T07.
+
+## Kết quả T09 — 2026-11-24
+
+T09 **DONE trong phạm vi QA/migration plan**: [report](../../reports/dbt_minimal_refactor/T09.md), [migration guide](DBT_MINIMAL_T09_MIGRATION.md). QA PostgreSQL 16/PostGIS cùng image Compose nạp lookup/shapefile thật; hai file mẫu PASS 16 model/15 test, fault/retry/replacement và full audit ba file latest PASS. Windows Task Scheduler tự chạy hai lượt (nạp mới/skip), exit 0; DDS parent SUCCESS khi OLAP PENDING. Migration metadata 008/rollback/reapply PASS; đã khảo sát schema-only/size/dependencies database hiện có bằng truy vấn chỉ đọc. Safety suite 29 PASS. Database hiện có giữ nguyên; triển khai live vẫn cần xử lý batch dở, backup, budget T10 và xác nhận consumer. Không chạy T10 hoặc 24 file.
