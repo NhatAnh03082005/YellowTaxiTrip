@@ -1,0 +1,104 @@
+{
+  "month": "2024-05",
+  "storage": "slim",
+  "prepare": "streaming",
+  "rows": 3723833,
+  "mage_execute_sync_seconds": 207.86041949799983,
+  "state": [
+    {
+      "batch_id": 1,
+      "status": "STAGED",
+      "rows_raw": 3723833,
+      "rows_canonical": 3723833,
+      "rows_technical_quarantined": 0,
+      "rows_fact_loaded": 0
+    }
+  ],
+  "relations": [
+    {
+      "relname": "taxi_zone_geometry",
+      "heap_toast_bytes": 8192,
+      "index_bytes": 16384,
+      "total_bytes": 24576
+    },
+    {
+      "relname": "taxi_zone_raw",
+      "heap_toast_bytes": 0,
+      "index_bytes": 8192,
+      "total_bytes": 8192
+    },
+    {
+      "relname": "yellow_taxi_canonical_data",
+      "heap_toast_bytes": 894689280,
+      "index_bytes": 439582720,
+      "total_bytes": 1334272000
+    },
+    {
+      "relname": "yellow_taxi_raw_wide_backup",
+      "heap_toast_bytes": 16384,
+      "index_bytes": 49152,
+      "total_bytes": 65536
+    },
+    {
+      "relname": "yellow_taxi_canonical_wide_backup",
+      "heap_toast_bytes": 16384,
+      "index_bytes": 49152,
+      "total_bytes": 65536
+    },
+    {
+      "relname": "stage_storage_contract",
+      "heap_toast_bytes": 16384,
+      "index_bytes": 16384,
+      "total_bytes": 32768
+    },
+    {
+      "relname": "technical_quarantine",
+      "heap_toast_bytes": 8192,
+      "index_bytes": 57344,
+      "total_bytes": 65536
+    },
+    {
+      "relname": "yellow_taxi_raw_data",
+      "heap_toast_bytes": 1079812096,
+      "index_bytes": 439582720,
+      "total_bytes": 1519394816
+    },
+    {
+      "relname": "stage_file_batch",
+      "heap_toast_bytes": 8192,
+      "index_bytes": 16384,
+      "total_bytes": 24576
+    }
+  ],
+  "workspace_bytes": 0,
+  "variables_bytes": 0,
+  "source_sha256": "1974230be2b5a3ea92e47b5eb77f32dbf1de896d81ad8df4ab6faba52749ad23",
+  "disk_samples": [
+    {
+      "seconds": 205.65172340400022,
+      "relation_bytes": 2853953536,
+      "work_bytes": 0,
+      "cluster_temp_bytes": 0
+    },
+    {
+      "seconds": 206.66908180999962,
+      "relation_bytes": 2853953536,
+      "work_bytes": 0,
+      "cluster_temp_bytes": 0
+    },
+    {
+      "seconds": 207.68353025599936,
+      "relation_bytes": 2853953536,
+      "work_bytes": 0,
+      "cluster_temp_bytes": 0
+    },
+    {
+      "seconds": 207.87525905000075,
+      "relation_bytes": 2853953536,
+      "work_bytes": 0,
+      "cluster_temp_bytes": 0
+    }
+  ],
+  "monitor_errors": [],
+  "scope": "Actual Mage execute_sync trip pipeline; includes checksum, control, source prepare, COPY and verification; no scheduler wait, DDS or reference init."
+}

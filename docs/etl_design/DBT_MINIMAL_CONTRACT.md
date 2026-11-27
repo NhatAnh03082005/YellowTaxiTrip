@@ -146,4 +146,6 @@ T11 sửa planning/raw projection sau R17 (27/11/2026): minimal staging dùng tr
 
 ## 10. Handoff
 
+Tích hợp Mage `origin/main` ngày27/11/2026: logical Raw/Canonical có thể là view theo contract slim-v1/slim-v2. DDS không sở hữu hay tự đổi physical storage. Statistics phải cập nhật đúng physical tables và metadata theo marker `stage.stage_storage_contract`; không ANALYZE view rồi coi đã có thống kê. Cleanup sau DDS SUCCESS giữ writer lock, kiểm logical/physical version và workspace scope, xác minh các bảng rollback slim-v1 rỗng trong slim-v2, truncate đúng danh sách physical tables và classification trong một transaction. Không CASCADE, không truncate view hoặc đẩy watermark để chữa lỗi cleanup. Staging UNLOGGED của slim-v2 thuộc bản Mage upstream; DDS workspace/Fact và các gate integrity không đổi.
+
 T02 có fixture JSON và oracle độc lập, expected literals và scenario matrix. Đây là acceptance specification, chưa chứng minh SQL mới PASS. T03–T08 phải chạy output SQL/runner thực với cùng input và so expected; T09 chạy QA recovery. Không nhập oracle vào runtime và không đổi expected để hợp thức hóa implementation lỗi.

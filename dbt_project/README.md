@@ -24,6 +24,8 @@ Catalog/checksum/schema registry
 4. Role dbt cần quyền tạo/ghi DDS/DQ và `ANALYZE` raw/canonical/seed/workspace. PostgreSQL16 yêu cầu ownership/role chủ sở hữu phù hợp; kiểm warning thiếu quyền ANALYZE.
 5. Có dự báo peak disk dương qua `--expected-peak-bytes`; controller chính giữ kiểm dự phòng25% filesystem của repo. Ngoại lệ disk25GiB/cap32GiB của benchmark QA cũ không áp dụng vào runner chính. Phải kiểm thêm ổ chứa PostgreSQL/Docker nếu khác ổ repo.
 
+Mage mới từ `origin/main` dùng slim-v2: `stage.yellow_taxi_trip_data` là bảng vật lý, Raw/Canonical là view. Database đích cần migrations Mage theo tên đầy đủ: `008_mage_raw_cast_payload.sql`, `009_slim_stage_optin.sql`, `010_slim_v2_unified_stage.sql`, cùng DDS `008_minimal_dds_metadata.sql`. Các migration có gate staging rỗng/batch inactive, không được tự áp lên live. Xem [Mage stage contract](../docs/etl_design/MAGE_STAGE_CONTRACT.md). Runner hỗ trợ wide, slim-v1 và slim-v2; phải chọn storage đúng database.
+
 ## Chạy một tháng qua luồng chính
 
 Chạy từ root repo sau khi cấu hình đúng target, có nguồn/reference và peak forecast thực tế. Ví dụ dùng một tháng cố định để kiểm tra; đổi tháng theo catalog.
@@ -32,6 +34,10 @@ Chạy từ root repo sau khi cấu hình đúng target, có nguồn/reference v
 # Gán từ dự báo peak bytes của database/máy đích, không dùng một số mẫu để vượt gate.
 if (!$env:DDS_EXPECTED_PEAK_BYTES) { throw 'Thiếu dự báo DDS_EXPECTED_PEAK_BYTES' }
 $env:ALLOW_STAGING_CLEANUP = '1'
+$env:MAGE_STAGE_LOAD_MODE = 'direct'
+$env:MAGE_PREPARE_MODE = 'streaming'
+$env:MAGE_STAGE_STORAGE = 'slim'
+$env:MAGE_BATCH_SIZE = '50000'
 
 & ./.venv-dbt-312/Scripts/python.exe deployment/scripts/run_24_month_backfill.py `
     --run-type INCREMENTAL `
@@ -58,6 +64,8 @@ Runner gọi lần lượt seed khi thiếu → `dbt run --selector minimal_dds_
 
 Classification chỉ xử lý một batch/version dưới writer lock, cập nhật thống kê đầu vào và phân loại duplicate trong file. Hash serialization, DQ, KPI và lineage giữ nguyên. JSON nguồn chỉ dùng tạm để tính hash; không lưu workspace rộng thứ hai hoặc registry/lifecycle trong minimal runtime.
 
+Với slim-v2, ANALYZE nhắm bảng unified và metadata thật thay vì view. Cleanup kiểm physical versions và yêu cầu các bảng rollback slim-v1 rỗng trước khi truncate danh sách bảng tường minh, cùng classification; không dùng CASCADE. Lỗi cleanup sau commit vẫn dùng retry-cleanup, giữ SUCCESS/watermark.
+
 ## Retry, lỗi và log
 
 - Lỗi trước commit: batch không SUCCESS/watermark không tiến. `--resume-batch <id> --enable-cleanup` kiểm staging và dựng lại DDS của đúng version; chỉ dùng khi nguồn còn đầy đủ.
@@ -74,4 +82,4 @@ Regression tests bảo vệ contracts/runner được giữ ở `tests/`; công 
 ./.venv-dbt-312/Scripts/python.exe tests/test_dbt_minimal_contract.py
 ```
 
-Kết quả tháng thật mới nhất: build330.500s +tests81.344s +recon0.062s = **411.906s**, vượt mục tiêu DDS360s. Dữ liệu16models/15tests/đối soát/commit/cleanup PASS. Chưa migrate live, chưa nghiệm thu đủ24 file, OLAP hoặc Power BI. [T10](../reports/dbt_minimal_refactor/T10.md), [T11](../reports/dbt_minimal_refactor/T11.md), [contract](../docs/etl_design/DBT_MINIMAL_CONTRACT.md).
+Kết quả May thật sau tích hợp Mage main + DDS: Mage104.484s; build347.125s +tests96.406s +recon0.063s = **DDS443.594s**, vượt360s. Native Source→DDS wall555.982s (~9m16s) đạt≤600s ở lượt này, đã gồm overhead/commit/cleanup. Dữ liệu16models/15tests/đối soát/commit/cleanup/skip PASS. Chưa migrate live, chưa nghiệm thu đủ24 file, OLAP hoặc Power BI. [T10](../reports/dbt_minimal_refactor/T10.md), [T11](../reports/dbt_minimal_refactor/T11.md), [contract](../docs/etl_design/DBT_MINIMAL_CONTRACT.md).

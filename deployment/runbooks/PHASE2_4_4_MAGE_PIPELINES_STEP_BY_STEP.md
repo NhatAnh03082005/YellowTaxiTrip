@@ -1,435 +1,196 @@
-# Hướng dẫn triển khai mục 4.4 — Mage pipelines
+# Runbook Mage pipelines — kiến trúc hiện tại
 
-**Owner:** Project Lead/Integration  
-**Ngày triển khai:** 2026-11-17 (Asia/Bangkok)  
-**Trạng thái:** CODE VÀ TEST 4.4 HOÀN TẤT; integration ghi Physical Staging chờ DDL 4.5  
-**Phụ thuộc:** 4.1–4.3 hoàn tất; 4.5 phải tạo năm bảng vật lý trước khi chạy exporter.
+Ngày cập nhật: 2026-11-27. Áp dụng cho Docker Compose của project và staging contract `slim-v2`.
 
-## 1. Mục tiêu và ranh giới trách nhiệm
+## 1. Bốn pipeline hiển thị trong Mage
 
-Mục 4.4 triển khai hai pipeline Mage:
+| Pipeline | Chức năng | Khi chạy |
+|---|---|---|
+| `pl_database_connection_test` | Kiểm tra kết nối Mage → PostgreSQL | Khi setup hoặc chẩn đoán kết nối |
+| `pl_control_smoke_validation` | Kiểm control batch và truyền `batch_id` giữa block | Smoke test control, không nạp trip |
+| `pl_reference_taxi_zone` | Nạp/kiểm 265 zone lookup và 263 geometry EPSG:2263 | Lần đầu hoặc khi reference thay đổi |
+| `pl_yellow_taxi_ingestion` | Discovery → checksum/schema → canonical/DQ → STAGED | Backfill/incremental Yellow Taxi |
 
-1. `pl_reference_taxi_zone`: đọc và kiểm tra Taxi Zone lookup cùng Shapefile.
-2. `pl_yellow_taxi_ingestion`: discovery, checksum/schema validation, đọc Parquet theo row group, canonicalization kỹ thuật, technical quarantine và ghi Physical Staging.
+Các thư mục pipeline có `.gitkeep` nhưng không có `metadata.yaml` chỉ là placeholder, không phải pipeline runtime.
 
-Mage chỉ chịu trách nhiệm technical ingestion. Mage không phân loại business quarantine, không tính KPI, không xóa business duplicate và không map surrogate dimension keys. Các việc đó thuộc dbt từ checkpoint 4.6.
+## 2. Khởi động
 
-Ranh giới bắt buộc:
+Từ `D:\BI\DATH\NYC_TAXI_BI_PROJECT`:
 
-```text
-Mage
-  stage.yellow_taxi_raw
-  stage.yellow_taxi_canonical
-  dq.technical_quarantine
-        |
-        v
-dbt
-  business DQ
-  duplicate classification
-  dimensions/fact/KPI eligibility
+```powershell
+docker compose up -d
+docker compose ps
 ```
 
-## 2. Quyết định đường dẫn
+Yêu cầu PostgreSQL `healthy`; Mage mở tại `http://localhost:6789`.
 
-Mage chạy trong Docker nên code không được dùng `D:\BI\DATH` hoặc đường dẫn Windows khác.
+Không dùng `docker compose down -v` để reset vì lệnh đó xóa PostgreSQL volume, reference và migration.
 
-| Host Windows | Mage container |
-|---|---|
-| `D:\BI\DATH\NYC_TAXI_BI_PROJECT\data` | `/home/src/data` |
-| `D:\BI\DATH\NYC_TAXI_BI_PROJECT\mage_project` | `/home/src/mage_project/nyc_taxi_bi` |
-| `data/reference/taxi+_zone_lookup.csv` | `/home/src/data/reference/taxi+_zone_lookup.csv` |
-| `data/reference/taxi_zones/taxi_zones.shp` | `/home/src/data/reference/taxi_zones/taxi_zones.shp` |
-| `data/catalog/yellow_taxi_2024_2025.csv` | `/home/src/data/catalog/yellow_taxi_2024_2025.csv` |
+## 3. Kiểm tra contract live
 
-Catalog tiếp tục lưu đường dẫn portable dạng `data/yellow_taxi/...`. Hàm `utils.paths.resolve_data_path` bỏ prefix `data/`, nối vào `/home/src/data` và chặn path traversal.
+```powershell
+docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT storage_mode FROM stage.stage_storage_contract;"'
+```
 
-Các data/project mounts trong `docker-compose.yml`:
+Kết quả hiện tại phải là:
+
+```text
+slim-v2
+```
+
+Biến Mage vẫn dùng `stage_storage_mode: slim`, không nhập `slim-v2` vào UI.
+
+## 4. Nạp reference
+
+Chạy `pl_reference_taxi_zone` khi database mới hoặc reference thay đổi. Kết quả chấp nhận:
+
+- `stage.taxi_zone_raw`: 265 dòng;
+- `stage.taxi_zone_geometry`: 263 dòng;
+- geometry SRID 2263;
+- location 264/265 không có polygon theo nguồn.
+
+Không cần chạy lại reference trước mỗi tháng trip.
+
+## 5. Cấu hình Yellow Taxi ingestion
+
+Ví dụ một tháng:
 
 ```yaml
-volumes:
-  - ./mage_project:/home/src/mage_project/${MAGE_PROJECT_NAME}
-  - ./data:/home/src/data
+prepare_mode: streaming
+stage_load_mode: direct
+stage_storage_mode: slim
+source_batch_size: 50000
+canonical_batch_size: 50000
+catalog_path: /home/src/data/catalog/yellow_taxi_selected_2_months.csv
+run_type: BACKFILL
+source_year_month_from: 2024-05
+source_year_month_to: 2024-05
 ```
 
-Mage block execution also requires the project directory on Python's import
-path. Compose sets:
+`from` và `to` giống nhau để xử lý đúng một file/version. Catalog có thể chứa nhiều tháng; extraction window mới quyết định tháng được chọn.
 
-```yaml
-PYTHONPATH: /home/src/mage_project/${MAGE_PROJECT_NAME}
-```
-
-This allows blocks to import shared modules with `from utils...` regardless of
-the kernel working directory.
-
-Work files được tạo tại:
-
-```text
-/home/src/data/work/task_4_4/<batch_id>/
-├── raw/
-├── canonical/
-└── technical_reject/
-```
-
-`data/work/**` đã được thêm vào `.gitignore` vì đây là runtime artifact, không phải source code.
-
-## 3. File implementation
-
-```text
-mage_project/
-├── utils/
-│   ├── __init__.py
-│   ├── paths.py
-│   ├── database.py
-│   ├── parquet_utils.py
-│   ├── canonical.py
-│   └── stage_loader.py
-├── data_loaders/
-│   ├── load_zone_lookup.py
-│   ├── load_zone_geometry.py
-│   └── get_extraction_window.py
-├── transformers/
-│   ├── validate_zone_lookup.py
-│   ├── validate_zone_geometry.py
-│   ├── discover_source_files.py
-│   ├── verify_checksum.py
-│   ├── filter_incremental.py
-│   ├── load_source_files.py
-│   ├── canonicalize_schema.py
-│   ├── standardize_and_validate.py
-│   └── verify_stage.py
-├── data_exporters/
-│   ├── load_reference_stage.py
-│   ├── write_technical_quarantine.py
-│   └── load_stage.py
-├── pipelines/
-│   ├── pl_reference_taxi_zone/metadata.yaml
-│   └── pl_yellow_taxi_ingestion/metadata.yaml
-└── tests/
-    ├── unit/test_task_4_4_utilities.py
-    └── integration/test_task_4_4_project_inputs.py
-
-tests/
-└── run_phase2_4_4_tests.py
-```
-
-## 4. Shared utilities
-
-### `paths.py`
-
-- Chuyển catalog path thành container path.
-- Không hard-code máy cá nhân.
-- Gọi `Path.relative_to` để ngăn `../` thoát khỏi mounted data root.
-
-Ví dụ:
-
-```text
-data/yellow_taxi/by_year_month/2024-05/file.parquet
--> /home/src/data/yellow_taxi/by_year_month/2024-05/file.parquet
-```
-
-### `database.py`
-
-- Đọc connection properties từ environment.
-- Không ghi password/connection string vào log.
-- Cung cấp `fetch_one`, `fetch_all`, `execute`.
-- `require_tables` fail sớm và nêu đúng bảng 4.5 còn thiếu.
-
-### `parquet_utils.py`
-
-- SHA-256 được tính streaming theo chunk 8 MB.
-- Footer Parquet phải đọc được và row count phải dương.
-- Required columns: pickup, dropoff, PU, DO và total.
-- Schema fingerprint dùng ordered `(ordinal, name, logical_type)` và JSON serialization compact giống script tạo catalog.
-- `source_record_key = SHA256(lower(file_sha256) || ':' || row_number)`.
-
-### `canonical.py`
-
-- Normalize tên cột, gồm `Airport_fee` thành `airport_fee`.
-- Tạo `cbd_congestion_fee = null` khi structurally absent ở schema 2024.
-- Try-cast timestamp, integer và numeric.
-- Chỉ technical reject khi required field null/uncastable.
-- Amount âm, distance âm và store flag lạ không phải technical reject.
-- Giữ `raw_payload` và `cast_error_flags`.
-
-### `stage_loader.py`
-
-- Chỉ insert phần giao giữa DataFrame columns và target table columns.
-- Bắt buộc target có `source_record_key`.
-- Ghi qua temporary table rồi `ON CONFLICT (source_record_key) DO NOTHING`.
-- JSON được cast rõ sang `jsonb`.
-- Không dùng `if_exists='replace'`, do đó không làm mất constraint/index của 4.5.
-
-## 5. Pipeline reference
-
-```text
-load_zone_lookup --------> validate_zone_lookup ----\
-                                                   > validate_zone_geometry
-load_zone_geometry -------------------------------/           |
-                                                              v
-                                                   load_reference_stage
-```
-
-### `load_zone_lookup`
-
-Đọc `/home/src/data/reference/taxi+_zone_lookup.csv` với `LocationID` là nullable integer và ba field text.
-
-### `validate_zone_lookup`
-
-Success criteria:
-
-- 265 rows.
-- 265 LocationID unique và non-null.
-- Đủ tập ID 1–265.
-- Borough và zone name có giá trị.
-- Zone 264/265 giữ nguyên là business source members.
-
-### `load_zone_geometry`
-
-Trước khi đọc, block bắt buộc tìm thấy `.shp`, `.shx`, `.dbf`, `.prj`. GeoPandas dùng engine `pyogrio`.
-
-### `validate_zone_geometry`
-
-Success criteria:
-
-- 263 features.
-- Source CRS là EPSG:2263.
-- LocationID unique/non-null.
-- Geometry non-null, non-empty và valid.
-- Chỉ Polygon/MultiPolygon.
-- Chuẩn hóa Polygon thành MultiPolygon.
-- Lookup IDs thiếu geometry đúng bằng `{264, 265}`.
-
-### `load_reference_stage`
-
-Exporter yêu cầu:
-
-```text
-stage.taxi_zone_raw
-stage.taxi_zone_geometry
-```
-
-Hai bảng được kiểm tra trước khi transaction bắt đầu. Lookup và geometry được reload trong cùng transaction; geometry lưu `MULTIPOLYGON` SRID 2263.
-
-## 6. Pipeline Yellow Taxi
+## 6. DAG Yellow Taxi
 
 ```text
 get_extraction_window
-  -> discover_source_files
-  -> verify_checksum
-  -> filter_incremental
-  -> load_source_files
-  -> canonicalize_schema
-  -> standardize_and_validate
-  -> write_technical_quarantine
-  -> load_stage
-  -> verify_stage
+  → discover_source_files
+  → verify_checksum
+  → filter_incremental
+  → load_source_files
+  → canonicalize_schema
+  → standardize_and_validate
+  → write_technical_quarantine
+  → load_stage
+  → verify_stage
 ```
 
-### 6.1 `get_extraction_window`
+Trong streaming mode, ba block prepare chỉ chuyển manifest JSON. Việc đọc Parquet, canonicalize và COPY bounded chunks diễn ra trong `load_stage`.
 
-Gọi `control.start_batch` với grain:
+## 7. `load_stage` slim-v2
 
 ```text
-pipeline_name = pl_taxi_master
-source_name   = yellow_taxi_tripdata
+Parquet chunks
+  → unified Raw + Canonical projection
+  → one continuous COPY: stage.yellow_taxi_trip_data
+  → INSERT technical rejects server-side
+  → validate count/key/scope/partition
+  → rebuild PK/unique
+  → commit receipt + STAGED
 ```
 
-Block nhận `BACKFILL`, `INCREMENTAL`, `RETRY`, `TEST`; RETRY bắt buộc có `parent_batch_id`. CET chỉ lấy từ PostgreSQL một lần và cùng `batch_id` được truyền đến cuối pipeline.
+Hai relation bàn giao cho dbt vẫn là:
 
-### 6.2 `discover_source_files`
+- `stage.yellow_taxi_raw` — toàn bộ source rows;
+- `stage.yellow_taxi_canonical` — accepted technical rows.
 
-Runtime variables:
+Không chạy riêng block `load_stage` với output upstream cũ. Chạy toàn pipeline để context batch/file/checksum nhất quán.
 
-```yaml
-run_type: BACKFILL
-source_year_month_from: '2024-01'
-source_year_month_to: '2025-12'
-catalog_path: /home/src/data/catalog/yellow_taxi_2024_2025.csv
-schema_registry_path: /home/src/data/catalog/yellow_taxi_schema_registry.csv
-work_root: /home/src/data/work/task_4_4
-```
+## 8. Kết quả và giới hạn
 
-Block thực hiện:
+Pipeline thành công kết thúc ở `STAGED`. Nó chưa chạy:
 
-1. Filter catalog theo scope tháng.
-2. `control.start_step(..., 'DISCOVERY')`.
-3. `should_discover_file` cho từng catalog row.
-4. `discover_file` cho file được chọn.
-5. `update_discovery_result` với expected/checked bằng số file trong scope.
-6. Finish DISCOVERY SUCCESS hoặc fail batch.
+- dbt/DDS;
+- business/duplicate DQ;
+- reconciliation cuối;
+- commit watermark;
+- cleanup staging;
+- OLAP/Power BI.
 
-Full scope phải có 24/24; subset test dùng số file thực tế trong subset.
+Do đó batch STAGED sẽ chặn tháng tiếp theo. Luồng production phải hoàn thành dbt/DDS + tests + reconciliation + watermark + cleanup trước khi nạp file mới.
 
-### 6.3 `verify_checksum`
+## 9. Reset chỉ dành cho benchmark Mage
 
-Với mỗi selected file:
-
-1. Resolve container path.
-2. Chuyển lifecycle sang DOWNLOADING.
-3. Tính SHA-256 streaming và so catalog.
-4. Đọc footer/schema.
-5. Tra schema fingerprint trong registry.
-6. Gọi `control.validate_file`.
-
-Action handling:
-
-| Action | Xử lý |
-|---|---|
-| `PROCESS` | Tiếp tục |
-| `REPROCESS_IDEMPOTENTLY` | Tiếp tục; staging dùng source key |
-| `SKIP_ALREADY_PROCESSED` | Không đọc row data |
-| `STOP_SOURCE_VERSION_CHANGED` | Fail batch và yêu cầu approval |
-
-### 6.4 `filter_incremental`
-
-Chỉ giữ `PROCESS` và `REPROCESS_IDEMPOTENTLY`. Watermark lọc theo `source_last_modified`, không theo pickup datetime.
-
-### 6.5 `load_source_files`
-
-- Duyệt Parquet theo row group nhưng giới hạn mỗi Arrow batch mặc định ở 100.000 dòng (`source_batch_size`), không đưa nguyên row group hoặc concat 24 file vào RAM.
-- `source_row_number` chạy liên tục từ 1 trong mỗi file.
-- Tạo stable `source_record_key`.
-- Thêm batch/file/schema lineage.
-- Ghi trực tiếp Arrow Table thành bounded raw work Parquet với Snappy; không chuyển cả row group qua pandas trước khi ghi.
-- Khi chạy lại block cho cùng batch, thư mục `raw` của chính batch đó được làm sạch để không trộn file dở từ lần bị ngắt.
-- Cập nhật heartbeat và in tiến độ sau mỗi 10 part.
-
-### 6.6 `canonicalize_schema`
-
-- Đọc từng raw work chunk.
-- Canonicalize technical fields.
-- Tách accepted canonical và technical reject.
-- Serialize `raw_payload`/`cast_error_flags` thành JSON text trước khi ghi Parquet; việc này tránh lỗi Arrow khi dictionary rỗng.
-
-### 6.7 `standardize_and_validate`
-
-Enforce tuyệt đối:
-
-```text
-rows_raw = rows_canonical + rows_technical_quarantined
-```
-
-Business anomaly vẫn ở canonical để dbt xử lý.
-
-### 6.8 `write_technical_quarantine`
-
-Yêu cầu `dq.technical_quarantine`. Mỗi chunk được ghi idempotently bằng `source_record_key`.
-
-### 6.9 `load_stage`
-
-Yêu cầu:
-
-```text
-stage.yellow_taxi_raw
-stage.yellow_taxi_canonical
-```
-
-Block start step STAGING, upsert từng chunk, rồi gọi `update_file_result(..., 'STAGED', ...)` theo file. Nếu lỗi, block finish STAGING FAILED và gọi `fail_batch`; watermark không đổi.
-
-Khi sửa file block từ host trong lúc Mage Editor đang mở, phải hard-refresh tab
-trước khi chạy. Editor cũ có thể gửi lại nội dung đang cache và ghi đè file trên
-bind mount. Với bản hiện tại, đầu file `load_stage.py` phải có
-`from importlib import reload`, và `stage_loader.py` phải dùng `copy_expert` thay
-vì `frame.to_sql`. Block tự reload utility module, tự resume riêng lỗi
-`STAGING_FAILED`, ghi heartbeat/tiến độ mỗi 10 part và vẫn idempotent theo
-`source_record_key`.
-
-### 6.10 `verify_stage`
-
-- Đếm theo file SHA, vì retry có thể giữ batch ID cũ trên row đã tồn tại.
-- Kiểm `raw = canonical + technical quarantine`.
-- Finish STAGING SUCCESS.
-- Ghi counters ban đầu.
-- Chuyển batch `RUNNING -> STAGED`.
-
-Block không gọi `commit_batch_success`: dbt, business DQ và reconciliation chưa chạy.
-
-## 7. Test suite
-
-Chạy trong Mage container để dùng đúng pandas/PyArrow/GeoPandas versions:
+Chỉ dùng khi không chạy dbt/DDS và muốn đo tháng khác. Ghi lại evidence trước khi reset.
 
 ```powershell
-docker compose up -d postgres mage
-docker compose exec -T mage bash -lc "cd /home/src/mage_project && python -m unittest discover -s nyc_taxi_bi/tests -t . -p 'test_task_4_4*.py' -v"
+$resetSql = @'
+BEGIN;
+SELECT pg_advisory_xact_lock(hashtext('yellow_taxi_backfill_runner'));
+TRUNCATE TABLE
+  stage.yellow_taxi_trip_data,
+  stage.stage_file_batch,
+  dq.technical_quarantine,
+  audit.trip_fingerprint_history,
+  audit.cross_file_fingerprint_match,
+  control.file_reconciliation_history,
+  control.etl_replacement,
+  control.etl_backfill_file,
+  control.etl_backfill_run,
+  control.etl_log,
+  control.etl_step_run,
+  control.etl_file,
+  control.source_file_version,
+  control.etl_batch,
+  control.etl_watermark
+RESTART IDENTITY CASCADE;
+INSERT INTO control.etl_watermark(
+  pipeline_name,source_name,last_successful_extraction_time,
+  last_successful_batch_id,watermark_version
+) VALUES (
+  'pl_taxi_master','yellow_taxi_tripdata',
+  '1970-01-01 00:00:00+00',NULL,0
+);
+COMMIT;
+CHECKPOINT;
+'@
+
+$resetSql | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+if ($LASTEXITCODE -ne 0) { throw 'Reset benchmark thất bại' }
 ```
 
-Các test hiện có:
+Kiểm tra:
 
-1. Catalog path mapping.
-2. Path traversal rejection.
-3. SHA-256 streaming.
-4. Schema fingerprint serialization.
-5. Stable/position-sensitive source key.
-6. Valid canonical row và invalid timestamp reject.
-7. Business anomaly không bị technical reject.
-8. Empty error JSON ghi được Parquet.
-9. Catalog đủ 24 validated files trên disk.
-10. File 2024/2025 map đúng schema v001/v002.
-11. Lookup/geometry contract 265/263, EPSG:2263, missing `{264,265}`.
-
-Kết quả ngày 2026-11-17:
-
-```text
-Ran 11 tests in 0.289s
-OK
+```powershell
+docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT (SELECT count(*) FROM stage.yellow_taxi_trip_data)||''|''||(SELECT count(*) FROM stage.stage_file_batch)||''|''||(SELECT count(*) FROM control.etl_batch)||''|''||(SELECT count(*) FROM dq.technical_quarantine);"'
 ```
 
-Pipeline metadata validation:
+Kết quả sạch là `0|0|0|0`. Reset không xóa source Parquet, reference hoặc `slim-v2`.
 
-```text
-pl_reference_taxi_zone: 5 blocks
-pl_yellow_taxi_ingestion: 10 blocks
-```
+## 10. Benchmark đã xác nhận
 
-Mage restart không phát hiện startup error.
+QA full-month:
 
-## 8. Trạng thái dependency 4.5
+| Tháng | Dòng | `load_stage` | Source → STAGED |
+|---|---:|---:|---:|
+| 2024-05 | 3.723.833 | 107,110 giây | 110,551 giây |
+| 2025-05 | 4.591.845 | 125,800 giây | 131,577 giây |
 
-Truy vấn `to_regclass` ngày 2026-11-17 xác nhận năm bảng sau chưa tồn tại:
+Người dùng đã chạy UI 2024-05 khoảng 2 phút và chạy thành công 2025-05. Chưa có số đo Source → DDS; không dùng các số trên để tuyên bố toàn ETL dưới 3 phút.
 
-```text
-stage.yellow_taxi_raw
-stage.yellow_taxi_canonical
-stage.taxi_zone_raw
-stage.taxi_zone_geometry
-dq.technical_quarantine
-```
+## 11. Xử lý lỗi thường gặp
 
-Do đó:
+- `Active or STALE batch already exists`: batch trước còn STAGED/RUNNING; hoàn tất downstream hoặc reset benchmark.
+- `Installed staging contract requires matching slim mode`: giữ `stage_storage_mode=slim`; kiểm marker database.
+- Dirty target: không xóa tay một phần; dùng recovery/runbook hoặc reset benchmark toàn scope.
+- Lỗi sau COPY: transaction phải rollback; kiểm batch/step và actual counts, không ép SUCCESS.
+- Mage dùng utility cache cũ: restart `mage` khi staging sạch, không rebuild/xóa volume.
 
-- Code, DAG, path handling, checksum/schema logic và test 4.4 đã hoàn tất.
-- Không chạy exporter thật trước 4.5.
-- `require_tables` sẽ fail có chủ đích với danh sách bảng thiếu.
-- Không tạo bảng tự động bằng pandas `replace` vì sẽ phá physical contract 4.5.
+## 12. Bằng chứng cần lưu
 
-## 9. Trình tự chạy sau khi hoàn tất 4.5
-
-1. Chạy DDL 4.5.
-2. Kiểm năm bảng bằng `to_regclass`.
-3. Chạy `pl_reference_taxi_zone`.
-4. Kiểm 265 lookup rows, 263 geometry rows, SRID 2263.
-5. Chạy Yellow Taxi scope một tháng 2024-05.
-6. Chạy scope 2025-05 để kiểm schema v002/CBD fee.
-7. Chạy invalid fixture/technical reject.
-8. Test retry và xác nhận không duplicate source key.
-9. Chạy full BACKFILL 2024-01..2025-12.
-10. Thu evidence per-file row counts và chuyển checkpoint 4.6.
-
-## 10. Definition of Done 4.4
-
-- [x] Hai Mage pipeline và metadata đã tạo.
-- [x] Host/container paths portable, không hard-code máy cá nhân.
-- [x] Reference CSV/Shapefile validation code hoàn tất.
-- [x] LocationID, CRS, geometry và expected 264/265 gap được test.
-- [x] Control LSET/CET/batch contract được dùng.
-- [x] Discovery/checksum/schema registry lifecycle được triển khai.
-- [x] Đọc Parquet theo row group.
-- [x] Lineage và stable source record key được tạo.
-- [x] Technical-only canonicalization và quarantine split được test.
-- [x] Stage/quarantine writer có idempotency và table preflight.
-- [x] 11 unit/integration tests pass trong Mage container.
-- [ ] Reference exporter chạy thật — chờ bảng 4.5.
-- [ ] Yellow staging/reconciliation chạy thật — chờ bảng 4.5.
-- [ ] Full 24-file BACKFILL evidence — thực hiện sau 4.5.
-
-Không đánh dấu ba mục cuối trước khi Physical Staging tồn tại và integration run thành công.
+- tháng, checksum và row count nguồn;
+- thời gian từng block và tổng pipeline;
+- rows Raw/Canonical/Technical;
+- trạng thái batch/file/step;
+- dbt/tests/reconciliation nếu đo end-to-end;
+- dung lượng trước/sau cleanup;
+- cấu hình variables và commit Git.

@@ -18,12 +18,14 @@ DDS được nghiệm thu → job reporting/OLAP riêng → Power BI
 
 Điểm điều phối Source → DDS: [run_24_month_backfill.py](deployment/scripts/run_24_month_backfill.py). Script gọi các hàm block Mage và điều phối dbt; không phải master DAG/scheduler Mage đã được nghiệm thu live. Entry point incremental: [run_dds_incremental.py](deployment/scripts/run_dds_incremental.py).
 
+Nhánh tích hợp lấy Mage từ `origin/main` (`5c456e7`): `direct + streaming + slim-v2`, một bảng vật lý unified và hai view Raw/Canonical. [Mage stage contract](docs/etl_design/MAGE_STAGE_CONTRACT.md). DDS cập nhật thống kê và cleanup theo physical storage contract; giữ riêng các gate tests/reconciliation/watermark của DDS.
+
 Hướng dẫn cấu hình, chạy một tháng, retry/skip và full audit: [dbt_project/README.md](dbt_project/README.md). Không dùng `dbt build` toàn project thay runner cho nạp dữ liệu tối giản.
 
 ## Trạng thái bàn giao
 
 - DDS minimal, batch tests, reconciliation, skip/retry/cleanup và migration QA đã được kiểm chứng. Chưa migrate live.
-- Lượt May thật mới nhất: 16 models/15 tests/đối soát/commit/cleanup PASS; DDS **411,906 giây**, chưa đạt mục tiêu360giây. [Kết quả đo](reports/dbt_minimal_refactor/T10.md), [tối ưu DDS](reports/dbt_minimal_refactor/T11.md).
+- Lượt May thật sau tích hợp Mage main + DDS: 16 models/15 tests/đối soát/commit/cleanup/skip PASS; tổng Source→DDS **555,982 giây (~9m16s)**, Mage104,484s, DDS443,594s. Tổng đạt≤600s ở lượt này, DDS chưa đạt360s. [Kết quả đo](reports/dbt_minimal_refactor/T10.md), [tối ưu DDS](reports/dbt_minimal_refactor/T11.md).
 - OLAP/reporting tách khỏi lượt nạp DDS; T07 chưa nghiệm thu. Chưa xác nhận hoàn tất toàn bộ24 file hoặc refresh Power BI.
 - Công cụ benchmark/QA T09–T11, lịch QA tạm và bản task plan trùng đã được dọn khỏi source. Log/snapshot/dữ liệu QA cục bộ ở `data/work` được Git bỏ qua; database và file nguồn giữ nguyên.
 

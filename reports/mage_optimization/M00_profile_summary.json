@@ -1,0 +1,83 @@
+{
+  "result": {
+    "scope": "loader + validation; existing local parts; no Mage scheduler/source transformation",
+    "rows": 3723833,
+    "source_sha256": "1974230be2b5a3ea92e47b5eb77f32dbf1de896d81ad8df4ab6faba52749ad23",
+    "counts": {
+      "yellow_taxi_raw": {
+        "attempted": 3723833,
+        "inserted": 3723833,
+        "conflicted": 0
+      },
+      "yellow_taxi_canonical": {
+        "attempted": 3723833,
+        "inserted": 3723833,
+        "conflicted": 0
+      }
+    },
+    "relations": [
+      {
+        "relname": "yellow_taxi_raw",
+        "heap_bytes": 1894416384,
+        "index_bytes": 572841984,
+        "total_bytes": 2467807232
+      },
+      {
+        "relname": "yellow_taxi_canonical",
+        "heap_bytes": 1685078016,
+        "index_bytes": 572850176,
+        "total_bytes": 2258427904
+      },
+      {
+        "relname": "technical_quarantine",
+        "heap_bytes": 0,
+        "index_bytes": 114688,
+        "total_bytes": 131072
+      }
+    ],
+    "seconds": 589.7904661459997,
+    "before": {
+      "temp_bytes": 0,
+      "db_bytes": 4746605027,
+      "wal_lsn": "0/2CFE618"
+    },
+    "after": {
+      "temp_bytes": 3447314236,
+      "db_bytes": 9473610211,
+      "wal_lsn": "0/3541C90"
+    },
+    "cluster_wal_delta_bytes": 8664696,
+    "note": "Global WAL/temp stats may include other activity; cloned tables omit foreign keys, retain indexes/checks/identities."
+  },
+  "phase_seconds": {
+    "read_raw_parquet": 6.854120999999998,
+    "read_canonical_parquet": 7.721166000000001,
+    "schema_inspection": 1.8159559999999995,
+    "cast_frame": 10.610276000000002,
+    "json_serialization": 1.1018959999999998,
+    "csv_serialization": 104.80759499999999,
+    "connect": 0.0076040000000000005,
+    "create_temporary": 0.19261299999999995,
+    "copy": 47.739914,
+    "conflict_validation": 58.89009099999997,
+    "insert": 291.776147,
+    "commit": 0.571338,
+    "validation": 53.850759
+  },
+  "phase_calls": {
+    "read_raw_parquet": 38,
+    "read_canonical_parquet": 38,
+    "schema_inspection": 76,
+    "cast_frame": 76,
+    "json_serialization": 76,
+    "csv_serialization": 76,
+    "connect": 76,
+    "create_temporary": 76,
+    "copy": 76,
+    "conflict_validation": 76,
+    "insert": 76,
+    "commit": 76,
+    "validation": 1
+  },
+  "process_peak_rss_kib": 1418520
+}

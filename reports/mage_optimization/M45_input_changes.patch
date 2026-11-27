@@ -1,0 +1,847 @@
+diff --git a/deployment/scripts/run_24_month_backfill.py b/deployment/scripts/run_24_month_backfill.py
+index ea2edc4..a403d41 100644
+--- a/deployment/scripts/run_24_month_backfill.py
++++ b/deployment/scripts/run_24_month_backfill.py
+@@ -519,6 +519,11 @@ def run_ingestion(month: str, replay_file_version_id=None,
+     from data_exporters.load_stage import load_stage
+     from transformers.verify_stage import verify_stage
+ 
++    # Same bounded loading options as Mage UI; direct is explicit until rollout QA.
++    stage_load_mode = os.environ.get('MAGE_STAGE_LOAD_MODE', 'upsert')
++    mage_batch_size = int(os.environ.get('MAGE_BATCH_SIZE', '50000'))
++    if stage_load_mode not in ('upsert', 'direct') or mage_batch_size <= 0:
++        raise ValueError('Invalid Mage stage mode or batch size')
+     context = get_extraction_window(run_type='BACKFILL', triggered_by='backfill_controller')
+     context = discover_source_files(
+         context, catalog_path=str(CATALOG), source_year_month_from=month,
+@@ -535,14 +540,14 @@ def run_ingestion(month: str, replay_file_version_id=None,
+     require_safe_file_version(context)
+     process_count = context['process_file_count']
+     context = load_source_files(
+-        context, work_root=str(WORK_ROOT), source_batch_size=50000,
++        context, work_root=str(WORK_ROOT), source_batch_size=mage_batch_size,
+     )
+     context = canonicalize_schema(
+-        context, work_root=str(WORK_ROOT), canonical_batch_size=50000,
++        context, work_root=str(WORK_ROOT), canonical_batch_size=mage_batch_size,
+     )
+     context = standardize_and_validate(context)
+-    context = write_technical_quarantine(context)
+-    context = load_stage(context)
++    context = write_technical_quarantine(context, stage_load_mode=stage_load_mode)
++    context = load_stage(context, stage_load_mode=stage_load_mode)
+     staged = verify_stage(context)
+     return {**staged, 'process_file_count': process_count}
+ 
+diff --git a/mage_project/data_exporters/load_stage.py b/mage_project/data_exporters/load_stage.py
+index 7318b7b..47753ed 100644
+--- a/mage_project/data_exporters/load_stage.py
++++ b/mage_project/data_exporters/load_stage.py
+@@ -1,16 +1,29 @@
++from utils.profiling import profiled, phase
+ from importlib import reload
+ 
+ import pandas as pd
+ 
+ from utils.database import execute, fetch_one, require_tables
+ import utils.stage_loader as stage_loader
+-from utils.decorators import data_exporter
++
++if 'data_exporter' not in globals():
++    from utils.decorators import data_exporter
++
+ 
+ @data_exporter
++@profiled
+ def load_stage(ingestion_context, *args, **kwargs):
+     # Mage keeps utility imports cached between manual block reruns. Reload the
+     # module so operational fixes are used without rebuilding upstream outputs.
+     reload(stage_loader)
++    mode = kwargs.get('stage_load_mode', ingestion_context.get('stage_load_mode', 'upsert'))
++    if mode not in ('upsert','direct'):
++        raise ValueError('Unknown stage_load_mode: '+str(mode))
++    if mode=='direct' and ingestion_context['files']:
++        from utils.atomic_stage import load_direct
++        return load_direct(ingestion_context)
++    if ingestion_context.get('quarantine_deferred'):
++        raise ValueError('Deferred quarantine requires direct mode; no implicit fallback')
+     upsert_dataframe = stage_loader.upsert_dataframe
+     batch_id = int(ingestion_context['batch_id'])
+     require_tables(['stage.yellow_taxi_raw', 'stage.yellow_taxi_canonical'])
+@@ -35,24 +48,35 @@ def load_stage(ingestion_context, *args, **kwargs):
+     execute("SELECT control.start_step(%(batch_id)s, 'STAGING');", {'batch_id': batch_id})
+     raw_attempts = 0
+     canonical_attempts = 0
++    seen_raw = set()
++    write_counts = {'raw':{},'canonical':{}}
+     try:
+-        for chunk_number, chunk in enumerate(ingestion_context['chunks'], start=1):
+-            raw = pd.read_parquet(chunk['raw_path'])
+-            canonical = pd.read_parquet(chunk['canonical_path'])
+-            raw_attempts += upsert_dataframe(raw, 'stage', 'yellow_taxi_raw')
+-            canonical_attempts += upsert_dataframe(
+-                canonical, 'stage', 'yellow_taxi_canonical'
+-            )
+-            if chunk_number % 10 == 0:
+-                execute(
+-                    'SELECT control.touch_batch_heartbeat(%(batch_id)s);',
+-                    {'batch_id': batch_id},
++        with stage_loader.StageWriter() as writer:
++            for chunk_number, chunk in enumerate(ingestion_context['chunks'], start=1):
++                if chunk['raw_path'] not in seen_raw:
++                    with phase('read_raw_parquet', batch_id=batch_id):
++                        raw = pd.read_parquet(chunk['raw_path'])
++                    if len(raw) != int(chunk.get('source_part_rows', chunk['row_count'])):
++                        raise ValueError('Raw source-part count mismatch')
++                    raw_attempts += upsert_dataframe(raw, 'stage', 'yellow_taxi_raw', metrics=write_counts['raw'], writer=writer)
++                    seen_raw.add(chunk['raw_path'])
++                with phase('read_canonical_parquet', batch_id=batch_id):
++                    canonical = pd.read_parquet(chunk['canonical_path'])
++                if len(canonical) != int(chunk['canonical_rows']):
++                    raise ValueError('Canonical part count mismatch')
++                canonical_attempts += upsert_dataframe(
++                    canonical, 'stage', 'yellow_taxi_canonical', metrics=write_counts['canonical'], writer=writer
+                 )
+-                print(
+-                    'Staged {}/{} bounded parts'.format(
+-                        chunk_number, len(ingestion_context['chunks'])
++                if chunk_number % 10 == 0:
++                    execute(
++                        'SELECT control.touch_batch_heartbeat(%(batch_id)s);',
++                        {'batch_id': batch_id},
++                    )
++                    print(
++                        'Staged {}/{} bounded parts'.format(
++                            chunk_number, len(ingestion_context['chunks'])
++                        )
+                     )
+-                )
+         grouped = {}
+         for chunk in ingestion_context['chunks']:
+             item = grouped.setdefault(chunk['etl_file_id'], {
+@@ -83,4 +107,5 @@ def load_stage(ingestion_context, *args, **kwargs):
+     return {
+         **ingestion_context, 'raw_write_attempts': raw_attempts,
+         'canonical_write_attempts': canonical_attempts,
++        'write_counts': write_counts,
+     }
+diff --git a/mage_project/data_exporters/write_technical_quarantine.py b/mage_project/data_exporters/write_technical_quarantine.py
+index b72095b..8b04522 100644
+--- a/mage_project/data_exporters/write_technical_quarantine.py
++++ b/mage_project/data_exporters/write_technical_quarantine.py
+@@ -1,17 +1,38 @@
++from utils.profiling import profiled, phase
+ import pandas as pd
+ 
+ from utils.database import require_tables
+-from utils.stage_loader import upsert_dataframe
+-from utils.decorators import data_exporter
++from importlib import reload
++import utils.stage_loader as stage_loader
++
++if 'data_exporter' not in globals():
++    from utils.decorators import data_exporter
++
+ 
+ @data_exporter
++@profiled
+ def write_technical_quarantine(ingestion_context, *args, **kwargs):
++    mode = kwargs.get('stage_load_mode', ingestion_context.get('stage_load_mode','upsert'))
++    if mode not in ('upsert','direct'):
++        raise ValueError('Unknown stage_load_mode: '+str(mode))
++    if ingestion_context.get('quarantine_deferred') and mode!='direct':
++        raise ValueError('Deferred quarantine cannot switch to upsert implicitly')
++    if mode=='direct' and ingestion_context['files']:
++        # Rejects are copied atomically alongside Raw and Canonical by load_stage.
++        return {**ingestion_context,'stage_load_mode':'direct','quarantine_deferred':True}
+     require_tables(['dq.technical_quarantine'])
++    reload(stage_loader)
+     written = 0
+-    for chunk in ingestion_context['chunks']:
+-        rejected = pd.read_parquet(chunk['reject_path'])
+-        written += upsert_dataframe(rejected, 'dq', 'technical_quarantine')
++    counts = {}
++    with stage_loader.StageWriter() as writer:
++        for chunk in ingestion_context['chunks']:
++            with phase('read_reject_parquet'):
++                rejected = pd.read_parquet(chunk['reject_path'])
++            if len(rejected) != int(chunk['technical_reject_rows']):
++                raise ValueError('Technical reject part count mismatch')
++            written += stage_loader.upsert_dataframe(rejected, 'dq', 'technical_quarantine', metrics=counts, writer=writer)
+     return {
+         **ingestion_context,
+         'technical_quarantine_write_attempts': written,
++        'technical_quarantine_write_counts': counts,
+     }
+diff --git a/mage_project/data_loaders/get_extraction_window.py b/mage_project/data_loaders/get_extraction_window.py
+index 4ff532b..aee6372 100644
+--- a/mage_project/data_loaders/get_extraction_window.py
++++ b/mage_project/data_loaders/get_extraction_window.py
+@@ -1,8 +1,14 @@
++from utils.profiling import profiled
+ from utils.database import fetch_one
+-from utils.decorators import data_loader, test
++
++if 'data_loader' not in globals():
++    from utils.decorators import data_loader
++if 'test' not in globals():
++    from utils.decorators import test
+ 
+ 
+ @data_loader
++@profiled
+ def get_extraction_window(*args, **kwargs):
+     run_type = kwargs.get('run_type', 'BACKFILL').upper()
+     parent_batch_id = kwargs.get('parent_batch_id')
+diff --git a/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml b/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
+index 495fd8e..664b7b2 100644
+--- a/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
++++ b/mage_project/pipelines/pl_yellow_taxi_ingestion/metadata.yaml
+@@ -10,7 +10,7 @@ blocks:
+   language: python
+   name: get_extraction_window
+   retry_config: null
+-  status: executed
++  status: failed
+   timeout: null
+   type: data_loader
+   upstream_blocks: []
+@@ -193,9 +193,12 @@ tags:
+ type: python
+ uuid: pl_yellow_taxi_ingestion
+ variables:
++  stage_load_mode: upsert
++  source_batch_size: 50000
++  canonical_batch_size: 50000
+   catalog_path: /home/src/data/catalog/yellow_taxi_selected_2_months.csv
+   run_type: BACKFILL
+   source_year_month_from: 2024-05
+-  source_year_month_to: 2025-05
++  source_year_month_to: 2024-05
+ variables_dir: /home/src/mage_data/nyc_taxi_bi
+ widgets: []
+diff --git a/mage_project/transformers/canonicalize_schema.py b/mage_project/transformers/canonicalize_schema.py
+index 104609a..6aa0ac9 100644
+--- a/mage_project/transformers/canonicalize_schema.py
++++ b/mage_project/transformers/canonicalize_schema.py
+@@ -1,3 +1,4 @@
++from utils.profiling import profiled
+ from pathlib import Path
+ import shutil
+ 
+@@ -6,16 +7,20 @@ import pyarrow.parquet as pq
+ 
+ from utils.canonical import canonicalize_dataframe, serialize_json_columns
+ from utils.database import execute
+-from utils.decorators import transformer
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
+ 
+ @transformer
++@profiled
+ def canonicalize_schema(ingestion_context, *args, **kwargs):
+-    batch_root = Path(kwargs.get('work_root', '/home/src/data/work/task_4_4')) / str(
+-        ingestion_context['batch_id']
+-    )
++    work_root = Path(kwargs.get('work_root', '/home/src/data/work/task_4_4')).resolve()
++    batch_root = (work_root / str(int(ingestion_context['batch_id']))).resolve()
++    batch_root.relative_to(work_root)
+     canonical_root = batch_root / 'canonical'
+     reject_root = batch_root / 'technical_reject'
+     for output_root in (canonical_root, reject_root):
++        output_root.resolve().relative_to(batch_root)
+         if output_root.exists():
+             shutil.rmtree(output_root)
+     canonical_root.mkdir(parents=True, exist_ok=True)
+@@ -45,6 +50,8 @@ def canonicalize_schema(ingestion_context, *args, **kwargs):
+             processed.append({
+                 **chunk,
+                 'raw_path': chunk['raw_path'],
++                'source_part_rows': int(chunk['row_count']),
++                'load_raw_part': chunk_rows == 0,
+                 'canonical_path': str(canonical_path),
+                 'reject_path': str(reject_path),
+                 'row_count': len(raw),
+diff --git a/mage_project/transformers/discover_source_files.py b/mage_project/transformers/discover_source_files.py
+index 63d2e42..e7aab0c 100644
+--- a/mage_project/transformers/discover_source_files.py
++++ b/mage_project/transformers/discover_source_files.py
+@@ -1,12 +1,16 @@
++from utils.profiling import profiled
+ from pathlib import Path
+ 
+ import pandas as pd
+ 
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
++
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
++@profiled
+ def discover_source_files(batch_context, *args, **kwargs):
+     batch_id = int(batch_context['batch_id'])
+     catalog_path = Path(kwargs.get(
+diff --git a/mage_project/transformers/filter_incremental.py b/mage_project/transformers/filter_incremental.py
+index 6f4e7f2..860bb85 100644
+--- a/mage_project/transformers/filter_incremental.py
++++ b/mage_project/transformers/filter_incremental.py
+@@ -1,7 +1,10 @@
+-from utils.decorators import transformer
++from utils.profiling import profiled
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
++@profiled
+ def filter_incremental(validation_context, *args, **kwargs):
+     process_actions = {'PROCESS', 'REPROCESS_IDEMPOTENTLY'}
+     process_files = [
+diff --git a/mage_project/transformers/load_source_files.py b/mage_project/transformers/load_source_files.py
+index a4253e9..b5b262a 100644
+--- a/mage_project/transformers/load_source_files.py
++++ b/mage_project/transformers/load_source_files.py
+@@ -1,3 +1,4 @@
++from utils.profiling import profiled
+ from pathlib import Path
+ import shutil
+ 
+@@ -5,10 +6,14 @@ import pyarrow as pa
+ import pyarrow.parquet as pq
+ 
+ from utils.database import execute
+-from utils.decorators import transformer
+ from utils.parquet_utils import make_source_record_key
+ 
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
++
+ @transformer
++@profiled
+ def load_source_files(ingestion_context, *args, **kwargs):
+     work_root = Path(
+         kwargs.get('work_root', '/home/src/data/work/task_4_4')
+diff --git a/mage_project/transformers/standardize_and_validate.py b/mage_project/transformers/standardize_and_validate.py
+index 69114d8..9fe4437 100644
+--- a/mage_project/transformers/standardize_and_validate.py
++++ b/mage_project/transformers/standardize_and_validate.py
+@@ -1,7 +1,10 @@
+-from utils.decorators import transformer
++from utils.profiling import profiled
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+ 
+ @transformer
++@profiled
+ def standardize_and_validate(ingestion_context, *args, **kwargs):
+     rows_raw = sum(item['row_count'] for item in ingestion_context['chunks'])
+     rows_canonical = sum(item['canonical_rows'] for item in ingestion_context['chunks'])
+diff --git a/mage_project/transformers/validate_zone_geometry.py b/mage_project/transformers/validate_zone_geometry.py
+index 5afb99c..e788fb4 100644
+--- a/mage_project/transformers/validate_zone_geometry.py
++++ b/mage_project/transformers/validate_zone_geometry.py
+@@ -1,3 +1,4 @@
++from utils.profiling import profiled
+ import geopandas as gpd
+ import pandas as pd
+ from shapely.geometry import MultiPolygon, Polygon
+@@ -13,6 +14,7 @@ def _to_multipolygon(geometry):
+ 
+ 
+ @transformer
++@profiled
+ def validate_zone_geometry(zone_lookup, zone_geometry, *args, **kwargs):
+     lookup = zone_lookup.copy()
+     if isinstance(zone_geometry, gpd.GeoDataFrame):
+diff --git a/mage_project/transformers/validate_zone_lookup.py b/mage_project/transformers/validate_zone_lookup.py
+index 526f0b3..9015d33 100644
+--- a/mage_project/transformers/validate_zone_lookup.py
++++ b/mage_project/transformers/validate_zone_lookup.py
+@@ -1,8 +1,10 @@
++from utils.profiling import profiled
+ import pandas as pd
+ from utils.decorators import test, transformer
+ 
+ 
+ @transformer
++@profiled
+ def validate_zone_lookup(dataframe, *args, **kwargs):
+     required = {'LocationID', 'Borough', 'Zone', 'service_zone'}
+     missing = required - set(dataframe.columns)
+diff --git a/mage_project/transformers/verify_checksum.py b/mage_project/transformers/verify_checksum.py
+index 78515e1..de4e4b3 100644
+--- a/mage_project/transformers/verify_checksum.py
++++ b/mage_project/transformers/verify_checksum.py
+@@ -1,12 +1,15 @@
++from utils.profiling import profiled
+ from pathlib import Path
+ 
+ import pandas as pd
+ 
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
+ from utils.parquet_utils import calculate_file_sha256, inspect_parquet
+ from utils.paths import resolve_data_path
+ 
++if 'transformer' not in globals():
++    from utils.decorators import transformer
++
+ def _resume_successful_validation(discovery_context, data_root=None):
+     """Rebuild block output when Mage reruns an already-successful step."""
+     validated = []
+@@ -60,6 +63,7 @@ def _resume_successful_validation(discovery_context, data_root=None):
+ 
+ 
+ @transformer
++@profiled
+ def verify_checksum(discovery_context, *args, **kwargs):
+     batch_id = int(discovery_context['batch_id'])
+     registry = pd.read_csv(Path(kwargs.get(
+diff --git a/mage_project/transformers/verify_stage.py b/mage_project/transformers/verify_stage.py
+index c4d9d98..b2eaed1 100644
+--- a/mage_project/transformers/verify_stage.py
++++ b/mage_project/transformers/verify_stage.py
+@@ -1,35 +1,26 @@
++from utils.profiling import profiled
+ from utils.database import execute, fetch_one
+-from utils.decorators import transformer
+ 
++if 'transformer' not in globals():
++    from utils.decorators import transformer
+ 
+-@transformer
+-def verify_stage(ingestion_context, *args, **kwargs):
++
++def _verify_stage(ingestion_context, *args, **kwargs):
+     batch_id = int(ingestion_context['batch_id'])
+-    hashes = sorted({
+-        item['source_file_sha256'] for item in ingestion_context['files']
+-    })
+     metrics = ingestion_context['metrics']
+-    if not hashes:
+-        raw_count = canonical_count = rejected_count = 0
+-    else:
+-        raw_count = fetch_one(
+-            'SELECT count(*) AS count FROM stage.yellow_taxi_raw '
+-            'WHERE source_file_sha256 = ANY(%(hashes)s);', {'hashes': hashes}
+-        )['count']
+-        canonical_count = fetch_one(
+-            'SELECT count(*) AS count FROM stage.yellow_taxi_canonical '
+-            'WHERE source_file_sha256 = ANY(%(hashes)s);', {'hashes': hashes}
+-        )['count']
+-        rejected_count = fetch_one(
+-            'SELECT count(*) AS count FROM dq.technical_quarantine '
+-            'WHERE source_file_sha256 = ANY(%(hashes)s);', {'hashes': hashes}
+-        )['count']
+-    if raw_count != canonical_count + rejected_count:
+-        raise ValueError(
+-            'Stage reconciliation failed: raw={} canonical={} rejected={}'.format(
+-                raw_count, canonical_count, rejected_count
+-            )
+-        )
++    raw_count = canonical_count = rejected_count = 0
++    for item in ingestion_context['files']:
++        params = {'batch': batch_id,'version':int(item['file_version_id']),
++                  'sha':item['source_file_sha256'],'file':item['file_name'],
++                  'expected':int(item['parquet_row_count']), 'schema':item['schema_version'],
++                  'fingerprint':item['schema_fingerprint'],'month':item['source_year_month']}
++        counts = validate_file_stage(params, ingestion_context['chunks'])
++        raw_count += counts['raw_count']
++        canonical_count += counts['canonical_count']
++        rejected_count += counts['rejected_count']
++    if (raw_count, canonical_count, rejected_count) != (
++            metrics['rows_raw'],metrics['rows_canonical'],metrics['rows_technical_quarantined']):
++        raise ValueError('Stage actual counts differ from local metrics')
+     execute(
+         """
+         SELECT control.finish_step(
+@@ -52,3 +43,65 @@ def verify_stage(ingestion_context, *args, **kwargs):
+         'rows_technical_quarantined': rejected_count,
+         'local_metrics': metrics,
+     }
++
++
++def validate_file_stage(params, chunks, reader=None):
++    expected = params['expected']
++    local = [c for c in chunks if c['source_file'] == params['file']]
++    local_counts = (sum(c['row_count'] for c in local),sum(c['canonical_rows'] for c in local),sum(c['technical_reject_rows'] for c in local))
++    if local_counts[0] != expected or local_counts[0] != local_counts[1]+local_counts[2]:
++        raise ValueError('Source/footer/local manifest counts mismatch')
++    # Include all rows for this SHA to detect stale/wrong-scope retries rather than hiding them.
++    result = (reader or fetch_one)("""
++        WITH rows AS (
++          SELECT 'raw' kind, source_record_key,source_row_number,batch_id,file_version_id,source_file,schema_version,schema_fingerprint,source_year_month
++            FROM stage.yellow_taxi_raw WHERE source_file_sha256=%(sha)s
++          UNION ALL
++          SELECT 'canonical',source_record_key,source_row_number,batch_id,file_version_id,source_file,schema_version,schema_fingerprint,source_year_month
++            FROM stage.yellow_taxi_canonical WHERE source_file_sha256=%(sha)s
++          UNION ALL
++          SELECT 'reject',source_record_key,source_row_number,batch_id,file_version_id,source_file,schema_version,schema_fingerprint,source_year_month
++            FROM dq.technical_quarantine WHERE source_file_sha256=%(sha)s
++        ), key_counts AS (
++          SELECT source_record_key,count(*) FILTER(WHERE kind='raw') r,
++            count(*) FILTER(WHERE kind='canonical') c,count(*) FILTER(WHERE kind='reject') q
++          FROM rows GROUP BY source_record_key
++        )
++        SELECT count(*) FILTER(WHERE kind='raw') raw_count,
++          count(*) FILTER(WHERE kind='canonical') canonical_count,
++          count(*) FILTER(WHERE kind='reject') rejected_count,
++          count(DISTINCT source_row_number) FILTER(WHERE kind='raw') distinct_rows,
++          count(*) FILTER(WHERE batch_id IS DISTINCT FROM %(batch)s
++            OR file_version_id IS DISTINCT FROM %(version)s OR source_file IS DISTINCT FROM %(file)s
++            OR schema_version IS DISTINCT FROM %(schema)s OR schema_fingerprint IS DISTINCT FROM %(fingerprint)s
++            OR source_year_month IS DISTINCT FROM %(month)s
++            OR source_row_number IS NULL OR source_row_number<1 OR source_row_number>%(expected)s
++            OR source_record_key IS DISTINCT FROM
++               encode(sha256(convert_to(lower(%(sha)s)::text || ':' || source_row_number::text,'UTF8')),'hex')) bad_scope,
++          (SELECT count(*) FROM key_counts WHERE r<>1 OR c+q<>1) bad_partition
++        FROM rows
++        """,params)
++    actual = (result['raw_count'],result['canonical_count'],result['rejected_count'])
++    if actual != local_counts or result['distinct_rows'] != expected or result['bad_scope'] or result['bad_partition']:
++        raise ValueError('Stage count/key/identity partition validation failed: {}'.format(result))
++    return result
++
++
++@transformer
++@profiled
++def verify_stage(ingestion_context, *args, **kwargs):
++    try:
++        if ingestion_context.get('direct_stage_published'):
++            from utils.atomic_stage import verify_published
++            return verify_published(ingestion_context)
++        return _verify_stage(ingestion_context, *args, **kwargs)
++    except Exception as exception:
++        if ingestion_context.get('direct_stage_published'):
++            execute("SELECT control.fail_batch(%(batch)s,'STAGING_VALIDATION_FAILED',%(message)s);",
++                    {'batch':int(ingestion_context['batch_id']),'message':str(exception)[:2000]})
++            raise
++        execute("""
++            SELECT control.finish_step(%(batch)s,'STAGING','FAILED',1,'{}'::jsonb,%(message)s);
++            SELECT control.fail_batch(%(batch)s,'STAGING_VALIDATION_FAILED',%(message)s);
++        """,{'batch':int(ingestion_context['batch_id']),'message':str(exception)[:2000]})
++        raise
+diff --git a/mage_project/utils/canonical.py b/mage_project/utils/canonical.py
+index caf3ee5..3760e48 100644
+--- a/mage_project/utils/canonical.py
++++ b/mage_project/utils/canonical.py
+@@ -1,6 +1,7 @@
+ import json
+ 
+ import pandas as pd
++import numpy as np
+ 
+ 
+ COLUMN_MAPPING = {
+@@ -44,6 +45,8 @@ REQUIRED_TECHNICAL_COLUMNS = [
+ def _json_value(value):
+     if pd.isna(value):
+         return None
++    if isinstance(value, (float, np.floating)) and not np.isfinite(value):
++        return str(value)
+     if hasattr(value, 'isoformat'):
+         return value.isoformat()
+     if hasattr(value, 'item'):
+@@ -103,7 +106,9 @@ def canonicalize_dataframe(raw_dataframe):
+             column,
+             'INVALID_INTEGER',
+         )
+-        canonical[column] = converted
++        bad = converted.notna() & (~np.isfinite(converted) | (converted % 1 != 0) | (converted < -32768) | (converted > 32767))
++        add_errors(bad, column, 'INTEGER_OUT_OF_RANGE_OR_FRACTIONAL')
++        canonical[column] = converted.mask(bad)
+ 
+     for column in NUMERIC_COLUMNS:
+         if column not in canonical.columns:
+@@ -116,7 +121,10 @@ def canonicalize_dataframe(raw_dataframe):
+             column,
+             'INVALID_NUMERIC',
+         )
+-        canonical[column] = converted
++        scale, limit = (3, 10**7) if column == 'trip_distance' else (2, 10**10)
++        bad = converted.notna() & (~np.isfinite(converted) | (converted.round(scale).abs() >= limit))
++        add_errors(bad, column, 'NUMERIC_OUT_OF_RANGE_OR_NONFINITE')
++        canonical[column] = converted.mask(bad)
+ 
+     if 'store_and_fwd_flag' not in canonical.columns:
+         canonical['store_and_fwd_flag'] = pd.NA
+@@ -127,6 +135,7 @@ def canonicalize_dataframe(raw_dataframe):
+             .str.strip()
+             .str.upper()
+         )
++        add_errors(canonical['store_and_fwd_flag'].notna() & ~normalized_flags.isin(['Y', 'N']), 'store_and_fwd_flag', 'INVALID_FLAG')
+         canonical['store_and_fwd_flag'] = normalized_flags.where(
+             normalized_flags.isin(['Y', 'N']), pd.NA
+         )
+@@ -145,6 +154,10 @@ def canonicalize_dataframe(raw_dataframe):
+     accepted = canonical.loc[~rejected_mask].copy()
+     rejected = canonical.loc[rejected_mask].copy()
+     accepted['raw_payload'] = None
++    # Only error rows carry a payload; healthy rows keep the existing compact form.
++    error_indices = pd.Series(error_flags).map(bool) & ~rejected_mask
++    for index in raw.index[error_indices]:
++        accepted.at[index, 'raw_payload'] = {c: _json_value(raw.at[index, c]) for c in source_columns}
+ 
+     if rejected.empty:
+         rejected['raw_payload'] = pd.Series(dtype='object')
+@@ -153,7 +166,7 @@ def canonicalize_dataframe(raw_dataframe):
+         payload_frame = payload_frame.astype(object).where(
+             pd.notna(payload_frame), None
+         )
+-        rejected['raw_payload'] = payload_frame.to_dict(orient='records')
++        rejected['raw_payload'] = [{c: _json_value(v) for c, v in row.items()} for row in payload_frame.to_dict(orient='records')]
+ 
+     if len(raw) != len(accepted) + len(rejected):
+         raise AssertionError('Technical row reconciliation failed')
+diff --git a/mage_project/utils/stage_loader.py b/mage_project/utils/stage_loader.py
+index 09b74cf..e06f6fa 100644
+--- a/mage_project/utils/stage_loader.py
++++ b/mage_project/utils/stage_loader.py
+@@ -7,6 +7,9 @@ from urllib.parse import quote_plus
+ 
+ import pandas as pd
+ from sqlalchemy import create_engine, inspect, text
++from .profiling import phase
++from .canonical import _json_value
++import numpy as np
+ 
+ 
+ IDENTIFIER = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+@@ -45,7 +48,7 @@ def serialize_json_value(value):
+ 
+ def normalize_copy_frame(dataframe, target_type_names):
+     """Format nullable integer columns as `1`, never pandas' float `1.0`."""
+-    result = dataframe.copy()
++    result = dataframe.copy(deep=False)
+     for column, type_name in target_type_names.items():
+         if column not in result.columns or not INTEGER_TYPES.search(type_name.lower()):
+             continue
+@@ -64,63 +67,162 @@ def normalize_copy_frame(dataframe, target_type_names):
+     return result
+ 
+ 
+-def upsert_dataframe(dataframe, schema, table, conflict_column='source_record_key'):
+-    """Insert the intersection of DataFrame/target columns idempotently."""
+-    if dataframe.empty:
+-        return 0
+-    schema = _safe_identifier(schema)
+-    table = _safe_identifier(table)
+-    conflict_column = _safe_identifier(conflict_column)
+-    engine = postgres_engine()
+-    target_columns = {
+-        item['name']: item for item in inspect(engine).get_columns(table, schema=schema)
+-    }
+-    common = [column for column in dataframe.columns if column in target_columns]
+-    if conflict_column not in common:
+-        raise RuntimeError(
+-            '{}.{} must expose {} for idempotent loading'.format(
+-                schema, table, conflict_column
+-            )
+-        )
+-    target_type_names = {
+-        column: str(target_columns[column]['type']) for column in common
+-    }
+-    frame = normalize_copy_frame(dataframe[common], target_type_names)
+-    json_columns = []
+-    for column in common:
+-        type_name = str(target_columns[column]['type']).lower()
+-        if 'json' in type_name:
+-            json_columns.append(column)
+-            frame[column] = frame[column].map(serialize_json_value)
+-    temporary = '_mage_{}_{}'.format(table, uuid.uuid4().hex[:12])
+-    quoted_columns = ', '.join('"{}"'.format(column) for column in common)
+-    buffer = StringIO()
+-    frame.to_csv(
+-        buffer, index=False, header=False, na_rep='\\N', lineterminator='\n'
+-    )
+-    buffer.seek(0)
+-    with engine.begin() as connection:
+-        # The temporary table inherits exact target types. PostgreSQL COPY is
+-        # substantially faster and uses less Python memory than multi-value
+-        # INSERT for 100k-row work parts.
+-        connection.execute(text(
+-            'CREATE TEMP TABLE "{}" ON COMMIT DROP AS '
+-            'SELECT {} FROM "{}"."{}" WITH NO DATA'.format(
+-                temporary, quoted_columns, schema, table
+-            )
+-        ))
+-        cursor = connection.connection.cursor()
+-        cursor.copy_expert(
+-            'COPY "{}" ({}) FROM STDIN WITH (FORMAT CSV, NULL \'\\N\')'.format(
+-                temporary, quoted_columns
+-            ),
+-            buffer,
+-        )
+-        connection.execute(text(
+-            'INSERT INTO "{}"."{}" ({}) SELECT {} FROM "{}" '
+-            'ON CONFLICT ("{}") DO NOTHING'.format(
+-                schema, table, quoted_columns, quoted_columns, temporary,
+-                conflict_column
+-            )
+-        ))
+-    return len(frame)
++def prepare_raw_frame(dataframe, target_type_names):
++    """Typed Raw is a transport projection; payload preserves any unrepresentable source."""
++    result = dataframe.copy(deep=False)
++    bad_rows = pd.Series(False, index=result.index)
++    lineage = {'batch_id', 'file_version_id', 'source_row_number'}
++    for column, type_name in target_type_names.items():
++        if column not in result or column in lineage:
++            continue
++        original = result[column]
++        lower = type_name.lower()
++        if INTEGER_TYPES.search(lower):
++            value = pd.to_numeric(original, errors='coerce')
++            bound = 2**63
++            bad = original.notna() & (value.isna() | ~np.isfinite(value) | (value % 1 != 0) | (value < -bound) | (value >= bound))
++        elif 'timestamp' in lower:
++            value = pd.to_datetime(original, errors='coerce')
++            bad = original.notna() & value.isna()
++        elif 'double' in lower or 'float' in lower:
++            value = pd.to_numeric(original, errors='coerce')
++            bad = original.notna() & (value.isna() | ~np.isfinite(value))
++        else:
++            continue
++        result[column] = value.mask(bad)
++        bad_rows |= bad
++    if bad_rows.any():
++        if 'raw_payload' not in target_type_names:
++            raise ValueError('Raw cast failure requires reviewed raw_payload migration; source remains intact')
++        result['raw_payload'] = None
++        source_columns = [c for c in dataframe if c not in {
++            'batch_id','file_version_id','source_file','source_year_month','source_file_sha256',
++            'source_row_number','source_record_key','schema_fingerprint','schema_version','source_last_modified'}]
++        for index in result.index[bad_rows]:
++            result.at[index,'raw_payload'] = {c: _json_value(dataframe.at[index,c]) for c in source_columns}
++    return result
++
++
++class StageWriter:
++    """One process-local connection and schema cache per invocation.
++
++    Upsert commits each part as before. Direct writes require an outer transaction
++    owned by the atomic staging coordinator; never auto-fallback on errors.
++    """
++    def __init__(self, serialization='arrow', engine=None):
++        if serialization not in ('pandas','arrow'):
++            raise ValueError('Unknown CSV serialization')
++        self.serialization = serialization
++        self.engine = engine
++        self.owns_engine = engine is None
++        self.columns = {}
++        self.connection = None
++
++    def __enter__(self):
++        self.engine = self.engine or postgres_engine()
++        try:
++            with phase('connect'):
++                self.connection = self.engine.connect()
++        except BaseException:
++            if self.owns_engine:
++                self.engine.dispose()
++            raise
++        return self
++
++    def __exit__(self, *exception):
++        try:
++            if self.connection is not None:
++                self.connection.close()
++        finally:
++            if self.owns_engine: self.engine.dispose()
++
++    def metadata(self, schema, table):
++        key = (schema, table)
++        if key not in self.columns:
++            with phase('schema_inspection',schema=schema,table=table):
++                self.columns[key] = {c['name']:c for c in inspect(self.connection).get_columns(table,schema=schema)}
++        return self.columns[key]
++
++    def serialize(self, dataframe, schema, table, conflict_column):
++        columns = self.metadata(schema,table)
++        types = {c:str(v['type']) for c,v in columns.items()}
++        labels = {'schema':schema,'table':table,'rows':len(dataframe)}
++        with phase('cast_frame', **labels):
++            source = prepare_raw_frame(dataframe,types) if table=='yellow_taxi_raw' else dataframe
++            common = [c for c in source if c in columns]
++            required = {c for c,v in columns.items() if not v['nullable'] and v.get('default') is None and not v.get('identity')}
++            unknown = set(source)-set(columns)
++            if unknown or required-set(common) or conflict_column not in common:
++                raise ValueError('Staging column contract mismatch: unknown={}, missing={}'.format(sorted(unknown),sorted(required-set(common))))
++            frame = normalize_copy_frame(source[common],types)
++        with phase('json_serialization', **labels):
++            for column in common:
++                if 'json' in types[column].lower():
++                    frame[column] = frame[column].map(serialize_json_value)
++        with phase('csv_serialization', serialization=self.serialization, **labels):
++            if self.serialization == 'arrow':
++                import pyarrow as pa
++                import pyarrow.csv as csv
++                from io import BytesIO
++                buffer = BytesIO()
++                csv.write_csv(pa.Table.from_pandas(frame,preserve_index=False),buffer,
++                              write_options=csv.WriteOptions(include_header=False,batch_size=65536))
++                null_marker = ''  # Arrow quotes empty strings; NULL is an unquoted empty field.
++            else:
++                null_marker = 'm' + uuid.uuid4().hex[:15]
++                if any(frame[c].eq(null_marker).fillna(False).any() for c in common):
++                    raise ValueError('COPY null marker collision')
++                buffer = StringIO()
++                frame.to_csv(buffer,index=False,header=False,na_rep=null_marker,lineterminator='\n')
++            buffer.seek(0)
++        return buffer, common, null_marker
++
++    def write(self,dataframe,schema,table,conflict_column='source_record_key',metrics=None,direct=False):
++        if dataframe.empty: return 0
++        schema,table,conflict_column = map(_safe_identifier,(schema,table,conflict_column))
++        if direct and not self.connection.in_transaction():
++            raise RuntimeError('Direct COPY requires an outer atomic transaction')
++        labels = {'schema':schema,'table':table,'rows':len(dataframe),'mode':'direct' if direct else 'upsert'}
++        buffer,common,null_marker = self.serialize(dataframe,schema,table,conflict_column)
++        quoted = ', '.join('"{}"'.format(_safe_identifier(c)) for c in common)
++        transaction = None if direct else self.connection.begin()
++        temporary = '_mage_{}_{}'.format(table,uuid.uuid4().hex[:12])
++        try:
++            if not direct:
++                with phase('create_temporary',**labels):
++                    self.connection.execute(text('CREATE TEMP TABLE "{}" ON COMMIT DROP AS SELECT {} FROM "{}"."{}" WITH NO DATA'.format(temporary,quoted,schema,table)))
++            target = '"{}"."{}"'.format(schema,table) if direct else '"{}"'.format(temporary)
++            with phase('copy',**labels):
++                with self.connection.connection.cursor() as cursor:
++                    cursor.copy_expert("COPY {} ({}) FROM STDIN WITH (FORMAT CSV, NULL '{}')".format(target,quoted,null_marker),buffer)
++            if direct:
++                inserted = len(dataframe)  # COPY aborts the transaction on any rejected row.
++            else:
++                with phase('conflict_validation',**labels):
++                    duplicates=self.connection.execute(text('SELECT 1 FROM "{}" GROUP BY "{}" HAVING count(*)>1 LIMIT 1'.format(temporary,conflict_column))).first()
++                    if duplicates: raise ValueError('Duplicate keys in input chunk')
++                    comparisons=' OR '.join('d."{0}" IS DISTINCT FROM s."{0}"'.format(c) for c in common)
++                    mismatch=self.connection.execute(text('SELECT 1 FROM "{}" s JOIN "{}"."{}" d ON d."{}"=s."{}" WHERE {} LIMIT 1'.format(temporary,schema,table,conflict_column,conflict_column,comparisons))).first()
++                    if mismatch: raise ValueError('Conflicting source key with different payload or scope')
++                with phase('insert',**labels):
++                    inserted=self.connection.execute(text('INSERT INTO "{}"."{}" ({}) SELECT {} FROM "{}" ON CONFLICT ("{}") DO NOTHING'.format(schema,table,quoted,quoted,temporary,conflict_column))).rowcount
++                with phase('commit',**labels): transaction.commit()
++        except BaseException:
++            if transaction is not None: transaction.rollback()
++            raise
++        finally:
++            buffer.close()
++        counts={'attempted':len(dataframe),'inserted':inserted,'conflicted':len(dataframe)-inserted}
++        if metrics is not None:
++            for k,v in counts.items(): metrics[k]=metrics.get(k,0)+v
++        # Direct counts are tentative until the outer COMMIT; caller discards them on failure.
++        print('MAGE_WRITE '+json.dumps({**labels,**counts,'committed':not direct}),flush=True)
++        return len(dataframe)
++
++
++def upsert_dataframe(dataframe,schema,table,conflict_column='source_record_key',metrics=None,writer=None):
++    if dataframe.empty: return 0
++    if writer is not None:
++        return writer.write(dataframe,schema,table,conflict_column,metrics)
++    with StageWriter() as session:
++        return session.write(dataframe,schema,table,conflict_column,metrics)

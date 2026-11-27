@@ -1,0 +1,23 @@
+[0m16:22:43  Running with dbt=1.8.7
+[0m16:22:43  Registered adapter: postgres=1.8.2
+[0m16:22:43  Unable to do partial parsing because saved manifest not found. Starting full parse.
+[0m16:22:46  Found 18 models, 147 data tests, 5 seeds, 18 sources, 446 macros
+[0m16:22:46  
+[0m16:22:46  Concurrency: 1 threads (target='qa')
+[0m16:22:46  
+[0m16:22:46  1 of 5 START seed file dds.dq_rule_policy ...................................... [RUN]
+[0m16:22:46  1 of 5 OK loaded seed file dds.dq_rule_policy .................................. [[32mINSERT 26[0m in 0.11s]
+[0m16:22:46  2 of 5 START seed file dds.payment_type_codes .................................. [RUN]
+[0m16:22:46  2 of 5 OK loaded seed file dds.payment_type_codes .............................. [[32mINSERT 7[0m in 0.04s]
+[0m16:22:46  3 of 5 START seed file dds.rate_codes .......................................... [RUN]
+[0m16:22:46  3 of 5 OK loaded seed file dds.rate_codes ...................................... [[32mINSERT 7[0m in 0.04s]
+[0m16:22:46  4 of 5 START seed file dds.vendor_codes ........................................ [RUN]
+[0m16:22:46  4 of 5 OK loaded seed file dds.vendor_codes .................................... [[32mINSERT 4[0m in 0.05s]
+[0m16:22:46  5 of 5 START seed file dds.zone_key_map ........................................ [RUN]
+[0m16:22:46  5 of 5 OK loaded seed file dds.zone_key_map .................................... [[32mINSERT 265[0m in 0.08s]
+[0m16:22:46  
+[0m16:22:46  Finished running 5 seeds in 0 hours 0 minutes and 0.54 seconds (0.54s).
+[0m16:22:46  
+[0m16:22:46  [32mCompleted successfully[0m
+[0m16:22:46  
+[0m16:22:46  Done. PASS=5 WARN=0 ERROR=0 SKIP=0 TOTAL=5

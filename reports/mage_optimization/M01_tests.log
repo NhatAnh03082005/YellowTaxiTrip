@@ -1,0 +1,369 @@
+test_chunk_split_manifest_and_keys (integration.test_mage_m01_postgres.MagePostgresQA) ... Completed source file 1/1: file.parquet (2 rows)
+MAGE_PROFILE {"phase": "load_source_files", "process_peak_rss_kib": 140800, "seconds": 0.00781, "started_unix": 1795701294.452206, "status": "SUCCESS"}
+/usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+/usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+Completed raw chunk 1/1: /tmp/tmpnoy1w7__/10/raw/file_part00000.parquet
+MAGE_PROFILE {"phase": "canonicalize_schema", "process_peak_rss_kib": 142784, "seconds": 0.072994, "started_unix": 1795701294.4601018, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "standardize_and_validate", "process_peak_rss_kib": 142784, "seconds": 8e-06, "started_unix": 1795701294.5332053, "status": "SUCCESS"}
+MAGE_PROFILE {"batch_id": 10, "phase": "read_raw_parquet", "process_peak_rss_kib": 147048, "seconds": 0.025036, "started_unix": 1795701294.5611227, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 147176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.023079, "started_unix": 1795701294.5866613, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 147304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.024579, "started_unix": 1795701294.6100962, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 147304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000262, "started_unix": 1795701294.634794, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.006984, "started_unix": 1795701294.6396103, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 7.9e-05, "started_unix": 1795701294.6467, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002865, "started_unix": 1795701294.6468265, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001012, "started_unix": 1795701294.6498024, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002186, "started_unix": 1795701294.6508975, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001137, "started_unix": 1795701294.6531534, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148152, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002218, "started_unix": 1795701294.6543846, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"batch_id": 10, "phase": "read_canonical_parquet", "process_peak_rss_kib": 148280, "seconds": 0.006682, "started_unix": 1795701294.6572428, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.02278, "started_unix": 1795701294.6644273, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.009729, "started_unix": 1795701294.687742, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000574, "started_unix": 1795701294.6975722, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002212, "started_unix": 1795701294.707244, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 7.5e-05, "started_unix": 1795701294.7095597, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002224, "started_unix": 1795701294.7096925, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000553, "started_unix": 1795701294.7120008, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001942, "started_unix": 1795701294.712608, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001339, "started_unix": 1795701294.714647, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148408, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002317, "started_unix": 1795701294.7160654, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"batch_id": 10, "phase": "read_canonical_parquet", "process_peak_rss_kib": 148664, "seconds": 0.004847, "started_unix": 1795701294.7189305, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "load_stage", "process_peak_rss_kib": 148664, "seconds": 0.163297, "started_unix": 1795701294.56064, "status": "SUCCESS"}
+ok
+test_copy_text_null_and_empty_are_distinct (integration.test_mage_m01_postgres.MagePostgresQA) ... MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.023484, "started_unix": 1795701294.7452097, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000691, "started_unix": 1795701294.7688417, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 2e-06, "started_unix": 1795701294.7695897, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000399, "started_unix": 1795701294.7700765, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 4.9e-05, "started_unix": 1795701294.7705255, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002137, "started_unix": 1795701294.7706048, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000591, "started_unix": 1795701294.7728307, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001466, "started_unix": 1795701294.773493, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00063, "started_unix": 1795701294.7750323, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148664, "rows": 5, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001821, "started_unix": 1795701294.775728, "status": "SUCCESS", "table": "copy_strings"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "copy_strings", "rows": 5, "attempted": 5, "inserted": 5, "conflicted": 0}
+ok
+test_count_balanced_but_missing_rows_fails (integration.test_mage_m01_postgres.MagePostgresQA) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.021166, "started_unix": 1795701294.831156, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.031209, "started_unix": 1795701294.8527806, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000305, "started_unix": 1795701294.8840735, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001104, "started_unix": 1795701294.8896391, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6.7e-05, "started_unix": 1795701294.8908205, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002063, "started_unix": 1795701294.8909268, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000587, "started_unix": 1795701294.8930771, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002183, "started_unix": 1795701294.8937447, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001262, "started_unix": 1795701294.8959975, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148664, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001581, "started_unix": 1795701294.8974123, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148664, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.017977, "started_unix": 1795701294.8999248, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148664, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007239, "started_unix": 1795701294.9183502, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 148664, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000371, "started_unix": 1795701294.9256988, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001584, "started_unix": 1795701294.931095, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000106, "started_unix": 1795701294.932861, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002249, "started_unix": 1795701294.933041, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00049, "started_unix": 1795701294.9353693, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001781, "started_unix": 1795701294.93593, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000872, "started_unix": 1795701294.9377682, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001429, "started_unix": 1795701294.938691, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.01661, "started_unix": 1795701294.9409149, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007761, "started_unix": 1795701294.9578607, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000396, "started_unix": 1795701294.9657009, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001073, "started_unix": 1795701294.9706001, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 9.4e-05, "started_unix": 1795701294.9717455, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001984, "started_unix": 1795701294.9718862, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000467, "started_unix": 1795701294.9739501, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002465, "started_unix": 1795701294.974484, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001283, "started_unix": 1795701294.9771185, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 148792, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001553, "started_unix": 1795701294.9784648, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+ok
+test_failed_verify_records_failure_never_success (integration.test_mage_m01_postgres.MagePostgresQA) ... MAGE_PROFILE {"phase": "verify_stage", "process_peak_rss_kib": 148920, "seconds": 0.000196, "started_unix": 1795701295.0054257, "status": "FAILED"}
+ok
+test_raw_invalid_fails_closed_without_payload_column (integration.test_mage_m01_postgres.MagePostgresQA) ... MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 148920, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.017114, "started_unix": 1795701295.0264919, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 148920, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.012429, "started_unix": 1795701295.0439367, "status": "FAILED", "table": "yellow_taxi_raw"}
+ok
+test_reject_all_and_extreme_numeric (integration.test_mage_m01_postgres.MagePostgresQA) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016361, "started_unix": 1795701295.1088462, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.047109, "started_unix": 1795701295.1255195, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000332, "started_unix": 1795701295.1727197, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001464, "started_unix": 1795701295.178295, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 7.2e-05, "started_unix": 1795701295.179845, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002264, "started_unix": 1795701295.1799626, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000833, "started_unix": 1795701295.1823058, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00205, "started_unix": 1795701295.1832032, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000904, "started_unix": 1795701295.1853287, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.005247, "started_unix": 1795701295.1863046, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.019017, "started_unix": 1795701295.1924477, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007735, "started_unix": 1795701295.2117891, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000689, "started_unix": 1795701295.219626, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002678, "started_unix": 1795701295.2256122, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6.1e-05, "started_unix": 1795701295.2283664, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001551, "started_unix": 1795701295.2284625, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000735, "started_unix": 1795701295.2300806, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00187, "started_unix": 1795701295.2309, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000997, "started_unix": 1795701295.232817, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149048, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001427, "started_unix": 1795701295.2338667, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+/usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+ok
+test_retry_counts_mismatch_payload_and_duplicate_input (integration.test_mage_m01_postgres.MagePostgresQA) ... MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015198, "started_unix": 1795701295.2965217, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016954, "started_unix": 1795701295.3120427, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5e-06, "started_unix": 1795701295.3290656, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000781, "started_unix": 1795701295.3324063, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.4e-05, "started_unix": 1795701295.333248, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001915, "started_unix": 1795701295.333335, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000552, "started_unix": 1795701295.3354344, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002164, "started_unix": 1795701295.3361735, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000721, "started_unix": 1795701295.338394, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001262, "started_unix": 1795701295.3391583, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016618, "started_unix": 1795701295.3412247, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.019119, "started_unix": 1795701295.3581583, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5e-06, "started_unix": 1795701295.3773518, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000961, "started_unix": 1795701295.3807886, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.8e-05, "started_unix": 1795701295.3818214, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002058, "started_unix": 1795701295.3819134, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000432, "started_unix": 1795701295.384039, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001631, "started_unix": 1795701295.3845189, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000658, "started_unix": 1795701295.3861973, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.004075, "started_unix": 1795701295.386904, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 1, "attempted": 1, "inserted": 0, "conflicted": 1}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015179, "started_unix": 1795701295.3922708, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.017445, "started_unix": 1795701295.4077518, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 4e-06, "started_unix": 1795701295.4252636, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000852, "started_unix": 1795701295.428587, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.7e-05, "started_unix": 1795701295.4295044, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001643, "started_unix": 1795701295.4295945, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000527, "started_unix": 1795701295.4313283, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149176, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001631, "started_unix": 1795701295.4319108, "status": "FAILED", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.024133, "started_unix": 1795701295.4359016, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.034531, "started_unix": 1795701295.4618378, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5e-06, "started_unix": 1795701295.4964497, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001045, "started_unix": 1795701295.5024548, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6e-05, "started_unix": 1795701295.5035703, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.0019, "started_unix": 1795701295.5036654, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.0005, "started_unix": 1795701295.5056293, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149176, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000988, "started_unix": 1795701295.5061853, "status": "FAILED", "table": "yellow_taxi_raw"}
+ok
+test_two_schemas_and_optional_cast_original (integration.test_mage_m01_postgres.MagePostgresQA) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.017979, "started_unix": 1795701295.6248944, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.020959, "started_unix": 1795701295.6432261, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000243, "started_unix": 1795701295.6642609, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001007, "started_unix": 1795701295.669322, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.8e-05, "started_unix": 1795701295.670388, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001853, "started_unix": 1795701295.6704776, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000542, "started_unix": 1795701295.672413, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001781, "started_unix": 1795701295.6730084, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000812, "started_unix": 1795701295.6748364, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149304, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.004704, "started_unix": 1795701295.6756952, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149304, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.021881, "started_unix": 1795701295.6814566, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149304, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.010027, "started_unix": 1795701295.7037864, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149304, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000381, "started_unix": 1795701295.7138865, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002262, "started_unix": 1795701295.7226884, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 7e-05, "started_unix": 1795701295.72505, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002119, "started_unix": 1795701295.7251742, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000506, "started_unix": 1795701295.7273939, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001786, "started_unix": 1795701295.7279515, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000873, "started_unix": 1795701295.7297847, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.003719, "started_unix": 1795701295.7307022, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.018458, "started_unix": 1795701295.735216, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.010197, "started_unix": 1795701295.7539914, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000831, "started_unix": 1795701295.7642574, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000995, "started_unix": 1795701295.775595, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.8e-05, "started_unix": 1795701295.776659, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001824, "started_unix": 1795701295.7767508, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000412, "started_unix": 1795701295.7786348, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001831, "started_unix": 1795701295.7791054, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00099, "started_unix": 1795701295.7809892, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001699, "started_unix": 1795701295.7820249, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+/usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015797, "started_unix": 1795701295.8462896, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.02056, "started_unix": 1795701295.8623862, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000218, "started_unix": 1795701295.8830194, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000978, "started_unix": 1795701295.8867254, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.6e-05, "started_unix": 1795701295.887759, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001643, "started_unix": 1795701295.8878481, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000406, "started_unix": 1795701295.8895426, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001797, "started_unix": 1795701295.889982, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000796, "started_unix": 1795701295.891826, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149432, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001449, "started_unix": 1795701295.8926628, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016357, "started_unix": 1795701295.8954206, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007676, "started_unix": 1795701295.9120967, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00042, "started_unix": 1795701295.9198418, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000989, "started_unix": 1795701295.9247148, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.4e-05, "started_unix": 1795701295.9257627, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001706, "started_unix": 1795701295.9258497, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000413, "started_unix": 1795701295.927625, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001789, "started_unix": 1795701295.9280818, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000749, "started_unix": 1795701295.9299183, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001208, "started_unix": 1795701295.9307058, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016143, "started_unix": 1795701295.9326696, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.008382, "started_unix": 1795701295.9491284, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000529, "started_unix": 1795701295.9576342, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001071, "started_unix": 1795701295.9629223, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6e-05, "started_unix": 1795701295.9640708, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001644, "started_unix": 1795701295.9641645, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000391, "started_unix": 1795701295.9658625, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002228, "started_unix": 1795701295.9662948, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000941, "started_unix": 1795701295.9685798, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001413, "started_unix": 1795701295.9695723, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+ok
+test_unknown_and_missing_columns_fail (integration.test_mage_m01_postgres.MagePostgresQA) ... MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015944, "started_unix": 1795701295.9926379, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149432, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015637, "started_unix": 1795701296.0091004, "status": "FAILED", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.019236, "started_unix": 1795701296.0262535, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016118, "started_unix": 1795701296.045808, "status": "FAILED", "table": "yellow_taxi_raw"}
+ok
+test_wrong_partition_even_with_correct_counts_fails (integration.test_mage_m01_postgres.MagePostgresQA) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.019389, "started_unix": 1795701296.120627, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.022662, "started_unix": 1795701296.1404665, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000742, "started_unix": 1795701296.1632519, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001227, "started_unix": 1795701296.1705842, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6e-05, "started_unix": 1795701296.171947, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001602, "started_unix": 1795701296.1720665, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000417, "started_unix": 1795701296.1737177, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001678, "started_unix": 1795701296.1741738, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000841, "started_unix": 1795701296.175898, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.0014, "started_unix": 1795701296.176777, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015086, "started_unix": 1795701296.178941, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007253, "started_unix": 1795701296.1943429, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000395, "started_unix": 1795701296.2016752, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001036, "started_unix": 1795701296.2064087, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.4e-05, "started_unix": 1795701296.2075055, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00205, "started_unix": 1795701296.207592, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000446, "started_unix": 1795701296.2097235, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001858, "started_unix": 1795701296.2102177, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000767, "started_unix": 1795701296.212131, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001341, "started_unix": 1795701296.21294, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016622, "started_unix": 1795701296.215116, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007136, "started_unix": 1795701296.2320592, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000836, "started_unix": 1795701296.2393215, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001244, "started_unix": 1795701296.2454286, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 6.1e-05, "started_unix": 1795701296.246751, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001967, "started_unix": 1795701296.2468455, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000603, "started_unix": 1795701296.2488976, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001928, "started_unix": 1795701296.2495651, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001025, "started_unix": 1795701296.2515538, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001524, "started_unix": 1795701296.2526295, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+ok
+test_wrong_scope_and_footer_fail (integration.test_mage_m01_postgres.MagePostgresQA) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016217, "started_unix": 1795701296.2953203, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.01928, "started_unix": 1795701296.3119974, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000222, "started_unix": 1795701296.3313522, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001013, "started_unix": 1795701296.3351696, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.9e-05, "started_unix": 1795701296.3362591, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001749, "started_unix": 1795701296.3363512, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000374, "started_unix": 1795701296.338163, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001701, "started_unix": 1795701296.3385785, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000838, "started_unix": 1795701296.3403273, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149560, "rows": 2, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.004044, "started_unix": 1795701296.3412156, "status": "SUCCESS", "table": "yellow_taxi_raw"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_raw", "rows": 2, "attempted": 2, "inserted": 2, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.016178, "started_unix": 1795701296.3461137, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007766, "started_unix": 1795701296.3626032, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149560, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000351, "started_unix": 1795701296.3704443, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001057, "started_unix": 1795701296.3752387, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.5e-05, "started_unix": 1795701296.3763607, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001627, "started_unix": 1795701296.3764477, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000347, "started_unix": 1795701296.3781328, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001906, "started_unix": 1795701296.378519, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00082, "started_unix": 1795701296.38048, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.002834, "started_unix": 1795701296.3813496, "status": "SUCCESS", "table": "yellow_taxi_canonical"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "yellow_taxi_canonical", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+MAGE_PROFILE {"phase": "schema_inspection", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.015541, "started_unix": 1795701296.384942, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "cast_frame", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.007255, "started_unix": 1795701296.400799, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "json_serialization", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000414, "started_unix": 1795701296.4081209, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "csv_serialization", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00093, "started_unix": 1795701296.4131896, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "connect", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 5.3e-05, "started_unix": 1795701296.414175, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "create_temporary", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00171, "started_unix": 1795701296.4142592, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "copy", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.00042, "started_unix": 1795701296.416024, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "conflict_validation", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001744, "started_unix": 1795701296.4164934, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "insert", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.000919, "started_unix": 1795701296.4182851, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_PROFILE {"phase": "commit", "process_peak_rss_kib": 149688, "rows": 1, "schema": "mage_m01_qa_bd76d88b9038", "seconds": 0.001243, "started_unix": 1795701296.4192486, "status": "SUCCESS", "table": "technical_quarantine"}
+MAGE_WRITE {"schema": "mage_m01_qa_bd76d88b9038", "table": "technical_quarantine", "rows": 1, "attempted": 1, "inserted": 1, "conflicted": 0}
+/usr/local/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1641: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  return np.find_common_type(types, [])
+ok
+test_catalog_has_24_validated_files_on_disk (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... ok
+test_downstream_blocks_accept_mage_context_keyword (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... MAGE_PROFILE {"phase": "load_source_files", "process_peak_rss_kib": 149688, "seconds": 0.000563, "started_unix": 1795701296.554831, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "canonicalize_schema", "process_peak_rss_kib": 149688, "seconds": 0.000473, "started_unix": 1795701296.5554683, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "standardize_and_validate", "process_peak_rss_kib": 149688, "seconds": 7e-06, "started_unix": 1795701296.5559888, "status": "SUCCESS"}
+ok
+test_geometry_transform_output_is_mage_preview_safe (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... MAGE_PROFILE {"phase": "validate_zone_lookup", "process_peak_rss_kib": 150484, "seconds": 0.003655, "started_unix": 1795701296.6138015, "status": "SUCCESS"}
+MAGE_PROFILE {"phase": "validate_zone_geometry", "process_peak_rss_kib": 192104, "seconds": 0.093631, "started_unix": 1795701297.145858, "status": "SUCCESS"}
+ok
+test_reference_loader_preserves_literal_na_members (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... ok
+test_reference_lookup_and_geometry_contract (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... ok
+test_representative_2024_and_2025_schema_versions (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... ok
+test_source_loader_uses_bounded_parts_and_stable_lineage (integration.test_task_4_4_project_inputs.ProjectInputIntegrationTests) ... Completed source file 1/1: source.parquet (5 rows)
+MAGE_PROFILE {"phase": "load_source_files", "process_peak_rss_kib": 198388, "seconds": 0.004751, "started_unix": 1795701297.6056979, "status": "SUCCESS"}
+ok
+test_business_anomaly_is_not_a_technical_reject (unit.test_task_4_4_utilities.CanonicalizationTests) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+ok
+test_copy_normalizes_nullable_float_integer_columns (unit.test_task_4_4_utilities.CanonicalizationTests) ... ok
+test_copy_rejects_fractional_values_for_integer_target (unit.test_task_4_4_utilities.CanonicalizationTests) ... ok
+test_json_columns_can_be_written_when_error_dictionary_is_empty (unit.test_task_4_4_utilities.CanonicalizationTests) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+ok
+test_stage_json_serializer_preserves_sql_null (unit.test_task_4_4_utilities.CanonicalizationTests) ... ok
+test_valid_row_is_canonical_and_invalid_timestamp_is_rejected (unit.test_task_4_4_utilities.CanonicalizationTests) ... /usr/local/lib/python3.10/site-packages/pandas/core/algorithms.py:522: DeprecationWarning: np.find_common_type is deprecated.  Please use `np.result_type` or `np.promote_types`.
+See https://numpy.org/devdocs/release/1.25.0-notes.html and the docs for more information.  (Deprecated NumPy 1.25)
+  common = np.find_common_type([values.dtype, comps_array.dtype], [])
+ok
+test_schema_fingerprint_uses_order_name_and_logical_type (unit.test_task_4_4_utilities.ParquetUtilityTests) ... ok
+test_sha256_reads_file_in_chunks (unit.test_task_4_4_utilities.ParquetUtilityTests) ... ok
+test_source_record_key_is_stable_and_position_sensitive (unit.test_task_4_4_utilities.ParquetUtilityTests) ... ok
+test_catalog_data_prefix_is_mapped_below_mount (unit.test_task_4_4_utilities.PathTests) ... ok
+test_path_traversal_is_rejected (unit.test_task_4_4_utilities.PathTests) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 3.468s
+
+OK

@@ -1,7 +1,10 @@
-from utils.decorators import transformer
+from utils.profiling import profiled
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 
 @transformer
+@profiled
 def filter_incremental(validation_context, *args, **kwargs):
     process_actions = {'PROCESS', 'REPROCESS_IDEMPOTENTLY'}
     process_files = [

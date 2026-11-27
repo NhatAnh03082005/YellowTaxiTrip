@@ -132,7 +132,7 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 | T08  | Runner DDS, skip/retry/cleanup, tách gate OLAP     | T06       | CODE_READY |
 | T09  | Migration QA và end-to-end fault/retry            | T08       | DONE       |
 | T10  | Benchmark thời gian và dung lượng                 | T09       | IN_PROGRESS — r15 May DDS365.546s NOT MET, June bị ngắt trong ingestion; baseline/tổng tích hợp còn thiếu; r17 đang đo lại cho T11 DDS |
-| T11  | Tuning theo evidence, chốt phiên bản              | T10       | IN_PROGRESS — bản sửa CODE_READY/QA PASS; R20 May-only16models/15tests/recon/commit/cleanup PASS, DDS411.906s chưa đạt360s; không chạy June theo yêu cầu mới |
+| T11  | Tuning theo evidence, chốt phiên bản              | T10       | IN_PROGRESS — tích hợp Mage main+DDS, May16models/15tests/recon/cleanup/skip PASS; tổng555.982s, DDS443.594s chưa đạt360s; không chạy June |
 | T12  | T12A bàn giao DDS; T12B chốt reporting            | A: T11; B: T07 | TODO   |
 
 Thứ tự thực hiện ETL: **T06 → T08 → T09 → T10 ↔ T11 → T12A → người phụ trách chạy 24 tháng và full audit DDS → T07 → T12B**. T07 có thể chuẩn bị code/fixture/mapping sớm, nhưng nghiệm thu reporting thật sau DDS. T12A là mốc bàn giao bản ETL đã benchmark, không đòi phải chạy đủ 24 tháng trước khi bàn giao; T12B không chặn bàn giao ETL. Không đổi số hiệu T00–T12 để giữ liên kết evidence cũ.

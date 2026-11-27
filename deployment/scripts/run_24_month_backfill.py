@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAGE_ROOT = ROOT / 'mage_project'
 DBT_ROOT = ROOT / 'dbt_project'
 DATA_ROOT = ROOT / 'data'
-WORK_ROOT = DATA_ROOT / 'work' / 'task_4_4'
+WORK_ROOT = Path(os.environ.get('MAGE_WORK_ROOT', str(DATA_ROOT / 'work' / 'task_4_4')))
 CATALOG = DATA_ROOT / 'catalog' / 'yellow_taxi_2024_2025.csv'
 SCHEMA_REGISTRY = DATA_ROOT / 'catalog' / 'yellow_taxi_schema_registry.csv'
 
@@ -409,6 +409,24 @@ def run_downstream(batch_id: int) -> dict:
             raise
 
 
+def staging_cleanup_tables(cursor) -> tuple[str, ...]:
+    """Resolve physical staging from the reviewed Mage contract, never truncate views."""
+    mode = os.environ.get('MAGE_STAGE_STORAGE', 'wide')
+    if mode == 'wide':
+        return ('stage.yellow_taxi_raw', 'stage.yellow_taxi_canonical')
+    if mode != 'slim':
+        raise RuntimeError('Invalid cleanup storage mode')
+    rows = execute_cursor(cursor, 'SELECT storage_mode FROM stage.stage_storage_contract WHERE singleton', fetch=True)
+    if len(rows) != 1 or rows[0]['storage_mode'] not in ('slim-v1', 'slim-v2'):
+        raise RuntimeError('Missing or unsupported slim staging contract')
+    if rows[0]['storage_mode'] == 'slim-v2':
+        # Empty v1 rollback tables still reference stage_file_batch. Include them
+        # explicitly instead of CASCADE; cleanup verifies they stayed empty.
+        return ('stage.yellow_taxi_trip_data', 'stage.yellow_taxi_raw_data',
+                'stage.yellow_taxi_canonical_data', 'stage.stage_file_batch')
+    return ('stage.yellow_taxi_raw_data', 'stage.yellow_taxi_canonical_data', 'stage.stage_file_batch')
+
+
 def clean_transient_storage(batch_id: int) -> None:
     """Clean the single-writer staging scope, with a durable retry checkpoint."""
     if os.environ.get('ALLOW_STAGING_CLEANUP') != '1':
@@ -428,11 +446,21 @@ def clean_transient_storage(batch_id: int) -> None:
                     raise RuntimeError('Refusing cleanup before batch SUCCESS')
                 if rows[0]['cleanup_status'] == 'SUCCESS':
                     return
-                execute_cursor(cursor, """
-                    LOCK TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical,
-                        dds.int_taxi_trip_classified IN ACCESS EXCLUSIVE MODE;
-                    LOCK TABLE dds.dbt_minimal_workspace_state IN ACCESS EXCLUSIVE MODE;
-                """)
+                staging_tables = staging_cleanup_tables(cursor)
+                execute_cursor(cursor, 'LOCK TABLE ' + ', '.join(staging_tables) +
+                               ', dds.int_taxi_trip_classified, dds.dbt_minimal_workspace_state IN ACCESS EXCLUSIVE MODE')
+                if 'stage.stage_file_batch' in staging_tables:
+                    # Logical views can hide orphan physical versions; check every
+                    # physical relation before deleting the single-file workspace.
+                    for table in staging_tables:
+                        rollback_table = ('stage.yellow_taxi_trip_data' in staging_tables and
+                                          table in ('stage.yellow_taxi_raw_data', 'stage.yellow_taxi_canonical_data'))
+                        foreign = execute_cursor(cursor, 'SELECT count(*) foreign_rows FROM ' + table +
+                            (' WHERE true' if rollback_table else ' WHERE file_version_id IS DISTINCT FROM %(version)s') +
+                            (' OR batch_id IS DISTINCT FROM %(batch)s' if table == 'stage.stage_file_batch' else ''),
+                            {'batch': batch_id, 'version': rows[0]['file_version_id']}, fetch=True)[0]
+                        if foreign['foreign_rows']:
+                            raise RuntimeError('Refusing cleanup: physical staging contains another batch/version')
                 safety = execute_cursor(cursor, """
                     SELECT
                       (SELECT count(*) FROM stage.yellow_taxi_raw
@@ -466,10 +494,9 @@ def clean_transient_storage(batch_id: int) -> None:
                     WHERE batch_id = %(batch)s;
                     UPDATE dds.dbt_minimal_workspace_state SET valid = false
                     WHERE model_name = 'int_taxi_trip_classified';
-                    TRUNCATE TABLE stage.yellow_taxi_raw, stage.yellow_taxi_canonical,
-                        dds.int_taxi_trip_classified
-                        RESTART IDENTITY;
                 """, {'batch': batch_id})
+                execute_cursor(cursor, 'TRUNCATE TABLE ' + ', '.join(staging_tables) +
+                               ', dds.int_taxi_trip_classified RESTART IDENTITY')
     except Exception as exception:
         execute("""
             UPDATE control.etl_backfill_file
@@ -617,7 +644,19 @@ def run_ingestion(month: str, replay_file_version_id=None,
     from data_exporters.load_stage import load_stage
     from transformers.verify_stage import verify_stage
 
+    stage_load_mode = os.environ.get('MAGE_STAGE_LOAD_MODE', 'upsert')
+    prepare_mode = os.environ.get('MAGE_PREPARE_MODE', 'disk')
+    storage_mode = os.environ.get('MAGE_STAGE_STORAGE', 'wide')
+    if prepare_mode not in ('disk', 'streaming') or storage_mode not in ('wide', 'slim'):
+        raise ValueError('Invalid Mage preparation/storage mode')
+    if (prepare_mode == 'streaming' or storage_mode == 'slim') and stage_load_mode != 'direct':
+        raise ValueError('Streaming/slim require direct loading')
+    mage_batch_size = int(os.environ.get('MAGE_BATCH_SIZE', '50000'))
+    if stage_load_mode not in ('upsert', 'direct') or mage_batch_size <= 0:
+        raise ValueError('Invalid Mage stage mode or batch size')
     context = get_extraction_window(
+        prepare_mode=prepare_mode, stage_load_mode=stage_load_mode,
+        stage_storage_mode=storage_mode,
         run_type=run_type,
         triggered_by='scheduled_dds_runner' if run_type == 'INCREMENTAL' else 'backfill_controller',
     )
@@ -672,14 +711,15 @@ def run_ingestion(month: str, replay_file_version_id=None,
     require_safe_file_version(context)
     process_count = context['process_file_count']
     context = load_source_files(
-        context, work_root=str(WORK_ROOT), source_batch_size=50000,
+        context, work_root=str(WORK_ROOT), source_batch_size=mage_batch_size,
+        prepare_mode=prepare_mode, stage_load_mode=stage_load_mode,
     )
     context = canonicalize_schema(
-        context, work_root=str(WORK_ROOT), canonical_batch_size=50000,
+        context, work_root=str(WORK_ROOT), canonical_batch_size=mage_batch_size,
     )
     context = standardize_and_validate(context)
-    context = write_technical_quarantine(context)
-    context = load_stage(context)
+    context = write_technical_quarantine(context, stage_load_mode=stage_load_mode)
+    context = load_stage(context, stage_load_mode=stage_load_mode, stage_storage_mode=storage_mode)
     staged = verify_stage(context)
     if context.get('replacement_approval_file_id') is not None:
         execute('SELECT control.bind_approved_replacement(%(batch)s,%(approval)s);',

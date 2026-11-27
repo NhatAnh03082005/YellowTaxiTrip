@@ -1,12 +1,16 @@
+from utils.profiling import profiled
 from pathlib import Path
 
 import pandas as pd
 
 from utils.database import execute, fetch_one
-from utils.decorators import transformer
+
+if 'transformer' not in globals():
+    from utils.decorators import transformer
 
 
 @transformer
+@profiled
 def discover_source_files(batch_context, *args, **kwargs):
     batch_id = int(batch_context['batch_id'])
     catalog_path = Path(kwargs.get(

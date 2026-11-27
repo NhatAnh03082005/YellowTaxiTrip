@@ -1,5 +1,7 @@
 # Phase 2 task 4.4 — Mage pipeline validation
 
+> Historical task-4.4 evidence. Current trip staging uses `direct + streaming + slim-v2`; see `docs/etl_design/MAGE_SLIM_V2_IMPLEMENTATION.md`. Counts/reference evidence below remains valid, but the old physical Raw/Canonical loader description is not the current architecture.
+
 **Date:** 2026-11-17 (Asia/Bangkok)  
 **Environment:** Docker Mage 0.9.76, project `nyc_taxi_bi`
 

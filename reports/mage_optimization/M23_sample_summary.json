@@ -1,0 +1,375 @@
+[
+  {
+    "artifact": "M02_sample_arrow.log",
+    "result": {
+      "mode": "upsert",
+      "serialization": "arrow",
+      "batch_size": 100000,
+      "rows": 500000,
+      "seconds_load_and_verify": 61.15579949200037,
+      "counts": {
+        "raw": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "canonical": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        }
+      },
+      "amounts": {
+        "yellow_taxi_raw": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ],
+        "yellow_taxi_canonical": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ]
+      },
+      "before": {
+        "temp_bytes": 5768678716,
+        "db_bytes": 4752839139
+      },
+      "after": {
+        "temp_bytes": 6408819388,
+        "db_bytes": 5390135779
+      },
+      "relations": [
+        {
+          "relname": "taxi_zone_raw",
+          "bytes": 8192
+        },
+        {
+          "relname": "taxi_zone_geometry",
+          "bytes": 24576
+        },
+        {
+          "relname": "yellow_taxi_raw",
+          "bytes": 333447168
+        },
+        {
+          "relname": "yellow_taxi_canonical",
+          "bytes": 304996352
+        }
+      ],
+      "scope": "QA local part replay; real FKs/control; excludes input re-batching, source transform, scheduler, final amount-query time"
+    },
+    "phase_seconds": {
+      "connect": 7.5e-05,
+      "schema_inspection": 0.01076,
+      "cast_frame": 1.0350300000000001,
+      "json_serialization": 0.12781299999999998,
+      "csv_serialization": 2.9183310000000002,
+      "create_temporary": 0.019517000000000003,
+      "copy": 5.311815000000001,
+      "conflict_validation": 4.262529,
+      "insert": 41.908352,
+      "commit": 0.069045
+    },
+    "peak_rss_kib": 1316212
+  },
+  {
+    "artifact": "M02_sample_pandas.log",
+    "result": {
+      "mode": "upsert",
+      "serialization": "pandas",
+      "batch_size": 100000,
+      "rows": 500000,
+      "seconds_load_and_verify": 72.2271462460003,
+      "counts": {
+        "raw": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "canonical": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        }
+      },
+      "amounts": {
+        "yellow_taxi_raw": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ],
+        "yellow_taxi_canonical": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ]
+      },
+      "before": {
+        "temp_bytes": 5130151868,
+        "db_bytes": 4755378659
+      },
+      "after": {
+        "temp_bytes": 5768678716,
+        "db_bytes": 5391012323
+      },
+      "relations": [
+        {
+          "relname": "taxi_zone_raw",
+          "bytes": 8192
+        },
+        {
+          "relname": "taxi_zone_geometry",
+          "bytes": 24576
+        },
+        {
+          "relname": "yellow_taxi_raw",
+          "bytes": 333447168
+        },
+        {
+          "relname": "yellow_taxi_canonical",
+          "bytes": 304996352
+        }
+      ],
+      "scope": "QA local part replay; real FKs/control; excludes input re-batching, source transform, scheduler, final amount-query time"
+    },
+    "phase_seconds": {
+      "connect": 9.4e-05,
+      "schema_inspection": 0.015426,
+      "cast_frame": 1.0991369999999998,
+      "json_serialization": 0.13280999999999998,
+      "csv_serialization": 13.349157,
+      "create_temporary": 0.019843,
+      "copy": 5.635388,
+      "conflict_validation": 4.349945,
+      "insert": 43.03813,
+      "commit": 0.071626
+    },
+    "peak_rss_kib": 1315900
+  },
+  {
+    "artifact": "M03_sample_100000.log",
+    "result": {
+      "mode": "direct",
+      "serialization": "arrow",
+      "batch_size": 100000,
+      "rows": 500000,
+      "seconds_load_and_verify": 53.313363618999574,
+      "counts": {
+        "raw": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "canonical": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "reject": {}
+      },
+      "amounts": {
+        "yellow_taxi_raw": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ],
+        "yellow_taxi_canonical": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ]
+      },
+      "before": {
+        "temp_bytes": 4008623292,
+        "db_bytes": 4749357539
+      },
+      "after": {
+        "temp_bytes": 4569276988,
+        "db_bytes": 5394100707
+      },
+      "relations": [
+        {
+          "relname": "taxi_zone_raw",
+          "bytes": 8192
+        },
+        {
+          "relname": "taxi_zone_geometry",
+          "bytes": 24576
+        },
+        {
+          "relname": "yellow_taxi_raw",
+          "bytes": 333815808
+        },
+        {
+          "relname": "yellow_taxi_canonical",
+          "bytes": 305496064
+        }
+      ],
+      "scope": "QA local part replay; real FKs/control; excludes input re-batching, source transform, scheduler, final amount-query time"
+    },
+    "phase_seconds": {
+      "connect": 0.000259,
+      "read_raw_parquet": 0.278068,
+      "schema_inspection": 0.019426,
+      "cast_frame": 1.171793,
+      "json_serialization": 0.16300699999999999,
+      "csv_serialization": 3.0685369999999996,
+      "copy": 43.692699,
+      "read_canonical_parquet": 0.29457300000000003,
+      "read_reject_parquet": 0.039441000000000004,
+      "validation": 4.130183
+    },
+    "peak_rss_kib": 1271536
+  },
+  {
+    "artifact": "M03_sample_250000.log",
+    "result": {
+      "mode": "direct",
+      "serialization": "arrow",
+      "batch_size": 250000,
+      "rows": 500000,
+      "seconds_load_and_verify": 51.52400794300047,
+      "counts": {
+        "raw": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "canonical": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "reject": {}
+      },
+      "amounts": {
+        "yellow_taxi_raw": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ],
+        "yellow_taxi_canonical": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ]
+      },
+      "before": {
+        "temp_bytes": 4569276988,
+        "db_bytes": 4755337699
+      },
+      "after": {
+        "temp_bytes": 5130151868,
+        "db_bytes": 5394518499
+      },
+      "relations": [
+        {
+          "relname": "taxi_zone_raw",
+          "bytes": 8192
+        },
+        {
+          "relname": "taxi_zone_geometry",
+          "bytes": 24576
+        },
+        {
+          "relname": "yellow_taxi_raw",
+          "bytes": 333815808
+        },
+        {
+          "relname": "yellow_taxi_canonical",
+          "bytes": 305496064
+        }
+      ],
+      "scope": "QA local part replay; real FKs/control; excludes input re-batching, source transform, scheduler, final amount-query time"
+    },
+    "phase_seconds": {
+      "connect": 0.000191,
+      "read_raw_parquet": 0.282936,
+      "schema_inspection": 0.013232,
+      "cast_frame": 1.023865,
+      "json_serialization": 0.15112699999999998,
+      "csv_serialization": 2.62483,
+      "copy": 42.94166,
+      "read_canonical_parquet": 0.267927,
+      "read_reject_parquet": 0.037244,
+      "validation": 3.85981
+    },
+    "peak_rss_kib": 1733060
+  },
+  {
+    "artifact": "M03_sample_50000.log",
+    "result": {
+      "mode": "direct",
+      "serialization": "arrow",
+      "batch_size": 50000,
+      "rows": 500000,
+      "seconds_load_and_verify": 53.072424531999786,
+      "counts": {
+        "raw": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "canonical": {
+          "attempted": 500000,
+          "inserted": 500000,
+          "conflicted": 0
+        },
+        "reject": {}
+      },
+      "amounts": {
+        "yellow_taxi_raw": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ],
+        "yellow_taxi_canonical": [
+          "9439507.34",
+          "1772652.46",
+          "13896290.05"
+        ]
+      },
+      "before": {
+        "temp_bytes": 3447314236,
+        "db_bytes": 4749029859
+      },
+      "after": {
+        "temp_bytes": 4008623292,
+        "db_bytes": 5388210659
+      },
+      "relations": [
+        {
+          "relname": "taxi_zone_raw",
+          "bytes": 8192
+        },
+        {
+          "relname": "taxi_zone_geometry",
+          "bytes": 24576
+        },
+        {
+          "relname": "yellow_taxi_raw",
+          "bytes": 333815808
+        },
+        {
+          "relname": "yellow_taxi_canonical",
+          "bytes": 305496064
+        }
+      ],
+      "scope": "QA local part replay; real FKs/control; excludes input re-batching, source transform, scheduler, final amount-query time"
+    },
+    "phase_seconds": {
+      "connect": 8.5e-05,
+      "read_raw_parquet": 0.22735600000000003,
+      "schema_inspection": 0.010831,
+      "cast_frame": 1.522223,
+      "json_serialization": 0.13469599999999998,
+      "csv_serialization": 3.0173119999999995,
+      "copy": 43.579719,
+      "read_canonical_parquet": 0.235253,
+      "read_reject_parquet": 0.064357,
+      "validation": 3.952474
+    },
+    "peak_rss_kib": 974952
+  }
+]

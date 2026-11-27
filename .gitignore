@@ -24,6 +24,8 @@ dbt_project/data/work/**
 # Generated tool artifacts
 dbt_project/target/
 dbt_project/logs/
+/tmp/
+/output/
 mage_project/.file_versions/
 mage_project/.ssh_tunnel/
 mage_project/.mage_data/

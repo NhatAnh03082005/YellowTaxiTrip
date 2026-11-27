@@ -23,6 +23,36 @@ def load_runner():
 
 
 class BackfillSafetyGates(unittest.TestCase):
+    def test_slim_cleanup_resolves_v1_v2_and_rejects_unknown_contract(self):
+        runner = load_runner()
+        for contract,expected in (
+            ('slim-v1',('stage.yellow_taxi_raw_data','stage.yellow_taxi_canonical_data','stage.stage_file_batch')),
+            ('slim-v2',('stage.yellow_taxi_trip_data','stage.yellow_taxi_raw_data','stage.yellow_taxi_canonical_data','stage.stage_file_batch')),
+        ):
+            with patch.dict(runner.os.environ,{'MAGE_STAGE_STORAGE':'slim'}), \
+                 patch.object(runner,'execute_cursor',return_value=[{'storage_mode':contract}]):
+                self.assertEqual(runner.staging_cleanup_tables(object()),expected)
+        with patch.dict(runner.os.environ,{'MAGE_STAGE_STORAGE':'slim'}), \
+             patch.object(runner,'execute_cursor',return_value=[{'storage_mode':'unknown'}]):
+            with self.assertRaisesRegex(RuntimeError,'unsupported'):
+                runner.staging_cleanup_tables(object())
+
+    def test_slim_cleanup_rejects_orphan_physical_version_before_truncate(self):
+        runner=load_runner()
+        connection=MagicMock()
+        cursor=connection.__enter__.return_value.cursor.return_value.__enter__.return_value
+        cursor.fetchall.side_effect=[
+            [{'status':'SUCCESS','cleanup_status':'PENDING','file_version_id':77}],
+            [{'storage_mode':'slim-v2'}],
+            [{'foreign_rows':1}],
+        ]
+        with patch.dict(runner.os.environ,{'ALLOW_STAGING_CLEANUP':'1','MAGE_STAGE_STORAGE':'slim'}), \
+             patch.object(runner,'connection',return_value=connection), \
+             patch.object(runner,'execute'):
+            with self.assertRaisesRegex(RuntimeError,'physical staging'):
+                runner.clean_transient_storage(123)
+        self.assertFalse(any('TRUNCATE' in call.args[0] for call in cursor.execute.call_args_list))
+
     def test_explicit_qa_host_and_port_survive_dotenv(self):
         runner = load_runner()
         with patch.dict(runner.os.environ, {'POSTGRES_HOST': '127.0.0.1',
