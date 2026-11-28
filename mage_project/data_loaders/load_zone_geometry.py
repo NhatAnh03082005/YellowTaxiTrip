@@ -3,7 +3,10 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 
-from utils.decorators import data_loader, test
+if 'data_loader' not in globals():
+    from utils.decorators import data_loader
+if 'test' not in globals():
+    from utils.decorators import test
 
 
 @data_loader

@@ -307,6 +307,31 @@ class BackfillSafetyGates(unittest.TestCase):
         self.assertIn('--target-path', command)
         self.assertIn('--log-path', command)
 
+    def test_dbt_memory_is_scoped_to_child_and_preserves_existing_options(self):
+        runner = load_runner()
+        with patch.dict(runner.os.environ, {
+            'PGOPTIONS': '-c statement_timeout=1800000 -c work_mem=4MB',
+            'DBT_WORK_MEM_MB': '32',
+        }, clear=True):
+            environment = runner.dbt_environment()
+            self.assertEqual(environment['PGOPTIONS'],
+                             '-c statement_timeout=1800000 -c work_mem=4MB -c work_mem=32MB')
+            self.assertEqual(runner.os.environ['PGOPTIONS'],
+                             '-c statement_timeout=1800000 -c work_mem=4MB')
+        with patch.dict(runner.os.environ, {}, clear=True):
+            self.assertEqual(runner.dbt_environment()['PGOPTIONS'], '-c work_mem=32MB')
+
+    def test_dbt_memory_rejects_invalid_settings_before_launch(self):
+        runner = load_runner()
+        for value in ('0', '-1', '1.5', '32MB', '32 -c fsync=off'):
+            with self.subTest(value=value), patch.dict(runner.os.environ, {'DBT_WORK_MEM_MB': value}):
+                with self.assertRaises(ValueError):
+                    runner.dbt_environment()
+        with patch.dict(runner.os.environ, {'DBT_WORK_MEM_MB': '', 'PGOPTIONS': '-c work_mem=8MB'}):
+            environment = runner.dbt_environment()
+            self.assertEqual(environment['PGOPTIONS'], '-c work_mem=8MB')
+            self.assertNotIn('DBT_WORK_MEM_MB', environment)
+
     def test_parent_without_validated_child_cannot_finalize(self):
         runner = load_runner()
         with patch.object(runner, 'execute', return_value=[]):

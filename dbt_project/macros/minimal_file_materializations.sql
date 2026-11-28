@@ -55,7 +55,9 @@
        still built before post-hooks/commit, so duplicate input rolls back. #}
     {% do run_query('create temporary view minimal_fact_source as ' ~ sql) %}
   {% else %}
-    {% do run_query('create temporary table minimal_fact_source on commit drop as ' ~ sql) %}
+    {# Keep source heap/index locality for subsequent files and retries. This
+       changes insertion order only; every row and conflict check is retained. #}
+    {% do run_query('create temporary table minimal_fact_source on commit drop as select * from (' ~ sql ~ ') ordered_source order by source_record_key') %}
     {% do run_query('create unique index on minimal_fact_source(source_record_key)') %}
     {% do run_query('analyze minimal_fact_source') %}
   {% endif %}
@@ -73,6 +75,13 @@
     {% endfor %}
   {% endif %}
   {% if existing is not none %}
+    {# The unique source-key lookup already performed by ON CONFLICT is the
+       collision check for ordinary loads/retries. Raise inside that same
+       transaction instead of separately joining all historical Fact keys.
+       Approved replacement still checks before deleting its old version. #}
+    {% do run_query(minimal_create_fact_version_guard()) %}
+  {% endif %}
+  {% if existing is not none and var('apply_approved_fact_replacement', false) %}
     {% set collisions=run_query('select 1 from ' ~ relation ~ ' f join minimal_fact_source s using(source_record_key) where f.file_version_id <> s.file_version_id limit 1') %}
     {% if collisions.rows | length %}
       {{ exceptions.raise_compiler_error('Source identity collision across file versions; refusing to overwrite unrelated Fact') }}
@@ -105,7 +114,11 @@
   {% for column in columns if column.name != 'trip_key' %}
     {% do names.append(adapter.quote(column.name)) %}
     {% if column.name != 'source_record_key' %}
-      {% do assignments.append(adapter.quote(column.name) ~ '=excluded.' ~ adapter.quote(column.name)) %}
+      {% if column.name == 'file_version_id' %}
+        {% do assignments.append(adapter.quote(column.name) ~ '=pg_temp.minimal_fact_version_guard(f.file_version_id,excluded.file_version_id)') %}
+      {% else %}
+        {% do assignments.append(adapter.quote(column.name) ~ '=excluded.' ~ adapter.quote(column.name)) %}
+      {% endif %}
       {% do current.append('f.' ~ adapter.quote(column.name)) %}
       {% do incoming.append('excluded.' ~ adapter.quote(column.name)) %}
     {% endif %}
@@ -114,10 +127,14 @@
     insert into {{ relation }} as f ({{ names | join(',') }})
     select {{ names | join(',') }} from minimal_fact_source where true
     {% if existing is not none %}
+    order by source_record_key
     on conflict(source_record_key) do update set {{ assignments | join(',') }}
     where row({{ current | join(',') }}) is distinct from row({{ incoming | join(',') }})
     {% endif %}
   {% endcall %}
+  {% if existing is not none %}
+    {% do run_query('drop function pg_temp.minimal_fact_version_guard(bigint,bigint)') %}
+  {% endif %}
   {% if existing is none %}
     {# New target only: build indexes in bulk, still inside the same writer lock
        and transaction. Existing targets retain their constraints and upsert. #}

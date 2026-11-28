@@ -1,6 +1,9 @@
 from utils.profiling import profiled
 import pandas as pd
-from utils.decorators import test, transformer
+if 'transformer' not in globals():
+    from utils.decorators import transformer
+if 'test' not in globals():
+    from utils.decorators import test
 
 
 @transformer

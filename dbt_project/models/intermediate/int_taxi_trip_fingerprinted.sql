@@ -1,19 +1,28 @@
 {{ config(materialized='ephemeral' if var('dbt_minimal_mode', false) else 'view') }}
 {% if var('dbt_minimal_mode', false) %}
--- Hash the unchanged raw JSON before joining it to canonical values. Only the
+-- Hash the unchanged raw representation before joining it to canonical values. Only the
 -- compact key/hash/contract result crosses the join; no persistent table added.
 with raw_rows as (
     select r.source_record_key,r.schema_fingerprint,r.schema_version,
+        {% if execute %}
+        {{ minimal_raw_scalar_source(source('stage','yellow_taxi_raw'),'r') }}
+        {% else %}
         {{ minimal_raw_values(source('stage','yellow_taxi_raw'),'r') }} as raw_values
+        {% endif %}
     from {{ source('stage','yellow_taxi_raw') }} r
     where r.batch_id={{ minimal_batch_id() }} and r.file_version_id={{ minimal_version_id() }}
-    -- Keep one JSON projection per raw row before the serializer references it.
+    -- Keep scalar conversion/payload projection once before serialization.
     offset 0
 ), raw_fields as (
     select source_record_key,schema_fingerprint,schema_version,
+        {% if execute %}
+        true as raw_values_present,
+        {{ minimal_raw_scalar_fields() }}
+        {% else %}
         raw_values is not null as raw_values_present,
         {{ minimal_raw_projection_fields() }},
         {{ minimal_raw_contract_valid() }} as raw_contract_valid
+        {% endif %}
     from raw_rows
     offset 0
 ), raw_hashes as materialized (

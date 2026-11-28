@@ -131,8 +131,8 @@ Không cần tạo đủ report rỗng từ đầu. Chỉ tạo khi thực hiệ
 | T07  | Job OLAP riêng và nghiệm thu reporting           | T12A + DDS được nghiệm thu | TODO |
 | T08  | Runner DDS, skip/retry/cleanup, tách gate OLAP     | T06       | CODE_READY |
 | T09  | Migration QA và end-to-end fault/retry            | T08       | DONE       |
-| T10  | Benchmark thời gian và dung lượng                 | T09       | IN_PROGRESS — r15 May DDS365.546s NOT MET, June bị ngắt trong ingestion; baseline/tổng tích hợp còn thiếu; r17 đang đo lại cho T11 DDS |
-| T11  | Tuning theo evidence, chốt phiên bản              | T10       | IN_PROGRESS — initial Fact tối ưu, DDS-only376.829s; May16models/15tests/full audit/strict parity/fault/recovery/upsert PASS; chưa đạt360s, chưa chạy June |
+| T10  | Benchmark thời gian và dung lượng                 | T09       | IN_PROGRESS — full-flow ba tối ưu DDS869.063s/parity PASS; DDS347.312/368.531s, June vượt360s; partition cuối chưa đo xong, original baseline thiếu; main/QA đã xóa theo yêu cầu dọn C |
+| T11  | Tuning theo evidence, chốt phiên bản              | T10       | IN_PROGRESS — raw scalar/policy/Fact full-flow PASS dữ liệu, June vượt8.531s; partition regression/probe PASS, CODE_READY chờ benchmark mới sau cleanup C; chưa DONE |
 | T12  | T12A bàn giao DDS; T12B chốt reporting            | A: T11; B: T07 | TODO   |
 
 Thứ tự thực hiện ETL: **T06 → T08 → T09 → T10 ↔ T11 → T12A → người phụ trách chạy 24 tháng và full audit DDS → T07 → T12B**. T07 có thể chuẩn bị code/fixture/mapping sớm, nhưng nghiệm thu reporting thật sau DDS. T12A là mốc bàn giao bản ETL đã benchmark, không đòi phải chạy đủ 24 tháng trước khi bàn giao; T12B không chặn bàn giao ETL. Không đổi số hiệu T00–T12 để giữ liên kết evidence cũ.
@@ -464,7 +464,11 @@ T08 **CODE_READY**: [report](../../reports/dbt_minimal_refactor/T08.md). Runner 
 
 ## Trạng thái mới nhất T10/T11 và dọn source — 2026-11-27
 
-T10/T11 giữ **IN_PROGRESS**, bản sửa DDS **CODE_READY**. Lượt một tháng May thật mới nhất nạp3,723,833raw, Fact3,661,046/business62,787/duplicate0;16models/15tests/đối soát/commit/cleanup PASS. DDS411.906s chưa đạt360s; Mage595.328s. Chỉ chạy May theo yêu cầu mới, không nạp June. Original baseline chưa có full native parity; không thay bằng sample hoặc recovery. Xem [T10](../../reports/dbt_minimal_refactor/T10.md), [T11](../../reports/dbt_minimal_refactor/T11.md).
+T10/T11 giữ **IN_PROGRESS**. Theo yêu cầu kiểm cả chuỗi nạp, đã đo hai QA mới liên tục May→June: Source→Mage→DDS→15tests/file→reconciliation→commit/cleanup→audit2file→finalize1701.297→1571.500s (**−7,63%**). Giữ code memory riêng dbt child/ordered Fact/conflict guard; không sửa engine Mage hoặc yêu cầu nghiệp vụ. Tổng DDS1431.376→1328.610s; candidate May631.938/June696.672s vẫn vượt360s, Source→cleanup740.141/799.859s vẫn vượt600s. June tests173.360→196.531s là regression phase, không chỉ báo node Fact nhanh hơn.
+
+Strict typed binary COPY toàn Fact/business/duplicate của hai file PASS (chỉ loại initial trip_key giữa database mới);16models/15tests mỗi file/audit2file, retry/collision/replacement fixture và native verified skip PASS. Watermark2, staging/mapping/workspace0; main `nyc_taxi` kiểm read-only vẫn batch1/2SUCCESS/Fact7.135.797/total206.940.635,71. Cả hai file thật là schema v001; v002 kiểm bằng fixture. Database QA candidate sau cleanup tăng~2,79% so baseline, không tuyên bố giảm disk. Một cặp đo chưa chứng minh SLA/cache ổn định hoặc24file; original immutable baseline còn thiếu. Không triển khai T07/T12. Xem [T10](../../reports/dbt_minimal_refactor/T10.md), [T11](../../reports/dbt_minimal_refactor/T11.md).
+
+Chẩn đoán sâu28/11/2026: [report nguyên nhân](../../reports/dbt_minimal_refactor/DDS_FLOW_ROOT_CAUSE_ANALYSIS.md). Full June trên QA clone có wide sort/hash spill, policy lặp3,54triệu lần cho182rule arrays, Fact CTE spool và partition ước lượng200groups/thực3,54triệu. Probe policy reuse có lợi ích thành phần; chưa sửa runtime hoặc báo PASS timing. Test-wrapper standalone/concurrent chưa tái hiện mức chậm cũ, nên nguyên nhân101/91s còn cần đo trong whole-flow có I/O/wait capture. Ghi nhận frequent checkpoints/max_wal_size1GB và probe inline fail do shm64MiB; không đổi server/container/main hoặc giảm coverage.
 
 Đã dọn bộ công cụ benchmark/QA tạm và bản plan root trùng theo yêu cầu người dùng. Giữ source Source→DDS, migration/rollback, contract và regression tests. Dùng [dbt README](../../dbt_project/README.md) cho entrypoint chính; các lệnh campaign QA cũ không còn được giữ trong source. Snapshot/log cục bộ ở `data/work`, không commit. Sau dọn:45offline tests PASS, dbt parse minimal/legacy PASS;89SQL/YAML/CSV dbt giữ nguyên so bản đã kiểm. Không migrate live, xóa database hoặc thực hiện T12/T07.
 

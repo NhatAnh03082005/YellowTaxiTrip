@@ -1,4 +1,22 @@
 selectors:
+  - name: minimal_dds_build
+    description: One-month build with the approved 15 batch gates; avoid indirectly rebuilding ephemeral SQL for legacy/global tests.
+    definition:
+      union:
+        - method: tag
+          value: minimal_dds
+          parents: true
+        - method: tag
+          value: minimal_batch
+        - exclude:
+            # Subtract non-monthly tests, retaining every model/seed ancestor.
+            # dbt 1.8 indirect_selection: empty would also suppress parents.
+            - intersection:
+                - method: resource_type
+                  value: test
+                - exclude:
+                    - method: tag
+                      value: minimal_batch
   - name: minimal_dds_run
     description: DDS models and their ancestors for one verified file version; OLAP is not a dependency.
     definition:

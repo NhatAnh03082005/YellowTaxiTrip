@@ -115,6 +115,22 @@ def dbt_executable() -> str:
     return 'dbt'
 
 
+def dbt_environment() -> dict:
+    """Bound sort/hash tuning to dbt child sessions, preserving Mage settings."""
+    environment = os.environ.copy()
+    value = environment.get('DBT_WORK_MEM_MB', '32').strip()
+    if not value:
+        environment.pop('DBT_WORK_MEM_MB', None)
+        return environment
+    if not value.isdecimal() or int(value) <= 0:
+        raise ValueError('DBT_WORK_MEM_MB requires a positive integer or empty to preserve connection settings')
+    value = str(int(value))
+    environment['DBT_WORK_MEM_MB'] = value
+    options = environment.get('PGOPTIONS', '').strip()
+    environment['PGOPTIONS'] = '{} -c work_mem={}MB'.format(options, value).strip()
+    return environment
+
+
 def run_dbt(arguments: list[str], batch_id: int, extra_vars=None) -> None:
     if extra_vars and any(key in extra_vars for key in (
         'fact_lifecycle_mode', 'enable_fingerprint_history_candidate',
@@ -143,7 +159,7 @@ def run_dbt(arguments: list[str], batch_id: int, extra_vars=None) -> None:
                       'artifact_root': str(artifact_root)}), flush=True)
     started = time.monotonic()
     try:
-        subprocess.run(command, cwd=ROOT, env=os.environ.copy(), check=True)
+        subprocess.run(command, cwd=ROOT, env=dbt_environment(), check=True)
     finally:
         if arguments[0] == 'test':
             subprocess.run([sys.executable, str(DBT_ROOT / 'scripts' / 'build_with_detailed_tests.py'),

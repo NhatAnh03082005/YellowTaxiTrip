@@ -236,6 +236,29 @@ def main():
             expected_error='Failure in test minimal_batch_fact')
         query("update dds.fact_taxi_trip set revenue_amount=revenue_amount-1 where source_record_key=%s",
               (expected['A01_CONTROL']['source_record_key'],))
+        # Preserve every failure branch when changing the Fact test query plan.
+        control_key = expected['A01_CONTROL']['source_record_key']
+        for column, mutation, failure_rules in (
+            ('trip_count', '2', [('FACT_MEASURE_POLICY',1)]),
+            ('pickup_date_key', '12345678', [('FACT_ROLE_FK',1),('FACT_ROLE_MAPPING',1)]),
+            ('vendor_key', '0', [('FACT_ROLE_MAPPING',1)]),
+            ('trip_distance_miles', 'trip_distance_miles+1', [('FACT_VALUES',1)]),
+            ('is_revenue_kpi_eligible', 'not is_revenue_kpi_eligible',
+             [('FACT_MEASURE_POLICY',1),('FACT_VALUES',1)]),
+        ):
+            original = query(f'select {column} value from dds.fact_taxi_trip where source_record_key=%s',
+                             (control_key,))[0]['value']
+            try:
+                query(f'update dds.fact_taxi_trip set {column}={mutation} where source_record_key=%s',
+                      (control_key,))
+                dbt(['test','--select','minimal_batch_fact'],101,ok=False,
+                    expected_error='Failure in test minimal_batch_fact')
+                compiled = next((work/'target/compiled').rglob('minimal_batch_fact.sql'))
+                failures = query(compiled.read_text(encoding='utf-8'))
+                assert sorted((r['rule'],r['failures']) for r in failures)==sorted(failure_rules), (column,failures)
+            finally:
+                query(f'update dds.fact_taxi_trip set {column}=%s where source_record_key=%s',
+                      (original,control_key))
         query("update dq.file_reconciliation set trusted_fare_delta=1 where file_version_id=101")
         dbt(['test','--select','file_reconciliation_balances'],101,ok=False,
             expected_error='Failure in test file_reconciliation_balances')

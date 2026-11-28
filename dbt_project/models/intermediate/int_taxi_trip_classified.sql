@@ -123,9 +123,25 @@ with fingerprinted as (
         (duplicate_occurrence_number > 1) as dup_001,
         {% if var('dbt_minimal_mode', false) %}false{% else %}has_cross_file_match{% endif %} as dup_002
     from lookups l
-), grouped_rules as (
+), grouped_rules as {% if var('dbt_minimal_mode', false) %}materialized{% endif %} (
     select
+        {% if var('dbt_minimal_mode', false) %}
+        {# Only final workspace inputs cross the materialization boundary.
+           Rule flags are consumed by the array expression below. #}
+        {% for name in ['source_record_key','file_version_id','source_row_number','batch_id',
+            'vendor_id','pickup_datetime','dropoff_datetime','passenger_count','trip_distance',
+            'rate_code_id','store_and_fwd_flag','pu_location_id','do_location_id','payment_type_id',
+            'fare_amount','extra','mta_tax','tip_amount','tolls_amount','improvement_surcharge',
+            'total_amount','congestion_surcharge','airport_fee','cbd_congestion_fee',
+            'duration_seconds','row_speed_mph','reported_total_amount','calculated_total_amount',
+            'component_reconciliation_status','raw_exact_fingerprint','candidate_trip_fingerprint',
+            'raw_contract_valid','duplicate_occurrence_number','duplicate_survivor_source_record_key',
+            'has_in_file_candidate_match'] %}
+        r.{{ name }},
+        {% endfor %}
+        {% else %}
         r.*,
+        {% endif %}
         array_remove(array[
             case when time_001 then 'TIME-001' end,
             case when time_002 then 'TIME-002' end,
@@ -155,7 +171,13 @@ with fingerprinted as (
             case when dup_002 then 'DUP-002' end
         ], null)::text[] as dq_rule_ids
     from rule_flags r
+{% if var('dbt_minimal_mode', false) %}
+), rule_patterns as (
+    select distinct dq_rule_ids from grouped_rules
+), policy_by_pattern as materialized (
+{% else %}
 ), policy_applied as (
+{% endif %}
     select
         g.*,
         coalesce(a.has_duplicate_rule, false) as has_duplicate_rule,
@@ -163,7 +185,7 @@ with fingerprinted as (
         coalesce(a.has_warning_rule, false) as has_warning_rule,
         coalesce(a.has_unmapped_rule, false) as has_unmapped_rule,
         coalesce(a.max_severity, 'PASS') as max_severity
-    from grouped_rules g
+    from {% if var('dbt_minimal_mode', false) %}rule_patterns{% else %}grouped_rules{% endif %} g
     cross join lateral (
         select
             bool_or(p.disposition_action = 'DUPLICATE') as has_duplicate_rule,
@@ -174,6 +196,14 @@ with fingerprinted as (
         from unnest(g.dq_rule_ids) as rule(rule_id)
         left join {{ ref('dq_rule_policy') }} p on p.rule_id = rule.rule_id
     ) a
+{% if var('dbt_minimal_mode', false) %}
+), policy_applied as (
+    {# Dynamic patterns come from this scope, never a fixed list of rule sets. #}
+    select g.*, a.has_duplicate_rule, a.has_business_quarantine_rule,
+           a.has_warning_rule, a.has_unmapped_rule, a.max_severity
+    from grouped_rules g
+    join policy_by_pattern a using(dq_rule_ids)
+{% endif %}
 ), dispositions as (
     select
         g.*,

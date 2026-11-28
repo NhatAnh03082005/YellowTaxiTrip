@@ -1,6 +1,20 @@
 # Contract Mage staging hiện tại
 
-Ngày cập nhật: 2026-11-27. Contract live: `slim-v2`.
+Ngày cập nhật: 2026-11-28. Contract live: `slim-v2`.
+
+## Sau khi tạo lại database
+
+`docker compose up -d postgres mage` khởi động dịch vụ; hai script trong `docker/postgres/init` chỉ tạo extensions, schemas và grants. Database vừa xóa volume chưa có bảng control/staging hoặc migration slim, nên mở được UI không có nghĩa là chạy được ingestion.
+
+Với database trống, triển khai SQL theo thứ tự: control tables/indexes → stage tables/indexes/comments → control functions/seed watermarks → migrations006/007 →008 minimal DDS metadata →008 raw cast payload →009 slim →010 unified slim-v2. DDL base hiện đã chứa các đối tượng clean-build của005;005 là đường nâng cấp database cũ. Không áp lại009/010 lên database đã cài hoặc đang có batch/dữ liệu staging; giữ nguyên guards của migration.
+
+Sau khởi tạo, kiểm marker `stage.stage_storage_contract.storage_mode='slim-v2'`, watermark0 và không có batch active. Chạy `pl_database_connection_test`, sau đó `pl_reference_taxi_zone` (265lookup/263geometry), rồi mới chạy trips theo tháng đã chọn. Reference không tạo batch trips hoặc đẩy watermark.
+
+Các block Python phải giữ decorator do Mage executor đưa vào globals. Chỉ import decorator fallback khi tên chưa tồn tại; import ghi đè sẽ gây lỗi “does not have any decorated functions” dù code có `@data_loader`/`@transformer`. Regression runtime cho mọi block trong các pipeline hiện có:
+
+```powershell
+docker compose exec -T mage python -m unittest nyc_taxi_bi.tests.integration.test_mage_block_registration -v
+```
 
 ## Phạm vi
 

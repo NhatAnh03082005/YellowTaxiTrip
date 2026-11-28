@@ -8,6 +8,9 @@ seed-paths: ['seeds']
 test-paths: ['tests']
 macro-paths: ['macros']
 
+on-run-start:
+  - "{{ minimal_assert_runtime_settings() }}"
+
 clean-targets: ['target', 'dbt_packages']
 
 # Approved defaults. Override with --vars only after business approval.

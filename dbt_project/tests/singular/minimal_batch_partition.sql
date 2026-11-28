@@ -1,49 +1,45 @@
 {{ config(enabled=var('dbt_minimal_mode', false), tags=['minimal_batch']) }}
 {% if var('dbt_minimal_mode', false) %}
--- Aggregate by source key, so every row is checked while stored diagnostics stay small.
+-- Each source row contributes one branch tag. Aggregate once per key; keep
+-- numeric counters and the existing failure predicates without assuming unique input.
 with source_keys as (
-    select source_record_key, count(*) as raw_n, 0::bigint as canonical_n,
-           0::bigint as technical_n, 0::bigint as classified_n,
-           0::bigint as fact_n, 0::bigint as business_n, 0::bigint as duplicate_n,
-           null::text as disposition
+    select source_record_key,0::smallint as branch,null::text as disposition
     from {{ source('stage','yellow_taxi_raw') }}
     where batch_id={{ minimal_batch_id() }} and file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,count(*),0,0,0,0,0,null::text
+    select source_record_key,1::smallint as branch,null::text as disposition
     from {{ source('stage','yellow_taxi_canonical') }}
     where batch_id={{ minimal_batch_id() }} and file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,0,count(*),0,0,0,0,null::text
+    select source_record_key,2::smallint as branch,null::text as disposition
     from {{ source('mage_dq','technical_quarantine') }}
     where batch_id={{ minimal_batch_id() }} and file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,0,0,count(*),0,0,0,max(primary_disposition)
+    select source_record_key,3::smallint as branch,primary_disposition as disposition
     from {{ ref('int_taxi_trip_classified') }}
     where batch_id={{ minimal_batch_id() }} and file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,0,0,0,count(*),0,0,null::text
+    select source_record_key,4::smallint as branch,null::text as disposition
     from {{ ref('fact_taxi_trip') }}
     where file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,0,0,0,0,count(*),0,null::text
+    select source_record_key,5::smallint as branch,null::text as disposition
     from {{ ref('business_quarantine') }}
     where file_version_id={{ minimal_version_id() }}
-    group by source_record_key
     union all
-    select source_record_key,0,0,0,0,0,0,count(*),null::text
+    select source_record_key,6::smallint as branch,null::text as disposition
     from {{ ref('duplicate_quarantine') }}
     where file_version_id={{ minimal_version_id() }}
-    group by source_record_key
 ), per_key as (
-    select source_record_key, sum(raw_n) raw_n, sum(canonical_n) canonical_n,
-           sum(technical_n) technical_n, sum(classified_n) classified_n,
-           sum(fact_n) fact_n, sum(business_n) business_n,
-           sum(duplicate_n) duplicate_n, max(disposition) disposition
+    select source_record_key,
+        count(*) filter(where branch=0)::numeric as raw_n,
+        count(*) filter(where branch=1)::numeric as canonical_n,
+        count(*) filter(where branch=2)::numeric as technical_n,
+        count(*) filter(where branch=3)::numeric as classified_n,
+        count(*) filter(where branch=4)::numeric as fact_n,
+        count(*) filter(where branch=5)::numeric as business_n,
+        count(*) filter(where branch=6)::numeric as duplicate_n,
+        max(disposition) as disposition
     from source_keys group by source_record_key
 ), checks as (
     select count(*) filter(where source_record_key is null or raw_n<>1

@@ -198,8 +198,8 @@ variables:
   prepare_mode: streaming
   run_type: BACKFILL
   source_batch_size: 50000
-  source_year_month_from: 2025-05
-  source_year_month_to: 2025-05
+  source_year_month_from: 2024-05
+  source_year_month_to: 2024-05
   stage_load_mode: direct
   stage_storage_mode: slim
 variables_dir: /home/src/mage_data/nyc_taxi_bi

@@ -9,4 +9,4 @@ yellow_taxi_bi:
       password: "{{ env_var('POSTGRES_PASSWORD') }}"
       dbname: "{{ env_var('POSTGRES_DB') }}"
       schema: dds
-      threads: 4
+      threads: "{{ env_var('DBT_THREADS', '2') | int }}"
